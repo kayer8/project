@@ -1,0 +1,17 @@
+@use './variables';
+@use './tdesign';
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "IBM Plex Sans", "Noto Sans SC", "Segoe UI", sans-serif;
+  background: #f5f7fb;
+  color: #1f1f1f;
+}
+
+#app {
+  min-height: 100vh;
+}

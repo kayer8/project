@@ -1,0 +1,1 @@
+export const CONTENT_STATUSES = ['draft', 'published', 'archived'] as const;

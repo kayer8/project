@@ -1,0 +1,39 @@
+{
+  "name": "admin-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint \"src/**/*.{ts,vue}\"",
+    "lint:fix": "eslint \"src/**/*.{ts,vue}\" --fix",
+    "format": "prettier --write \"**/*.{ts,vue,js,json,scss,css,md}\"",
+    "stylelint": "stylelint \"src/**/*.{scss,css,vue}\""
+  },
+  "dependencies": {
+    "axios": "^1.6.7",
+    "pinia": "^2.1.7",
+    "tdesign-vue-next": "^1.8.3",
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.19",
+    "@typescript-eslint/eslint-plugin": "^7.0.1",
+    "@typescript-eslint/parser": "^7.0.1",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-vue": "^9.21.1",
+    "prettier": "^3.2.5",
+    "sass": "^1.70.0",
+    "stylelint": "^16.2.1",
+    "stylelint-config-prettier": "^9.0.5",
+    "stylelint-config-standard-scss": "^13.0.0",
+    "stylelint-config-standard-vue": "^1.0.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.1.4"
+  }
+}
