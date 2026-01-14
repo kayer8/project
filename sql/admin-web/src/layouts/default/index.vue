@@ -1,20 +1,23 @@
 <template>
   <t-layout class="layout-root">
     <t-layout-sider
+      class="layout-sider"
       collapsible
       :collapsed="appStore.sidebarCollapsed"
-      :width="220"
+      :width="240"
       @collapsed-change="appStore.toggleSidebar"
     >
       <Sidebar />
     </t-layout-sider>
-    <t-layout>
+    <t-layout class="layout-main">
       <t-layout-header class="layout-header">
         <Topbar />
-        <Breadcrumb />
-        <AppTabs v-if="appStore.enableTabs" />
       </t-layout-header>
       <t-layout-content class="layout-content">
+        <div class="layout-toolbar">
+          <Breadcrumb />
+          <AppTabs v-if="appStore.enableTabs" />
+        </div>
         <router-view />
       </t-layout-content>
     </t-layout>
@@ -34,14 +37,34 @@ const appStore = useAppStore();
 <style scoped>
 .layout-root {
   min-height: 100vh;
+  background: #f3f3f3;
+  flex-direction: row;
+}
+
+.layout-sider {
+  background: #242424;
+  border-right: 1px solid #383838;
+}
+
+.layout-main {
+  background: #f3f3f3;
 }
 
 .layout-header {
-  padding: 16px 24px 0 24px;
-  background: #f5f7fb;
+  padding: 12px 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #e6e8f0;
 }
 
 .layout-content {
   padding: 24px;
+  background: #f3f3f3;
+}
+
+.layout-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 </style>

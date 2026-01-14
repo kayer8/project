@@ -1,9 +1,6 @@
-import { request } from '@/api/request';
+import { mockContentList } from '@/mocks/data';
 import type { ContentItem } from './types';
 
 export function fetchContentList() {
-  return request<ContentItem[]>({
-    url: '/content',
-    method: 'GET',
-  });
+  return Promise.resolve<ContentItem[]>(mockContentList);
 }

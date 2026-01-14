@@ -1,8 +1,6 @@
-import { request } from '@/api/request';
+import { mockSystemLogs } from '@/mocks/data';
+import type { SystemLog } from './types';
 
 export function fetchSystemLogs() {
-  return request<string[]>({
-    url: '/system/logs',
-    method: 'GET',
-  });
+  return Promise.resolve<SystemLog[]>(mockSystemLogs);
 }

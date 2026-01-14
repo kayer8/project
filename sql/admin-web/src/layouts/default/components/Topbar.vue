@@ -1,7 +1,9 @@
 <template>
   <div class="topbar">
-    <div class="title">Admin Console</div>
-    <div class="actions">
+    <div class="topbar-left">
+      <div class="title">{{ appStore.title }}</div>
+    </div>
+    <div class="topbar-right">
       <t-button theme="default" variant="text" @click="logout">Sign out</t-button>
     </div>
   </div>
@@ -10,9 +12,11 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/store/modules/user';
+import { useAppStore } from '@/store/modules/app';
 
 const router = useRouter();
 const userStore = useUserStore();
+const appStore = useAppStore();
 
 const logout = () => {
   userStore.logout();
@@ -25,11 +29,23 @@ const logout = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 0 16px 0;
+  gap: 16px;
 }
 
 .title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 </style>

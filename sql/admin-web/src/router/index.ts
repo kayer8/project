@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import routes from './routes';
-import { setupAuthGuard } from './guards/auth.guard';
 import { setupProgressGuard } from './guards/progress.guard';
 
 const router = createRouter({
@@ -8,7 +7,6 @@ const router = createRouter({
   routes,
 });
 
-setupAuthGuard(router);
 setupProgressGuard(router);
 
 export default router;

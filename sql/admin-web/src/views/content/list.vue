@@ -1,16 +1,23 @@
 <template>
   <PageContainer title="Content List">
-    <BaseTable :data="[]" :columns="columns" />
+    <BaseTable :data="items" :columns="columns" />
   </PageContainer>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import PageContainer from '@/components/PageContainer/index.vue';
 import BaseTable from '@/components/BaseTable/index.vue';
+import { useContentList } from '@/modules/content/hooks/useContentList';
 
 const columns = ref([
   { colKey: 'title', title: 'Title' },
   { colKey: 'author', title: 'Author' },
 ]);
+
+const { items, load } = useContentList();
+
+onMounted(() => {
+  void load();
+});
 </script>

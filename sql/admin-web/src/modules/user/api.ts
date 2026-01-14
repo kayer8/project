@@ -1,9 +1,6 @@
-import { request } from '@/api/request';
+import { mockUserList } from '@/mocks/data';
 import type { UserItem } from './types';
 
 export function fetchUserList() {
-  return request<UserItem[]>({
-    url: '/users',
-    method: 'GET',
-  });
+  return Promise.resolve<UserItem[]>(mockUserList);
 }

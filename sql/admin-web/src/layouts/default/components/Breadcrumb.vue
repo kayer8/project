@@ -15,6 +15,6 @@ const label = computed(() => (route.meta?.title as string) || '');
 
 <style scoped>
 .breadcrumb {
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 </style>
