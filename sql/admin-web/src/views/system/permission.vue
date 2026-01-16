@@ -1,7 +1,7 @@
 <template>
-  <PageContainer title="Permission">
+  <PageContainer title="权限管理">
     <t-card>
-      <p>Permission placeholder.</p>
+      <p>权限占位。</p>
     </t-card>
   </PageContainer>
 </template>

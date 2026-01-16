@@ -1,7 +1,7 @@
 <template>
-  <PageContainer title="User Detail">
-    <t-card title="Profile">
-      <p>Profile placeholder.</p>
+  <PageContainer title="用户详情">
+    <t-card title="资料">
+      <p>资料占位。</p>
     </t-card>
   </PageContainer>
 </template>

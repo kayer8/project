@@ -1,61 +1,61 @@
 ﻿<template>
-  <PageContainer title="Analytics Overview">
+  <PageContainer title="看板总览">
     <div class="overview-toolbar">
       <t-date-range-picker v-model="range" value-type="YYYY-MM-DD" />
       <t-space>
-        <t-button variant="outline" @click="goTaskFunnel">Task Funnel</t-button>
-        <t-button variant="outline" @click="goNightFunnel">Night Funnel</t-button>
-        <t-button variant="outline" @click="goTaskRanking">Task Ranking</t-button>
+        <t-button variant="outline" @click="goTaskFunnel">任务漏斗</t-button>
+        <t-button variant="outline" @click="goNightFunnel">夜间漏斗</t-button>
+        <t-button variant="outline" @click="goTaskRanking">模板表现排行</t-button>
       </t-space>
     </div>
 
     <div class="overview-section">
-      <div class="section-title">Today</div>
+      <div class="section-title">今日</div>
       <div class="metric-grid">
-        <MetricCard label="DAU" :value="summary?.today.dau || 0" clickable @click="goTaskFunnel" />
-        <MetricCard label="New Users" :value="summary?.today.newUsers || 0" />
-        <MetricCard label="Day-1 Retention" :value="formatRate(summary?.today.retention1d)" />
+        <MetricCard label="日活" :value="summary?.today.dau || 0" clickable @click="goTaskFunnel" />
+        <MetricCard label="新增用户" :value="summary?.today.newUsers || 0" />
+        <MetricCard label="次日留存" :value="formatRate(summary?.today.retention1d)" />
         <MetricCard
-          label="Task Completion"
+          label="任务完成率"
           :value="formatRate(summary?.today.taskCompletionRate)"
           clickable
           @click="goTaskFunnel"
         />
         <MetricCard
-          label="Night Completion"
+          label="夜间完成率"
           :value="formatRate(summary?.today.nightCompletionRate)"
           clickable
           @click="goNightFunnel"
         />
-        <MetricCard label="Refresh Rate" :value="formatRate(summary?.today.refreshRate)" />
+        <MetricCard label="换一换使用率" :value="formatRate(summary?.today.refreshRate)" />
       </div>
     </div>
 
     <div class="overview-section">
-      <div class="section-title">Yesterday</div>
+      <div class="section-title">昨日</div>
       <div class="metric-grid">
-        <MetricCard label="DAU" :value="summary?.yesterday.dau || 0" />
-        <MetricCard label="New Users" :value="summary?.yesterday.newUsers || 0" />
-        <MetricCard label="Day-1 Retention" :value="formatRate(summary?.yesterday.retention1d)" />
-        <MetricCard label="Task Completion" :value="formatRate(summary?.yesterday.taskCompletionRate)" />
-        <MetricCard label="Night Completion" :value="formatRate(summary?.yesterday.nightCompletionRate)" />
-        <MetricCard label="Refresh Rate" :value="formatRate(summary?.yesterday.refreshRate)" />
+        <MetricCard label="日活" :value="summary?.yesterday.dau || 0" />
+        <MetricCard label="新增用户" :value="summary?.yesterday.newUsers || 0" />
+        <MetricCard label="次日留存" :value="formatRate(summary?.yesterday.retention1d)" />
+        <MetricCard label="任务完成率" :value="formatRate(summary?.yesterday.taskCompletionRate)" />
+        <MetricCard label="夜间完成率" :value="formatRate(summary?.yesterday.nightCompletionRate)" />
+        <MetricCard label="换一换使用率" :value="formatRate(summary?.yesterday.refreshRate)" />
       </div>
     </div>
 
     <div class="overview-section">
-      <div class="section-title">Last 7 Days Avg</div>
+      <div class="section-title">近7天均值</div>
       <div class="metric-grid">
-        <MetricCard label="DAU" :value="summary?.range7d.dau || 0" />
-        <MetricCard label="New Users" :value="summary?.range7d.newUsers || 0" />
-        <MetricCard label="Day-1 Retention" :value="formatRate(summary?.range7d.retention1d)" />
-        <MetricCard label="Task Completion" :value="formatRate(summary?.range7d.taskCompletionRate)" />
-        <MetricCard label="Night Completion" :value="formatRate(summary?.range7d.nightCompletionRate)" />
-        <MetricCard label="Refresh Rate" :value="formatRate(summary?.range7d.refreshRate)" />
+        <MetricCard label="日活" :value="summary?.range7d.dau || 0" />
+        <MetricCard label="新增用户" :value="summary?.range7d.newUsers || 0" />
+        <MetricCard label="次日留存" :value="formatRate(summary?.range7d.retention1d)" />
+        <MetricCard label="任务完成率" :value="formatRate(summary?.range7d.taskCompletionRate)" />
+        <MetricCard label="夜间完成率" :value="formatRate(summary?.range7d.nightCompletionRate)" />
+        <MetricCard label="换一换使用率" :value="formatRate(summary?.range7d.refreshRate)" />
       </div>
     </div>
 
-    <t-card title="Daily Trend (7d)">
+    <t-card title="7日趋势">
       <t-table :data="trendPoints" :columns="trendColumns" row-key="date" />
     </t-card>
   </PageContainer>
@@ -76,17 +76,17 @@ const trendPoints = ref<TrendPoint[]>([]);
 const range = ref<string[]>([]);
 
 const trendColumns = [
-  { colKey: 'date', title: 'Date', width: 120 },
-  { colKey: 'dau', title: 'DAU', width: 120 },
+  { colKey: 'date', title: '日期', width: 120 },
+  { colKey: 'dau', title: '日活', width: 120 },
   {
     colKey: 'taskCompletionRate',
-    title: 'Task Completion',
+    title: '任务完成率',
     width: 160,
     cell: ({ row }: { row: TrendPoint }) => formatRate(row.taskCompletionRate),
   },
   {
     colKey: 'nightCompletionRate',
-    title: 'Night Completion',
+    title: '夜间完成率',
     width: 160,
     cell: ({ row }: { row: TrendPoint }) => formatRate(row.nightCompletionRate),
   },

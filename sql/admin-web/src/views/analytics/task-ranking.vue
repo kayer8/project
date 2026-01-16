@@ -1,8 +1,8 @@
 ﻿<template>
-  <PageContainer title="Task Template Ranking">
+  <PageContainer title="模板表现排行">
     <template #actions>
       <t-space>
-        <t-button variant="outline" @click="handleExport">Export</t-button>
+        <t-button variant="outline" @click="handleExport">导出</t-button>
       </t-space>
     </template>
 
@@ -19,9 +19,9 @@
         </template>
         <template #operation="{ row }">
           <t-space size="small">
-            <t-link theme="default" @click.stop="handleOffline(row)">Offline</t-link>
-            <t-link theme="primary" @click.stop="goEdit(row)">Edit</t-link>
-            <t-link theme="default" @click.stop="goDetail(row)">Detail</t-link>
+            <t-link theme="default" @click.stop="handleOffline(row)">下线</t-link>
+            <t-link theme="primary" @click.stop="goEdit(row)">编辑</t-link>
+            <t-link theme="default" @click.stop="goDetail(row)">查看详情</t-link>
           </t-space>
         </template>
       </t-table>
@@ -41,22 +41,22 @@ const router = useRouter();
 const ranking = ref<TaskRankingItem[]>([]);
 
 const columns = [
-  { colKey: 'id', title: 'Template ID', width: 120 },
-  { colKey: 'title', title: 'Title', minWidth: 220 },
-  { colKey: 'completionRate', title: 'Completion', width: 140 },
-  { colKey: 'skipRate', title: 'Skip', width: 120 },
-  { colKey: 'replaceRate', title: 'Replace', width: 120 },
-  { colKey: 'operation', title: 'Actions', width: 200, fixed: 'right' },
+  { colKey: 'id', title: '模板ID', width: 120 },
+  { colKey: 'title', title: '标题', minWidth: 220 },
+  { colKey: 'completionRate', title: '完成率', width: 140 },
+  { colKey: 'skipRate', title: '跳过率', width: 120 },
+  { colKey: 'replaceRate', title: '换出率', width: 120 },
+  { colKey: 'operation', title: '操作', width: 200, fixed: 'right' },
 ];
 
 const formatRate = (value: number) => `${Math.round(value * 100)}%`;
 
 const handleExport = () => {
-  MessagePlugin.success('Exported ranking (mock).');
+  MessagePlugin.success('已导出排行（模拟）。');
 };
 
 const handleOffline = (row: TaskRankingItem) => {
-  MessagePlugin.success(`Template ${row.id} set offline (mock).`);
+  MessagePlugin.success(`模板 ${row.id} 已下线（模拟）。`);
 };
 
 const goEdit = (row: TaskRankingItem) => {
@@ -71,3 +71,4 @@ onMounted(async () => {
   ranking.value = await fetchTaskRanking();
 });
 </script>
+

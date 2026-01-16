@@ -2,26 +2,26 @@
   <div class="sidebar">
     <div class="brand">{{ appStore.title }}</div>
     <t-menu class="menu" theme="dark" :value="active">
-      <t-menu-item value="/dashboard" @click="go('/dashboard')">Dashboard</t-menu-item>
-      <t-menu-item value="/task-templates" @click="go('/task-templates')">Task Templates</t-menu-item>
-      <t-menu-item value="/night-programs" @click="go('/night-programs')">Night Programs</t-menu-item>
-      <t-menu-item value="/copy-templates" @click="go('/copy-templates')">Copy Templates</t-menu-item>
-      <t-menu-item value="/tickets" @click="go('/tickets')">Tickets</t-menu-item>
-      <t-menu-item value="/configs" @click="go('/configs')">App Config</t-menu-item>
-      <t-submenu value="analytics" title="Analytics">
+      <t-menu-item value="/dashboard" @click="go('/dashboard')">看板</t-menu-item>
+      <t-menu-item value="/task-templates" @click="go('/task-templates')">任务模板</t-menu-item>
+      <t-menu-item value="/night-programs" @click="go('/night-programs')">夜间引导</t-menu-item>
+      <t-menu-item value="/copy-templates" @click="go('/copy-templates')">文案模板</t-menu-item>
+      <t-menu-item value="/tickets" @click="go('/tickets')">反馈工单</t-menu-item>
+      <t-menu-item value="/configs" @click="go('/configs')">规则配置</t-menu-item>
+      <t-submenu value="analytics" title="数据报表">
         <t-menu-item value="/analytics/task-funnel" @click="go('/analytics/task-funnel')">
-          Task Funnel
+          任务漏斗
         </t-menu-item>
         <t-menu-item value="/analytics/night-funnel" @click="go('/analytics/night-funnel')">
-          Night Funnel
+          夜间漏斗
         </t-menu-item>
         <t-menu-item value="/analytics/task-ranking" @click="go('/analytics/task-ranking')">
-          Task Ranking
+          模板表现排行
         </t-menu-item>
       </t-submenu>
-      <t-menu-item value="/content/list" @click="go('/content/list')">Content</t-menu-item>
-      <t-menu-item value="/users/list" @click="go('/users/list')">Users</t-menu-item>
-      <t-menu-item value="/system/role" @click="go('/system/role')">System</t-menu-item>
+      <t-menu-item value="/content/list" @click="go('/content/list')">内容</t-menu-item>
+      <t-menu-item value="/users/list" @click="go('/users/list')">用户</t-menu-item>
+      <t-menu-item value="/system/role" @click="go('/system/role')">系统</t-menu-item>
     </t-menu>
   </div>
 </template>

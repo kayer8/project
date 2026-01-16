@@ -1,5 +1,5 @@
 <template>
-  <PageContainer title="System Logs">
+  <PageContainer title="系统日志">
     <t-card>
       <ul class="log-list">
         <li v-for="log in logs" :key="log.id">{{ log.message }}</li>

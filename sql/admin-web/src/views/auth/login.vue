@@ -1,15 +1,15 @@
 <template>
   <div class="login-card">
-    <t-card title="Admin Login">
+    <t-card title="管理后台登录">
       <t-form @submit.prevent="handleSubmit">
-        <t-form-item label="Username">
-          <t-input v-model="form.username" placeholder="Enter username" />
+        <t-form-item label="用户名">
+          <t-input v-model="form.username" placeholder="请输入用户名" />
         </t-form-item>
-        <t-form-item label="Password">
-          <t-input v-model="form.password" type="password" placeholder="Enter password" />
+        <t-form-item label="密码">
+          <t-input v-model="form.password" type="password" placeholder="请输入密码" />
         </t-form-item>
         <t-form-item>
-          <t-button theme="primary" type="submit" block>Sign in</t-button>
+          <t-button theme="primary" type="submit" block>登录</t-button>
         </t-form-item>
       </t-form>
     </t-card>

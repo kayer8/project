@@ -1,6 +1,6 @@
 <template>
   <t-breadcrumb class="breadcrumb">
-    <t-breadcrumb-item>Home</t-breadcrumb-item>
+    <t-breadcrumb-item>首页</t-breadcrumb-item>
     <t-breadcrumb-item>{{ label }}</t-breadcrumb-item>
   </t-breadcrumb>
 </template>

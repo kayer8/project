@@ -1,30 +1,30 @@
 ﻿<template>
   <ListPage
-    title="Night Programs"
+    title="夜间引导"
     v-model:keyword="filters.keyword"
     v-model:sort="filters.sort"
     :sort-options="sortOptions"
   >
     <template #actions>
       <t-space>
-        <t-button theme="primary" @click="goCreate">New Program</t-button>
-        <t-button variant="outline" @click="handleExport">Export</t-button>
+        <t-button theme="primary" @click="goCreate">新建引导</t-button>
+        <t-button variant="outline" @click="handleExport">导出</t-button>
       </t-space>
     </template>
 
     <template #filters>
-      <t-select v-model="filters.type" placeholder="Type" clearable :options="nightProgramTypeOptions" />
-      <t-select v-model="filters.status" placeholder="Status" clearable :options="statusOptions" />
+      <t-select v-model="filters.type" placeholder="类型" clearable :options="nightProgramTypeOptions" />
+      <t-select v-model="filters.status" placeholder="状态" clearable :options="statusOptions" />
       <t-select
         v-model="filters.moods"
-        placeholder="Moods"
+        placeholder="心情标签"
         multiple
         clearable
         :options="moodOptions"
       />
       <t-select
         v-model="filters.directions"
-        placeholder="Directions"
+        placeholder="方向标签"
         multiple
         clearable
         :options="directionOptions"
@@ -32,7 +32,7 @@
       <t-date-range-picker v-model="filters.updatedAt" value-type="YYYY-MM-DD" />
       <t-input-number
         v-model="filters.completionBelow"
-        placeholder="Completion <"
+        placeholder="完成率 <"
         :min="0"
         :max="100"
         :step="5"
@@ -42,8 +42,8 @@
 
     <template #toolbar-actions>
       <t-space>
-        <t-button variant="outline" @click="handleBatchOnline">Batch Online</t-button>
-        <t-button variant="outline" @click="handleBatchOffline">Batch Offline</t-button>
+        <t-button variant="outline" @click="handleBatchOnline">批量上线</t-button>
+        <t-button variant="outline" @click="handleBatchOffline">批量下线</t-button>
       </t-space>
     </template>
 
@@ -59,14 +59,14 @@
     >
       <template #status="{ row }">
         <t-tag :theme="row.status === 'online' ? 'success' : 'default'" variant="light">
-          {{ row.status === 'online' ? 'Online' : 'Offline' }}
+          {{ formatStatus(row.status) }}
         </t-tag>
       </template>
       <template #tags="{ row }">
-        <TagSummary :tags="[...row.tags.moods, ...row.tags.directions]" />
+        <TagSummary :tags="formatTags(row)" />
       </template>
       <template #duration="{ row }">
-        {{ row.duration ? `${row.duration}s` : '-' }}
+        {{ row.duration ? `${row.duration}秒` : '-' }}
       </template>
       <template #exposure="{ row }">
         {{ row.performance.range7d.exposure }}
@@ -79,13 +79,13 @@
       </template>
       <template #operation="{ row }">
         <t-space size="small">
-          <t-link theme="primary" @click.stop="goEdit(row)">Edit</t-link>
-          <t-link theme="default" @click.stop="handleCopy(row)">Copy</t-link>
+          <t-link theme="primary" @click.stop="goEdit(row)">编辑</t-link>
+          <t-link theme="default" @click.stop="handleCopy(row)">复制</t-link>
           <t-link theme="default" @click.stop="handleToggleStatus(row)">
-            {{ row.status === 'online' ? 'Offline' : 'Online' }}
+            {{ row.status === 'online' ? '下线' : '上线' }}
           </t-link>
           <t-link v-if="isSuperAdmin" theme="danger" @click.stop="handleDelete(row)">
-            Delete
+            删除
           </t-link>
         </t-space>
       </template>
@@ -117,6 +117,8 @@ import {
   nightProgramTypeOptions,
   moodOptions,
   directionOptions,
+  getOptionLabel,
+  mapOptionLabels,
 } from '@/modules/common/options';
 import { fetchNightPrograms } from '@/modules/night-programs/api';
 import type { NightProgram } from '@/modules/night-programs/types';
@@ -145,25 +147,37 @@ const pagination = reactive({
 });
 
 const sortOptions = [
-  { label: 'Updated (newest)', value: 'updated_desc' },
-  { label: 'Completion 7d', value: 'completion_desc' },
-  { label: 'Exposure 7d', value: 'exposure_desc' },
+  { label: '更新时间（新到旧）', value: 'updated_desc' },
+  { label: '近7天完成率', value: 'completion_desc' },
+  { label: '近7天曝光', value: 'exposure_desc' },
 ];
 
 const columns = [
   { colKey: 'row-select', type: 'multiple', width: 46, fixed: 'left' },
-  { colKey: 'id', title: 'Program ID', width: 120 },
-  { colKey: 'title', title: 'Title', minWidth: 180 },
-  { colKey: 'type', title: 'Type', width: 100 },
-  { colKey: 'duration', title: 'Duration', width: 110 },
-  { colKey: 'status', title: 'Status', width: 100 },
-  { colKey: 'tags', title: 'Tags', width: 180 },
-  { colKey: 'updatedAt', title: 'Updated at', width: 150 },
-  { colKey: 'updatedBy', title: 'Updated by', width: 120 },
-  { colKey: 'exposure', title: 'Exposure 7d', width: 130 },
-  { colKey: 'completionRate', title: 'Completion 7d', width: 140 },
-  { colKey: 'exitRate', title: 'Exit 7d', width: 120 },
-  { colKey: 'operation', title: 'Actions', width: 200, fixed: 'right' },
+  { colKey: 'id', title: '引导ID', width: 120 },
+  { colKey: 'title', title: '标题', minWidth: 180 },
+  {
+    colKey: 'type',
+    title: '类型',
+    width: 100,
+    cell: ({ row }: { row: NightProgram }) => formatType(row.type),
+  },
+  { colKey: 'duration', title: '时长', width: 110 },
+  { colKey: 'status', title: '状态', width: 100 },
+  { colKey: 'tags', title: '标签', width: 180 },
+  { colKey: 'updatedAt', title: '更新时间', width: 150 },
+  { colKey: 'updatedBy', title: '更新人', width: 120 },
+  { colKey: 'exposure', title: '近7天曝光', width: 130 },
+  { colKey: 'completionRate', title: '近7天完成率', width: 140 },
+  { colKey: 'exitRate', title: '近7天退出率', width: 120 },
+  { colKey: 'operation', title: '操作', width: 200, fixed: 'right' },
+];
+
+const formatStatus = (status: NightProgram['status']) => getOptionLabel(statusOptions, status);
+const formatType = (type: NightProgram['type']) => getOptionLabel(nightProgramTypeOptions, type);
+const formatTags = (row: NightProgram) => [
+  ...mapOptionLabels(moodOptions, row.tags.moods),
+  ...mapOptionLabels(directionOptions, row.tags.directions),
 ];
 
 const formatRate = (value: number) => `${Math.round(value * 100)}%`;
@@ -251,48 +265,49 @@ const goEdit = (row: NightProgram) => {
 
 const handleCopy = (row: NightProgram) => {
   DialogPlugin.confirm({
-    header: 'Copy program',
-    body: `Create a draft copy of "${row.title}"?`,
-    onConfirm: () => MessagePlugin.success('Copied to draft (mock).'),
+    header: '复制引导',
+    body: `确认复制「${row.title}」为草稿？`,
+    onConfirm: () => MessagePlugin.success('已复制为草稿（模拟）。'),
   });
 };
 
 const handleToggleStatus = (row: NightProgram) => {
   const next = row.status === 'online' ? 'offline' : 'online';
+  const nextLabel = next === 'online' ? '上线' : '下线';
   DialogPlugin.confirm({
-    header: `${next === 'online' ? 'Online' : 'Offline'} program`,
-    body: `Confirm to set ${row.title} as ${next}?`,
-    onConfirm: () => MessagePlugin.success(`Program set to ${next} (mock).`),
+    header: `${nextLabel}引导`,
+    body: `确认将「${row.title}」设为${nextLabel}？`,
+    onConfirm: () => MessagePlugin.success(`引导已设为${nextLabel}（模拟）。`),
   });
 };
 
 const handleDelete = (row: NightProgram) => {
   DialogPlugin.confirm({
-    header: 'Delete program',
-    body: `Delete ${row.title}?`,
-    onConfirm: () => MessagePlugin.success('Program deleted (mock).'),
+    header: '删除引导',
+    body: `确认删除「${row.title}」？`,
+    onConfirm: () => MessagePlugin.success('引导已删除（模拟）。'),
   });
 };
 
 const handleExport = () => {
-  MessagePlugin.success('Exported CSV (mock).');
+  MessagePlugin.success('已导出 CSV（模拟）。');
 };
 
 const handleBatchOnline = () => {
   if (!selectedKeys.value.length) {
-    MessagePlugin.warning('Select programs first.');
+    MessagePlugin.warning('请先选择引导内容。');
     return;
   }
-  MessagePlugin.success(`Set ${selectedKeys.value.length} programs online (mock).`);
+  MessagePlugin.success(`已将 ${selectedKeys.value.length} 个引导上线（模拟）。`);
   clearSelection();
 };
 
 const handleBatchOffline = () => {
   if (!selectedKeys.value.length) {
-    MessagePlugin.warning('Select programs first.');
+    MessagePlugin.warning('请先选择引导内容。');
     return;
   }
-  MessagePlugin.success(`Set ${selectedKeys.value.length} programs offline (mock).`);
+  MessagePlugin.success(`已将 ${selectedKeys.value.length} 个引导下线（模拟）。`);
   clearSelection();
 };
 
@@ -312,3 +327,4 @@ onMounted(() => {
   void load();
 });
 </script>
+

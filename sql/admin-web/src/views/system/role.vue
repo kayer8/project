@@ -1,7 +1,7 @@
 <template>
-  <PageContainer title="Role Management">
+  <PageContainer title="角色管理">
     <t-card>
-      <p>Role management placeholder.</p>
+      <p>角色管理占位。</p>
     </t-card>
   </PageContainer>
 </template>

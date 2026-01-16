@@ -1,7 +1,7 @@
 <template>
-  <PageContainer title="Content Detail">
-    <t-card title="Detail">
-      <p>Detail placeholder.</p>
+  <PageContainer title="内容详情">
+    <t-card title="详情">
+      <p>详情占位。</p>
     </t-card>
   </PageContainer>
 </template>

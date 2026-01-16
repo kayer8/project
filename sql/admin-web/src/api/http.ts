@@ -18,7 +18,7 @@ http.interceptors.response.use(
     ) {
       const typed = payload as ApiResponse<unknown>;
       if (typed.code !== 0) {
-        return Promise.reject(new Error(typed.message || 'Request failed'));
+        return Promise.reject(new Error(typed.message || '请求失败'));
       }
       return typed.data;
     }

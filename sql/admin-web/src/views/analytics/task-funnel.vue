@@ -1,9 +1,9 @@
 ﻿<template>
-  <PageContainer title="Task Funnel">
+  <PageContainer title="任务漏斗">
     <template #actions>
       <t-space>
-        <t-button variant="outline" @click="handleExport">Export</t-button>
-        <t-button variant="outline" @click="goToRanking">View Template Ranking</t-button>
+        <t-button variant="outline" @click="handleExport">导出</t-button>
+        <t-button variant="outline" @click="goToRanking">查看模板排行</t-button>
       </t-space>
     </template>
 
@@ -25,18 +25,18 @@ const router = useRouter();
 const stages = ref<FunnelStage[]>([]);
 
 const columns = [
-  { colKey: 'stage', title: 'Stage', minWidth: 220 },
-  { colKey: 'users', title: 'Users', width: 140 },
+  { colKey: 'stage', title: '阶段', minWidth: 220 },
+  { colKey: 'users', title: '人数', width: 140 },
   {
     colKey: 'rate',
-    title: 'Conversion',
+    title: '转化率',
     width: 140,
     cell: ({ row }: { row: FunnelStage }) => `${Math.round(row.rate * 100)}%`,
   },
 ];
 
 const handleExport = () => {
-  MessagePlugin.success('Exported funnel (mock).');
+  MessagePlugin.success('已导出漏斗（模拟）。');
 };
 
 const goToRanking = () => {
@@ -47,3 +47,4 @@ onMounted(async () => {
   stages.value = await fetchTaskFunnel();
 });
 </script>
+

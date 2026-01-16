@@ -9,7 +9,7 @@ export interface UserProfile {
 export const useUserStore = defineStore('user', {
   state: () => ({
     token: getToken(),
-    profile: { name: 'Guest', roles: [] } as UserProfile,
+    profile: { name: '访客', roles: [] } as UserProfile,
   }),
   actions: {
     setProfile(profile: UserProfile) {

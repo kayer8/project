@@ -5,19 +5,19 @@ const contentRoutes: RouteRecordRaw[] = [
     path: 'content/list',
     name: 'ContentList',
     component: () => import('@/views/content/list.vue'),
-    meta: { title: 'Content List', requiresAuth: true },
+    meta: { title: '内容列表', requiresAuth: true },
   },
   {
     path: 'content/edit',
     name: 'ContentEdit',
     component: () => import('@/views/content/edit.vue'),
-    meta: { title: 'Content Edit', requiresAuth: true },
+    meta: { title: '内容编辑', requiresAuth: true },
   },
   {
     path: 'content/detail',
     name: 'ContentDetail',
     component: () => import('@/views/content/detail.vue'),
-    meta: { title: 'Content Detail', requiresAuth: true },
+    meta: { title: '内容详情', requiresAuth: true },
   },
 ];
 

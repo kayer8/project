@@ -1,39 +1,39 @@
 ﻿<template>
   <ListPage
-    title="Task Templates"
+    title="任务模板"
     v-model:keyword="filters.keyword"
     v-model:sort="filters.sort"
     :sort-options="sortOptions"
   >
     <template #actions>
       <t-space>
-        <t-button theme="primary" @click="goCreate">New Task</t-button>
-        <t-button variant="outline" @click="handleImport">Import</t-button>
-        <t-button variant="outline" @click="handleExport">Export</t-button>
+        <t-button theme="primary" @click="goCreate">新建任务</t-button>
+        <t-button variant="outline" @click="handleImport">导入</t-button>
+        <t-button variant="outline" @click="handleExport">导出</t-button>
       </t-space>
     </template>
 
     <template #filters>
-      <t-select v-model="filters.status" placeholder="Status" clearable :options="statusOptions" />
-      <t-select v-model="filters.type" placeholder="Type" clearable :options="taskTypeOptions" />
-      <t-select v-model="filters.difficulty" placeholder="Difficulty" clearable :options="difficultyOptions" />
+      <t-select v-model="filters.status" placeholder="状态" clearable :options="statusOptions" />
+      <t-select v-model="filters.type" placeholder="类型" clearable :options="taskTypeOptions" />
+      <t-select v-model="filters.difficulty" placeholder="难度" clearable :options="difficultyOptions" />
       <t-select
         v-model="filters.moods"
-        placeholder="Moods"
+        placeholder="心情标签"
         multiple
         clearable
         :options="moodOptions"
       />
       <t-select
         v-model="filters.directions"
-        placeholder="Directions"
+        placeholder="方向标签"
         multiple
         clearable
         :options="directionOptions"
       />
       <t-select
         v-model="filters.traces"
-        placeholder="Traces"
+        placeholder="追踪标签"
         multiple
         clearable
         :options="traceOptions"
@@ -41,7 +41,7 @@
       <t-date-range-picker v-model="filters.updatedAt" value-type="YYYY-MM-DD" />
       <t-input-number
         v-model="filters.completionBelow"
-        placeholder="Completion <"
+        placeholder="完成率 <"
         :min="0"
         :max="100"
         :step="5"
@@ -51,9 +51,9 @@
 
     <template #toolbar-actions>
       <t-space>
-        <t-button variant="outline" @click="handleBatchOnline">Batch Online</t-button>
-        <t-button variant="outline" @click="handleBatchOffline">Batch Offline</t-button>
-        <t-button variant="outline" @click="handleBatchTag">Batch Tag</t-button>
+        <t-button variant="outline" @click="handleBatchOnline">批量上线</t-button>
+        <t-button variant="outline" @click="handleBatchOffline">批量下线</t-button>
+        <t-button variant="outline" @click="handleBatchTag">批量打标签</t-button>
       </t-space>
     </template>
 
@@ -69,26 +69,26 @@
     >
       <template #status="{ row }">
         <t-tag :theme="row.status === 'online' ? 'success' : 'default'" variant="light">
-          {{ row.status === 'online' ? 'Online' : 'Offline' }}
+          {{ formatStatus(row.status) }}
         </t-tag>
       </template>
       <template #type="{ row }">
-        {{ row.type }}
+        {{ formatType(row.type) }}
       </template>
       <template #tagSummary="{ row }">
         <TagSummary :tags="getTagSummary(row)" />
       </template>
       <template #moods="{ row }">
-        <TagSummary :tags="row.tags.moods" />
+        <TagSummary :tags="formatMoods(row.tags.moods)" />
       </template>
       <template #directions="{ row }">
-        <TagSummary :tags="row.tags.directions" />
+        <TagSummary :tags="formatDirections(row.tags.directions)" />
       </template>
       <template #traces="{ row }">
-        <TagSummary :tags="row.tags.traces" />
+        <TagSummary :tags="formatTraces(row.tags.traces)" />
       </template>
       <template #defaultDuration="{ row }">
-        {{ row.type === 'timer' ? `${row.defaultDuration}s` : '-' }}
+        {{ row.type === 'timer' ? `${row.defaultDuration}秒` : '-' }}
       </template>
       <template #exposure="{ row }">
         {{ row.performance.range7d.exposure }}
@@ -104,17 +104,17 @@
       </template>
       <template #operation="{ row }">
         <t-space size="small">
-          <t-link theme="primary" @click.stop="goEdit(row)">Edit</t-link>
-          <t-link theme="default" @click.stop="handleCopy(row)">Copy</t-link>
+          <t-link theme="primary" @click.stop="goEdit(row)">编辑</t-link>
+          <t-link theme="default" @click.stop="handleCopy(row)">复制</t-link>
           <t-link theme="default" @click.stop="handleToggleStatus(row)">
-            {{ row.status === 'online' ? 'Offline' : 'Online' }}
+            {{ row.status === 'online' ? '下线' : '上线' }}
           </t-link>
           <t-link
             v-if="isSuperAdmin"
             theme="danger"
             @click.stop="openDeleteDialog(row)"
           >
-            Delete
+            删除
           </t-link>
         </t-space>
       </template>
@@ -134,14 +134,14 @@
 
   <t-dialog
     v-model:visible="deleteDialogVisible"
-    header="Delete template"
-    :confirm-btn="{ content: 'Delete', disabled: deleteConfirmText !== 'DELETE' }"
-    cancel-btn="Cancel"
+    header="删除模板"
+    :confirm-btn="{ content: '删除', disabled: deleteConfirmText !== 'DELETE' }"
+    cancel-btn="取消"
     @confirm="confirmDelete"
   >
     <div class="delete-dialog">
-      <p>Type DELETE to confirm removing this template.</p>
-      <t-input v-model="deleteConfirmText" placeholder="Type DELETE" />
+      <p>请输入 DELETE 确认删除该模板。</p>
+      <t-input v-model="deleteConfirmText" placeholder="请输入 DELETE" />
     </div>
   </t-dialog>
 </template>
@@ -161,6 +161,8 @@ import {
   moodOptions,
   directionOptions,
   traceOptions,
+  getOptionLabel,
+  mapOptionLabels,
 } from '@/modules/common/options';
 import { fetchTaskTemplates } from '@/modules/task-templates/api';
 import type { TaskTemplate } from '@/modules/task-templates/types';
@@ -191,37 +193,43 @@ const pagination = reactive({
 });
 
 const sortOptions = [
-  { label: 'Created (newest)', value: 'created_desc' },
-  { label: 'Updated (newest)', value: 'updated_desc' },
-  { label: 'Completion 7d', value: 'completion_desc' },
-  { label: 'Exposure 7d', value: 'exposure_desc' },
+  { label: '创建时间（新到旧）', value: 'created_desc' },
+  { label: '更新时间（新到旧）', value: 'updated_desc' },
+  { label: '近7天完成率', value: 'completion_desc' },
+  { label: '近7天曝光', value: 'exposure_desc' },
 ];
 
 const columns = [
   { colKey: 'row-select', type: 'multiple', width: 46, fixed: 'left' },
-  { colKey: 'id', title: 'Template ID', width: 120 },
-  { colKey: 'title', title: 'Title', minWidth: 180 },
-  { colKey: 'type', title: 'Type', width: 90 },
-  { colKey: 'difficulty', title: 'Difficulty', width: 100 },
-  { colKey: 'status', title: 'Status', width: 100 },
-  { colKey: 'tagSummary', title: 'Tag summary', width: 160 },
-  { colKey: 'moods', title: 'Moods', width: 150 },
-  { colKey: 'directions', title: 'Directions', width: 160 },
-  { colKey: 'traces', title: 'Traces', width: 160 },
-  { colKey: 'defaultDuration', title: 'Default duration', width: 150 },
-  { colKey: 'updatedAt', title: 'Updated at', width: 150 },
-  { colKey: 'updatedBy', title: 'Updated by', width: 120 },
-  { colKey: 'exposure', title: 'Exposure 7d', width: 130 },
-  { colKey: 'completionRate', title: 'Completion 7d', width: 140 },
-  { colKey: 'skipRate', title: 'Skip 7d', width: 120 },
-  { colKey: 'replaceRate', title: 'Replace 7d', width: 120 },
-  { colKey: 'operation', title: 'Actions', width: 200, fixed: 'right' },
+  { colKey: 'id', title: '模板ID', width: 120 },
+  { colKey: 'title', title: '标题', minWidth: 180 },
+  { colKey: 'type', title: '类型', width: 90 },
+  { colKey: 'difficulty', title: '难度', width: 100 },
+  { colKey: 'status', title: '状态', width: 100 },
+  { colKey: 'tagSummary', title: '标签摘要', width: 160 },
+  { colKey: 'moods', title: '心情标签', width: 150 },
+  { colKey: 'directions', title: '方向标签', width: 160 },
+  { colKey: 'traces', title: '追踪标签', width: 160 },
+  { colKey: 'defaultDuration', title: '默认时长', width: 150 },
+  { colKey: 'updatedAt', title: '更新时间', width: 150 },
+  { colKey: 'updatedBy', title: '更新人', width: 120 },
+  { colKey: 'exposure', title: '近7天曝光', width: 130 },
+  { colKey: 'completionRate', title: '近7天完成率', width: 140 },
+  { colKey: 'skipRate', title: '近7天跳过率', width: 120 },
+  { colKey: 'replaceRate', title: '近7天换出率', width: 120 },
+  { colKey: 'operation', title: '操作', width: 200, fixed: 'right' },
 ];
 
+const formatStatus = (status: TaskTemplate['status']) => getOptionLabel(statusOptions, status);
+const formatType = (type: TaskTemplate['type']) => getOptionLabel(taskTypeOptions, type);
+const formatMoods = (tags: string[]) => mapOptionLabels(moodOptions, tags);
+const formatDirections = (tags: string[]) => mapOptionLabels(directionOptions, tags);
+const formatTraces = (tags: string[]) => mapOptionLabels(traceOptions, tags);
+
 const getTagSummary = (row: TaskTemplate) => [
-  ...row.tags.moods,
-  ...row.tags.directions,
-  ...row.tags.traces,
+  ...formatMoods(row.tags.moods),
+  ...formatDirections(row.tags.directions),
+  ...formatTraces(row.tags.traces),
 ];
 
 const formatRate = (value: number) => `${Math.round(value * 100)}%`;
@@ -318,53 +326,54 @@ const goEdit = (row: TaskTemplate) => {
 
 const handleCopy = (row: TaskTemplate) => {
   DialogPlugin.confirm({
-    header: 'Copy template',
-    body: `Create a draft copy of "${row.title}"?`,
-    onConfirm: () => MessagePlugin.success('Copied to draft (mock).'),
+    header: '复制模板',
+    body: `确认复制「${row.title}」为草稿？`,
+    onConfirm: () => MessagePlugin.success('已复制为草稿（模拟）。'),
   });
 };
 
 const handleToggleStatus = (row: TaskTemplate) => {
   const next = row.status === 'online' ? 'offline' : 'online';
+  const nextLabel = next === 'online' ? '上线' : '下线';
   DialogPlugin.confirm({
-    header: `${next === 'online' ? 'Online' : 'Offline'} template`,
-    body: `Confirm to set ${row.title} as ${next}?`,
-    onConfirm: () => MessagePlugin.success(`Template set to ${next} (mock).`),
+    header: `${nextLabel}模板`,
+    body: `确认将「${row.title}」设为${nextLabel}？`,
+    onConfirm: () => MessagePlugin.success(`模板已设为${nextLabel}（模拟）。`),
   });
 };
 
 const handleImport = () => {
-  MessagePlugin.info('Import preview opened (mock).');
+  MessagePlugin.info('已打开导入预览（模拟）。');
 };
 
 const handleExport = () => {
-  MessagePlugin.success('Exported CSV (mock).');
+  MessagePlugin.success('已导出 CSV（模拟）。');
 };
 
 const handleBatchOnline = () => {
   if (!selectedKeys.value.length) {
-    MessagePlugin.warning('Select templates first.');
+    MessagePlugin.warning('请先选择模板。');
     return;
   }
-  MessagePlugin.success(`Set ${selectedKeys.value.length} templates online (mock).`);
+  MessagePlugin.success(`已将 ${selectedKeys.value.length} 个模板上线（模拟）。`);
   clearSelection();
 };
 
 const handleBatchOffline = () => {
   if (!selectedKeys.value.length) {
-    MessagePlugin.warning('Select templates first.');
+    MessagePlugin.warning('请先选择模板。');
     return;
   }
-  MessagePlugin.success(`Set ${selectedKeys.value.length} templates offline (mock).`);
+  MessagePlugin.success(`已将 ${selectedKeys.value.length} 个模板下线（模拟）。`);
   clearSelection();
 };
 
 const handleBatchTag = () => {
   if (!selectedKeys.value.length) {
-    MessagePlugin.warning('Select templates first.');
+    MessagePlugin.warning('请先选择模板。');
     return;
   }
-  MessagePlugin.info('Batch tagging opened (mock).');
+  MessagePlugin.info('已打开批量打标签（模拟）。');
 };
 
 const deleteDialogVisible = ref(false);
@@ -379,7 +388,7 @@ const openDeleteDialog = (row: TaskTemplate) => {
 
 const confirmDelete = () => {
   if (deleteConfirmText.value !== 'DELETE' || !deleteTarget.value) return;
-  MessagePlugin.success(`Deleted ${deleteTarget.value.title} (mock).`);
+  MessagePlugin.success(`已删除「${deleteTarget.value.title}」（模拟）。`);
   deleteDialogVisible.value = false;
 };
 
@@ -414,3 +423,4 @@ onMounted(() => {
   gap: 12px;
 }
 </style>
+

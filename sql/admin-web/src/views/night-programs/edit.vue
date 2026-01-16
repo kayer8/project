@@ -1,43 +1,43 @@
 ﻿<template>
-  <PageContainer :title="isCreate ? 'New Night Program' : 'Edit Night Program'">
+  <PageContainer :title="isCreate ? '新建夜间引导' : '编辑夜间引导'">
     <t-card>
       <t-form class="form" label-align="top">
-        <t-form-item label="Title" required>
-          <t-input v-model="form.title" placeholder="Program title" />
+        <t-form-item label="标题" required>
+          <t-input v-model="form.title" placeholder="引导标题" />
         </t-form-item>
-        <t-form-item label="Type" required>
+        <t-form-item label="类型" required>
           <t-select v-model="form.type" :options="nightProgramTypeOptions" />
         </t-form-item>
 
-        <t-form-item v-if="form.type === 'timer'" label="Duration (seconds)" required>
+        <t-form-item v-if="form.type === 'timer'" label="时长（秒）" required>
           <t-input-number v-model="form.duration" :min="30" :max="900" />
         </t-form-item>
-        <t-form-item v-if="form.type === 'timer'" label="Timer copy" required>
+        <t-form-item v-if="form.type === 'timer'" label="计时文案" required>
           <t-textarea v-model="form.timerText" :autosize="{ minRows: 3 }" />
         </t-form-item>
 
-        <t-form-item v-if="form.type === 'questions'" label="Questions" required>
+        <t-form-item v-if="form.type === 'questions'" label="问题列表" required>
           <QuestionsEditor v-model="form.questions" />
         </t-form-item>
 
-        <t-form-item v-if="form.type === 'audio'" label="Audio URL" required>
+        <t-form-item v-if="form.type === 'audio'" label="音频地址" required>
           <t-input v-model="form.audioUrl" placeholder="https://" />
         </t-form-item>
-        <t-form-item v-if="form.type === 'audio'" label="Audio copy" required>
+        <t-form-item v-if="form.type === 'audio'" label="音频文案" required>
           <t-textarea v-model="form.text" :autosize="{ minRows: 3 }" />
         </t-form-item>
         <div v-if="form.type === 'audio' && form.audioUrl" class="audio-preview">
           <audio :src="form.audioUrl" controls />
         </div>
 
-        <t-form-item v-if="form.type === 'text'" label="Text" required>
+        <t-form-item v-if="form.type === 'text'" label="文本内容" required>
           <t-textarea v-model="form.text" :autosize="{ minRows: 4 }" />
         </t-form-item>
 
-        <t-form-item label="Moods">
+        <t-form-item label="心情标签">
           <t-select v-model="form.moods" multiple clearable :options="moodOptions" />
         </t-form-item>
-        <t-form-item label="Directions">
+        <t-form-item label="方向标签">
           <t-select v-model="form.directions" multiple clearable :options="directionOptions" />
         </t-form-item>
       </t-form>
@@ -45,9 +45,9 @@
 
     <div class="form-actions">
       <t-space>
-        <t-button variant="outline" @click="handleSaveDraft">Save Draft</t-button>
-        <t-button theme="primary" @click="handleSavePublish">Save & Publish</t-button>
-        <t-button variant="text" @click="handleCancel">Cancel</t-button>
+        <t-button variant="outline" @click="handleSaveDraft">保存草稿</t-button>
+        <t-button theme="primary" @click="handleSavePublish">保存并上线</t-button>
+        <t-button variant="text" @click="handleCancel">取消</t-button>
       </t-space>
     </div>
   </PageContainer>
@@ -79,7 +79,7 @@ const form = reactive({
     {
       id: 'Q1',
       text: '',
-      options: ['Yes', 'No', 'Skip'],
+      options: ['是', '否', '跳过'],
     },
   ],
   moods: [] as string[],
@@ -88,7 +88,7 @@ const form = reactive({
 
 const validateBase = () => {
   if (!form.title.trim()) {
-    MessagePlugin.error('Title is required.');
+    MessagePlugin.error('请填写标题。');
     return false;
   }
   return true;
@@ -98,36 +98,36 @@ const validatePublish = () => {
   if (!validateBase()) return false;
   if (form.type === 'timer') {
     if (form.duration < 30) {
-      MessagePlugin.error('Duration must be at least 30 seconds.');
+      MessagePlugin.error('时长不得少于 30 秒。');
       return false;
     }
     if (!form.timerText.trim()) {
-      MessagePlugin.error('Timer copy is required.');
+      MessagePlugin.error('请填写计时文案。');
       return false;
     }
   }
   if (form.type === 'questions') {
     if (!form.questions.length) {
-      MessagePlugin.error('At least one question is required.');
+      MessagePlugin.error('至少需要 1 个问题。');
       return false;
     }
     if (form.questions.some((question) => !question.text.trim())) {
-      MessagePlugin.error('Each question needs text.');
+      MessagePlugin.error('每个问题都需要填写文案。');
       return false;
     }
   }
   if (form.type === 'audio') {
     if (!form.audioUrl.trim()) {
-      MessagePlugin.error('Audio URL is required.');
+      MessagePlugin.error('请填写音频地址。');
       return false;
     }
     if (!form.text.trim()) {
-      MessagePlugin.error('Audio copy is required.');
+      MessagePlugin.error('请填写音频文案。');
       return false;
     }
   }
   if (form.type === 'text' && !form.text.trim()) {
-    MessagePlugin.error('Text content is required.');
+    MessagePlugin.error('请填写文本内容。');
     return false;
   }
   return true;
@@ -135,12 +135,12 @@ const validatePublish = () => {
 
 const handleSaveDraft = () => {
   if (!validateBase()) return;
-  MessagePlugin.success('Draft saved (mock).');
+  MessagePlugin.success('草稿已保存（模拟）。');
 };
 
 const handleSavePublish = () => {
   if (!validatePublish()) return;
-  MessagePlugin.success('Saved and published (mock).');
+  MessagePlugin.success('已保存并上线（模拟）。');
 };
 
 const handleCancel = () => {
@@ -179,3 +179,4 @@ onMounted(async () => {
   margin-top: 8px;
 }
 </style>
+

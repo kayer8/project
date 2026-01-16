@@ -9,21 +9,21 @@
           :disabled="questions.length <= 1"
           @click="removeQuestion(index)"
         >
-          Remove
+          删除
         </t-button>
       </div>
       <t-input
         :model-value="question.text"
-        placeholder="Question text"
+        placeholder="问题文案"
         @update:model-value="(value) => updateQuestion(index, { text: value })"
       />
       <t-input
         :model-value="question.options.join(', ')"
-        placeholder="Options separated by commas"
+        placeholder="选项用逗号分隔"
         @update:model-value="(value) => updateOptions(index, value)"
       />
     </div>
-    <t-button variant="dashed" @click="addQuestion">Add question</t-button>
+    <t-button variant="dashed" @click="addQuestion">新增问题</t-button>
   </div>
 </template>
 
@@ -76,7 +76,7 @@ const addQuestion = () => {
     {
       id: nextId(),
       text: '',
-      options: ['Yes', 'No', 'Skip'],
+      options: ['是', '否', '跳过'],
     },
   ];
   emit('update:modelValue', next);

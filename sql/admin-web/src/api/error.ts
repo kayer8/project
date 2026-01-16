@@ -9,5 +9,5 @@ export function normalizeError(error: AxiosError | Error) {
     return new Error(message || error.message);
   }
 
-  return error instanceof Error ? error : new Error('Request failed');
+  return error instanceof Error ? error : new Error('请求失败');
 }

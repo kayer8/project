@@ -1,35 +1,35 @@
 ﻿<template>
-  <PageContainer :title="isCreate ? 'New Task Template' : 'Edit Task Template'">
+  <PageContainer :title="isCreate ? '新建任务模板' : '编辑任务模板'">
     <t-card>
       <t-form class="form" label-align="top">
-        <t-form-item label="Title" required>
-          <t-input v-model="form.title" placeholder="<= 20 characters" />
+        <t-form-item label="标题" required>
+          <t-input v-model="form.title" placeholder="最多 20 字" />
         </t-form-item>
-        <t-form-item label="Description" required>
-          <t-textarea v-model="form.description" placeholder="<= 200 characters" :autosize="{ minRows: 3 }" />
+        <t-form-item label="描述" required>
+          <t-textarea v-model="form.description" placeholder="最多 200 字" :autosize="{ minRows: 3 }" />
         </t-form-item>
-        <t-form-item label="Type" required>
+        <t-form-item label="类型" required>
           <t-select v-model="form.type" :options="taskTypeOptions" />
         </t-form-item>
-        <t-form-item v-if="form.type === 'timer'" label="Default Duration (seconds)" required>
+        <t-form-item v-if="form.type === 'timer'" label="默认时长（秒）" required>
           <t-input-number v-model="form.defaultDuration" :min="30" :max="600" />
         </t-form-item>
-        <t-form-item v-if="form.type === 'steps'" label="Steps" required>
+        <t-form-item v-if="form.type === 'steps'" label="步骤" required>
           <StepsEditor v-model="form.steps" />
         </t-form-item>
-        <t-form-item label="Difficulty" required>
+        <t-form-item label="难度" required>
           <t-select v-model="form.difficulty" :options="difficultyOptions" />
         </t-form-item>
-        <t-form-item label="Moods">
+        <t-form-item label="心情标签">
           <t-select v-model="form.moods" multiple clearable :options="moodOptions" />
         </t-form-item>
-        <t-form-item label="Direction tags" required>
+        <t-form-item label="方向标签" required>
           <t-select v-model="form.directions" multiple clearable :options="directionOptions" />
         </t-form-item>
-        <t-form-item label="Trace tags" required>
+        <t-form-item label="追踪标签" required>
           <t-select v-model="form.traces" multiple clearable :options="traceOptions" />
         </t-form-item>
-        <t-form-item label="Visible after publish">
+        <t-form-item label="上架后可见">
           <t-switch v-model="form.visibleAfterPublish" />
         </t-form-item>
       </t-form>
@@ -37,27 +37,27 @@
 
     <div class="form-actions">
       <t-space>
-        <t-button variant="outline" @click="handleSaveDraft">Save Draft</t-button>
-        <t-button theme="primary" @click="handleSavePublish">Save & Publish</t-button>
-        <t-button variant="outline" @click="openPreview">Preview</t-button>
-        <t-button variant="text" @click="handleCancel">Cancel</t-button>
+        <t-button variant="outline" @click="handleSaveDraft">保存草稿</t-button>
+        <t-button theme="primary" @click="handleSavePublish">保存并上线</t-button>
+        <t-button variant="outline" @click="openPreview">预览</t-button>
+        <t-button variant="text" @click="handleCancel">取消</t-button>
       </t-space>
     </div>
 
-    <t-dialog v-model:visible="previewVisible" header="Preview" :footer="false">
+    <t-dialog v-model:visible="previewVisible" header="预览" :footer="false">
       <div class="preview-card">
-        <div class="preview-title">{{ form.title || 'Untitled task' }}</div>
-        <div class="preview-desc">{{ form.description || 'No description yet.' }}</div>
+        <div class="preview-title">{{ form.title || '未命名任务' }}</div>
+        <div class="preview-desc">{{ form.description || '暂无描述。' }}</div>
         <div v-if="form.type === 'steps'" class="preview-steps">
           <div v-for="(step, index) in form.steps" :key="`step-${index}`" class="preview-step">
-            {{ index + 1 }}. {{ step || 'Empty step' }}
+            {{ index + 1 }}. {{ step || '未填写步骤' }}
           </div>
         </div>
         <div v-if="form.type === 'timer'" class="preview-timer">
-          <t-button theme="primary" size="small">Start {{ form.defaultDuration }}s</t-button>
+          <t-button theme="primary" size="small">开始 {{ form.defaultDuration }} 秒</t-button>
         </div>
         <div v-if="form.type === 'free'" class="preview-free">
-          <t-button variant="outline" size="small">Write now</t-button>
+          <t-button variant="outline" size="small">立即书写</t-button>
         </div>
       </div>
     </t-dialog>
@@ -106,19 +106,19 @@ const openPreview = () => {
 
 const validateBase = () => {
   if (!form.title.trim()) {
-    MessagePlugin.error('Title is required.');
+    MessagePlugin.error('请填写标题。');
     return false;
   }
   if (form.title.length > 20) {
-    MessagePlugin.error('Title must be 20 characters or less.');
+    MessagePlugin.error('标题不超过 20 字。');
     return false;
   }
   if (!form.description.trim()) {
-    MessagePlugin.error('Description is required.');
+    MessagePlugin.error('请填写描述。');
     return false;
   }
   if (form.description.length > 200) {
-    MessagePlugin.error('Description must be 200 characters or less.');
+    MessagePlugin.error('描述不超过 200 字。');
     return false;
   }
   return true;
@@ -127,30 +127,30 @@ const validateBase = () => {
 const validatePublish = () => {
   if (!validateBase()) return false;
   if (form.type === 'timer' && (form.defaultDuration < 30 || form.defaultDuration > 600)) {
-    MessagePlugin.error('Timer duration must be between 30 and 600 seconds.');
+    MessagePlugin.error('计时时长需在 30-600 秒之间。');
     return false;
   }
   if (form.type === 'steps') {
     const validSteps = form.steps.filter((step) => step.trim());
     if (!validSteps.length) {
-      MessagePlugin.error('At least one step is required.');
+      MessagePlugin.error('至少填写 1 条步骤。');
       return false;
     }
     if (validSteps.some((step) => step.length > 30)) {
-      MessagePlugin.error('Each step must be 30 characters or less.');
+      MessagePlugin.error('每条步骤不超过 30 字。');
       return false;
     }
   }
   if (!form.directions.length) {
-    MessagePlugin.error('Select at least one direction tag.');
+    MessagePlugin.error('至少选择 1 个方向标签。');
     return false;
   }
   if (!form.traces.length) {
-    MessagePlugin.error('Select at least one trace tag.');
+    MessagePlugin.error('至少选择 1 个追踪标签。');
     return false;
   }
   if (form.traces.length > 2) {
-    MessagePlugin.error('Trace tags should be limited to 2.');
+    MessagePlugin.error('追踪标签最多 2 个。');
     return false;
   }
   return true;
@@ -158,12 +158,12 @@ const validatePublish = () => {
 
 const handleSaveDraft = () => {
   if (!validateBase()) return;
-  MessagePlugin.success('Draft saved (mock).');
+  MessagePlugin.success('草稿已保存（模拟）。');
 };
 
 const handleSavePublish = () => {
   if (!validatePublish()) return;
-  MessagePlugin.success('Saved and published (mock).');
+  MessagePlugin.success('已保存并上线（模拟）。');
 };
 
 const handleCancel = () => {
@@ -232,3 +232,4 @@ onMounted(async () => {
   margin-top: 6px;
 }
 </style>
+

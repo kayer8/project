@@ -1,47 +1,47 @@
 ﻿<template>
-  <PageContainer :title="isCreate ? 'New Copy Template' : 'Edit Copy Template'">
+  <PageContainer :title="isCreate ? '新建文案模板' : '编辑文案模板'">
     <t-card>
       <t-form class="form" label-align="top">
-        <t-form-item label="Type" required>
+        <t-form-item label="类型" required>
           <t-select v-model="form.type" :options="copyTemplateTypeOptions" />
         </t-form-item>
-        <t-form-item label="Content" required>
-          <t-textarea v-model="form.content" :autosize="{ minRows: 3 }" placeholder="<= 80 characters" />
+        <t-form-item label="文案内容" required>
+          <t-textarea v-model="form.content" :autosize="{ minRows: 3 }" placeholder="最多 80 字" />
         </t-form-item>
-        <t-form-item label="Trace condition">
+        <t-form-item label="追踪条件">
           <t-select v-model="form.trace" clearable :options="traceOptions" />
         </t-form-item>
-        <t-form-item label="Mood condition">
+        <t-form-item label="心情条件">
           <t-select v-model="form.mood" clearable :options="moodOptions" />
         </t-form-item>
-        <t-form-item label="Direction condition">
+        <t-form-item label="方向条件">
           <t-select v-model="form.direction" clearable :options="directionOptions" />
         </t-form-item>
-        <t-form-item label="Weight">
+        <t-form-item label="权重">
           <t-input-number v-model="form.weight" :min="0.1" :max="3" :step="0.1" />
         </t-form-item>
-        <t-form-item label="Enable">
+        <t-form-item label="启用">
           <t-switch v-model="form.enabled" />
         </t-form-item>
         <div v-if="poolWarning" class="warning">
-          Enabled templates for this type are below 3. Consider adding more copies.
+          同类型启用数量不足 3 条，请补充文案。
         </div>
       </t-form>
     </t-card>
 
     <div class="form-actions">
       <t-space>
-        <t-button variant="outline" @click="handleSave">Save</t-button>
-        <t-button theme="primary" @click="handleSaveEnable">Save & Enable</t-button>
-        <t-button variant="outline" @click="openPreview">Preview</t-button>
-        <t-button variant="text" @click="handleCancel">Cancel</t-button>
+        <t-button variant="outline" @click="handleSave">保存</t-button>
+        <t-button theme="primary" @click="handleSaveEnable">保存并启用</t-button>
+        <t-button variant="outline" @click="openPreview">预览</t-button>
+        <t-button variant="text" @click="handleCancel">取消</t-button>
       </t-space>
     </div>
 
-    <t-dialog v-model:visible="previewVisible" header="Preview" :footer="false">
+    <t-dialog v-model:visible="previewVisible" header="预览" :footer="false">
       <div class="preview-card">
         <div class="preview-title">{{ previewTitle }}</div>
-        <div class="preview-text">{{ form.content || 'No content yet.' }}</div>
+        <div class="preview-text">{{ form.content || '暂无内容。' }}</div>
       </div>
     </t-dialog>
   </PageContainer>
@@ -80,7 +80,7 @@ const previewVisible = ref(false);
 const enabledCount = ref(0);
 
 const previewTitle = computed(() =>
-  copyTemplateTypeOptions.find((option) => option.value === form.type)?.label || 'Preview',
+  copyTemplateTypeOptions.find((option) => option.value === form.type)?.label || '预览',
 );
 
 const poolWarning = computed(() => enabledCount.value < 3);
@@ -91,11 +91,11 @@ const openPreview = () => {
 
 const validate = () => {
   if (!form.content.trim()) {
-    MessagePlugin.error('Content is required.');
+    MessagePlugin.error('请填写文案内容。');
     return false;
   }
   if (form.content.length > 80) {
-    MessagePlugin.error('Content must be 80 characters or less.');
+    MessagePlugin.error('文案内容不超过 80 字。');
     return false;
   }
   return true;
@@ -103,12 +103,12 @@ const validate = () => {
 
 const handleSave = () => {
   if (!validate()) return;
-  MessagePlugin.success('Saved (mock).');
+  MessagePlugin.success('已保存（模拟）。');
 };
 
 const handleSaveEnable = () => {
   if (!validate()) return;
-  MessagePlugin.success('Saved and enabled (mock).');
+  MessagePlugin.success('已保存并启用（模拟）。');
 };
 
 const handleCancel = () => {
@@ -183,3 +183,4 @@ watch(
   color: #4f5565;
 }
 </style>
+

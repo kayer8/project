@@ -18,7 +18,7 @@
           v-model="sortProxy"
           class="list-sort"
           clearable
-          placeholder="Sort by"
+          placeholder="排序方式"
           :options="sortOptions"
         />
         <div class="list-spacer" />
@@ -55,7 +55,7 @@ const props = withDefaults(
   }>(),
   {
     keyword: '',
-    searchPlaceholder: 'Search by title or ID',
+    searchPlaceholder: '搜索标题/ID',
     sort: '',
     sortOptions: () => [],
     showSearch: true,

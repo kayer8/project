@@ -1,5 +1,5 @@
 <template>
-  <PageContainer title="Content List">
+  <PageContainer title="内容列表">
     <BaseTable :data="items" :columns="columns" />
   </PageContainer>
 </template>
@@ -11,8 +11,8 @@ import BaseTable from '@/components/BaseTable/index.vue';
 import { useContentList } from '@/modules/content/hooks/useContentList';
 
 const columns = ref([
-  { colKey: 'title', title: 'Title' },
-  { colKey: 'author', title: 'Author' },
+  { colKey: 'title', title: '标题' },
+  { colKey: 'author', title: '作者' },
 ]);
 
 const { items, load } = useContentList();

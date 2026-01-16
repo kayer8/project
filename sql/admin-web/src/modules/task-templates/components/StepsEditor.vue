@@ -3,7 +3,7 @@
     <div v-for="(step, index) in steps" :key="`step-${index}`" class="step-row">
       <t-input
         :model-value="step"
-        :placeholder="`Step ${index + 1}`"
+        :placeholder="`步骤 ${index + 1}`"
         @update:model-value="(value) => updateStep(index, value)"
       />
       <t-button
@@ -12,11 +12,11 @@
         :disabled="steps.length <= min"
         @click="removeStep(index)"
       >
-        Remove
+        删除
       </t-button>
     </div>
     <t-button variant="dashed" :disabled="steps.length >= max" @click="addStep">
-      Add step
+      新增步骤
     </t-button>
   </div>
 </template>

@@ -1,5 +1,5 @@
 <template>
-  <PageContainer title="Content Edit">
+  <PageContainer title="内容编辑">
     <BaseForm :schema="schema" />
   </PageContainer>
 </template>

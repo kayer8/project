@@ -4,7 +4,7 @@
       <div class="title">{{ appStore.title }}</div>
     </div>
     <div class="topbar-right">
-      <t-button theme="default" variant="text" @click="logout">Sign out</t-button>
+      <t-button theme="default" variant="text" @click="logout">退出登录</t-button>
     </div>
   </div>
 </template>

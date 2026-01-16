@@ -1,5 +1,5 @@
 <template>
-  <PageContainer title="User List">
+  <PageContainer title="用户列表">
     <BaseTable :data="items" :columns="columns" />
   </PageContainer>
 </template>
@@ -12,8 +12,8 @@ import { fetchUserList } from '@/modules/user/api';
 import type { UserItem } from '@/modules/user/types';
 
 const columns = ref([
-  { colKey: 'name', title: 'Name' },
-  { colKey: 'role', title: 'Role' },
+  { colKey: 'name', title: '姓名' },
+  { colKey: 'role', title: '角色' },
 ]);
 
 const items = ref<UserItem[]>([]);
