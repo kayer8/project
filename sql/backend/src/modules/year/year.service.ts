@@ -224,7 +224,7 @@ export class YearService {
     }));
 
     const templates = await this.prisma.taskTemplate.findMany({
-      where: { is_active: true },
+      where: { is_active: true, deleted_at: null },
     });
 
     const recommended = templates

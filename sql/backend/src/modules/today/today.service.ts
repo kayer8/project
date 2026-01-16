@@ -139,7 +139,7 @@ export class TodayService {
 
     if (!set) {
       const templates = await this.prisma.taskTemplate.findMany({
-        where: { is_active: true },
+        where: { is_active: true, deleted_at: null },
       });
       const selected = this.pickTemplates(templates, TASKS_PER_DAY);
 
@@ -213,7 +213,7 @@ export class TodayService {
 
   private async pickTemplate(existingIds: Set<string>, mood?: string) {
     const templates = await this.prisma.taskTemplate.findMany({
-      where: { is_active: true },
+      where: { is_active: true, deleted_at: null },
     });
 
     const filtered = mood

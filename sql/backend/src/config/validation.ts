@@ -27,6 +27,14 @@ class EnvironmentVariables {
   @IsString()
   JWT_EXPIRES_IN?: string;
 
+  @IsOptional()
+  @IsString()
+  ADMIN_JWT_SECRET?: string;
+
+  @IsOptional()
+  @IsString()
+  ADMIN_JWT_EXPIRES_IN?: string;
+
   @IsString()
   WECHAT_APPID!: string;
 

@@ -10,6 +10,10 @@
     secret: process.env.JWT_SECRET,
     expiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
   },
+  adminJwt: {
+    secret: process.env.ADMIN_JWT_SECRET ?? process.env.JWT_SECRET,
+    expiresIn: process.env.ADMIN_JWT_EXPIRES_IN ?? '7d',
+  },
   wechat: {
     appId: process.env.WECHAT_APPID,
     secret: process.env.WECHAT_SECRET,

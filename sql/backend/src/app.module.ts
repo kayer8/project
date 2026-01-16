@@ -17,6 +17,7 @@ import { NotesModule } from './modules/notes/notes.module';
 import { NightModule } from './modules/night/night.module';
 import { MeModule } from './modules/me/me.module';
 import { FeedbackModule } from './modules/feedback/feedback.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { FeedbackModule } from './modules/feedback/feedback.module';
     NightModule,
     MeModule,
     FeedbackModule,
+    AdminModule,
   ],
 })
 export class AppModule implements NestModule {

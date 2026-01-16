@@ -29,6 +29,40 @@ model User {
   @@map("users")
 }
 
+model AdminRole {
+  id               String   @id @default(uuid())
+  name             String
+  permissions_json Json
+  created_at       DateTime @default(now())
+
+  admins AdminUser[]
+
+  @@unique([name])
+  @@map("admin_roles")
+}
+
+model AdminUser {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  password_hash  String?
+  name           String
+  role_id        String
+  role           AdminRole @relation(fields: [role_id], references: [id])
+  is_active      Boolean   @default(true)
+  last_login_at  DateTime?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+
+  audit_logs              AuditLog[]     @relation("AdminActor")
+  updated_task_templates  TaskTemplate[] @relation("TaskTemplateUpdatedBy")
+  updated_night_programs  NightProgram[] @relation("NightProgramUpdatedBy")
+  updated_copy_templates  CopyTemplate[] @relation("CopyTemplateUpdatedBy")
+  updated_configs         AppConfig[]    @relation("ConfigUpdatedBy")
+  assigned_feedback_tickets FeedbackTicket[] @relation("FeedbackAssignee")
+
+  @@map("admin_users")
+}
+
 model UserSettings {
   user_id              String   @id
   user                 User     @relation(fields: [user_id], references: [id])
@@ -92,12 +126,55 @@ model TaskTemplate {
   direction_tags       Json?
   trace_tags           Json?
   is_active            Boolean  @default(true)
+  updated_by_admin_id  String?
+  updated_by_admin     AdminUser? @relation("TaskTemplateUpdatedBy", fields: [updated_by_admin_id], references: [id])
+  deleted_at           DateTime?
+  content_version      Int?
+  review_status        String?
   created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
 
   daily_tasks DailyTask[]
 
   @@index([is_active])
   @@map("task_templates")
+}
+
+model NightProgram {
+  id                  String   @id @default(uuid())
+  title               String
+  type                String
+  duration_sec        Int?
+  content_json        Json?
+  moods               Json?
+  direction_tags      Json?
+  is_active           Boolean  @default(false)
+  updated_by_admin_id String?
+  updated_by_admin    AdminUser? @relation("NightProgramUpdatedBy", fields: [updated_by_admin_id], references: [id])
+  deleted_at          DateTime?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  @@index([is_active])
+  @@map("night_programs")
+}
+
+model CopyTemplate {
+  id                  String   @id @default(uuid())
+  type                String
+  text                String
+  conditions_json     Json?
+  weight              Int      @default(1)
+  is_enabled          Boolean  @default(true)
+  updated_by_admin_id String?
+  updated_by_admin    AdminUser? @relation("CopyTemplateUpdatedBy", fields: [updated_by_admin_id], references: [id])
+  deleted_at          DateTime?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  @@index([type])
+  @@index([is_enabled])
+  @@map("copy_templates")
 }
 
 model DailyTaskSet {
@@ -206,9 +283,78 @@ model FeedbackTicket {
   type       String
   content    String
   contact    String?
-  created_at DateTime @default(now())
+  status            String   @default("new")
+  assignee_admin_id String?
+  assignee_admin    AdminUser? @relation("FeedbackAssignee", fields: [assignee_admin_id], references: [id])
+  tags_json         Json?
+  internal_notes_json Json?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
 
   @@map("feedback_tickets")
+}
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  actor_admin_id String
+  actor          AdminUser @relation("AdminActor", fields: [actor_admin_id], references: [id])
+  action         String
+  resource_type  String
+  resource_id    String
+  diff_json      Json?
+  ip             String?
+  user_agent     String?
+  created_at     DateTime @default(now())
+
+  @@index([resource_type, resource_id])
+  @@index([created_at])
+  @@map("audit_logs")
+}
+
+model AppConfig {
+  id                  String   @id @default(uuid())
+  key                 String
+  value_json          Json
+  version             Int
+  status              String
+  comment             String?
+  updated_by_admin_id String?
+  updated_by_admin    AdminUser? @relation("ConfigUpdatedBy", fields: [updated_by_admin_id], references: [id])
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  @@index([key, version])
+  @@index([key, status])
+  @@map("app_configs")
+}
+
+model MetricsDaily {
+  date             DateTime @id @db.Date
+  dau              Int
+  new_users        Int
+  today_open_users Int
+  task_done_users  Int
+  night_entry_users Int
+  night_finish_users Int
+  refresh_users    Int
+  created_at       DateTime @default(now())
+
+  @@map("metrics_daily")
+}
+
+model TaskTemplateImport {
+  id             String   @id @default(uuid())
+  format         String
+  source_url     String?
+  default_active Boolean  @default(false)
+  status         String   @default("preview")
+  preview_json   Json?
+  data_json      Json?
+  errors_json    Json?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  @@map("task_template_imports")
 }
 
 model Book {
