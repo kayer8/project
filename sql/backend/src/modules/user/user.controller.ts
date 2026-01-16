@@ -1,4 +1,4 @@
-﻿import { Controller, Get, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { UserService } from './user.service';
@@ -19,7 +19,7 @@ export class UserController {
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
-  getUser(@Param('id', ParseIntPipe) id: number) {
+  getUser(@Param('id') id: string) {
     return this.userService.getById(id);
   }
 }

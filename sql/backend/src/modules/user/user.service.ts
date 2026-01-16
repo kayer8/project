@@ -1,4 +1,4 @@
-ï»¿import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BusinessException } from '../../common/exceptions/business.exception';
 import { AppErrorCode } from '../../common/exceptions/app-error-code';
@@ -7,7 +7,7 @@ import { AppErrorCode } from '../../common/exceptions/app-error-code';
 export class UserService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getById(id: number) {
+  async getById(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
     });
@@ -23,22 +23,37 @@ export class UserService {
 
   findByOpenId(openId: string) {
     return this.prisma.user.findUnique({
-      where: { openId },
+      where: { openid: openId },
     });
   }
 
   createWeChatUser(params: {
-    openId: string;
-    unionId?: string;
+    openid: string;
+    unionid?: string;
     nickname?: string;
-    avatarUrl?: string;
+    avatar_url?: string;
+    timezone?: string;
   }) {
     return this.prisma.user.create({
       data: {
-        openId: params.openId,
-        unionId: params.unionId ?? null,
-        nickname: params.nickname ?? null,
-        avatarUrl: params.avatarUrl ?? null,
+        openid: params.openid,
+        unionid: params.unionid ?? null,
+        nickname: params.nickname ?? 'ÐÂÓÃ»§',
+        avatar_url: params.avatar_url ?? null,
+        timezone: params.timezone ?? 'Asia/Shanghai',
+      },
+    });
+  }
+
+  updateWeChatProfile(
+    userId: string,
+    updates: { nickname?: string; avatar_url?: string },
+  ) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(updates.nickname ? { nickname: updates.nickname } : {}),
+        ...(updates.avatar_url ? { avatar_url: updates.avatar_url } : {}),
       },
     });
   }

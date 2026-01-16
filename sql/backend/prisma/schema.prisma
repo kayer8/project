@@ -8,15 +8,207 @@ generator client {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  openId    String   @unique
-  unionId   String?
-  nickname  String?
-  avatarUrl String?
-  phone     String?
-  status    Int      @default(1)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(uuid())
+  openid     String   @unique
+  unionid    String?
+  nickname   String
+  avatar_url String?
+  timezone   String   @default("Asia/Shanghai")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  settings         UserSettings?
+  year_plans       YearPlan[]
+  daily_task_sets  DailyTaskSet[]
+  micro_notes      MicroNote[]
+  trace_events     TraceEvent[]
+  night_sessions   NightSession[]
+  review_snapshots ReviewSnapshot[]
+  feedback_tickets FeedbackTicket[]
+
+  @@map("users")
+}
+
+model UserSettings {
+  user_id              String   @id
+  user                 User     @relation(fields: [user_id], references: [id])
+  font_scale           Float    @default(1.0)
+  theme                String   @default("warm_gray")
+  motion_enabled       Boolean  @default(true)
+  notify_daily_enabled Boolean  @default(true)
+  notify_daily_time    String   @default("09:30")
+  notify_night_enabled Boolean  @default(true)
+  notify_night_time    String   @default("23:00")
+  notify_mode          String   @default("gentle")
+  dnd_start            String   @default("00:00")
+  dnd_end              String   @default("08:00")
+  updated_at           DateTime @updatedAt
+
+  @@map("user_settings")
+}
+
+model YearPlan {
+  id          String   @id @default(uuid())
+  user_id     String
+  user        User     @relation(fields: [user_id], references: [id])
+  year        Int
+  theme_id    String
+  theme_title String
+  status      String   @default("active")
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  directions       YearDirection[]
+  trace_events     TraceEvent[]
+  review_snapshots ReviewSnapshot[]
+
+  @@unique([user_id, year])
+  @@map("year_plans")
+}
+
+model YearDirection {
+  id           String   @id @default(uuid())
+  plan_id      String
+  plan         YearPlan @relation(fields: [plan_id], references: [id])
+  direction_id String
+  title        String
+  is_enabled   Boolean  @default(true)
+  sort_order   Int
+  created_at   DateTime @default(now())
+
+  @@unique([plan_id, direction_id])
+  @@map("year_directions")
+}
+
+model TaskTemplate {
+  id                   String   @id @default(uuid())
+  title                String
+  description          String
+  type                 String
+  default_duration_sec Int?
+  steps_json           Json?
+  difficulty           Int
+  moods                Json?
+  direction_tags       Json?
+  trace_tags           Json?
+  is_active            Boolean  @default(true)
+  created_at           DateTime @default(now())
+
+  daily_tasks DailyTask[]
+
+  @@index([is_active])
+  @@map("task_templates")
+}
+
+model DailyTaskSet {
+  id            String   @id @default(uuid())
+  user_id       String
+  user          User     @relation(fields: [user_id], references: [id])
+  date          DateTime @db.Date
+  source        String   @default("auto")
+  refresh_count Int      @default(0)
+  created_at    DateTime @default(now())
+
+  tasks DailyTask[]
+
+  @@unique([user_id, date])
+  @@map("daily_task_sets")
+}
+
+model DailyTask {
+  id                     String   @id @default(uuid())
+  set_id                 String
+  set                    DailyTaskSet @relation(fields: [set_id], references: [id])
+  template_id            String
+  template               TaskTemplate @relation(fields: [template_id], references: [id])
+  position               Int
+  status                 String   @default("pending")
+  done_at                DateTime?
+  skipped_at             DateTime?
+  skip_reason            String?
+  replaced_from_task_id  String?
+  created_at             DateTime @default(now())
+
+  @@index([set_id, status])
+  @@map("daily_tasks")
+}
+
+model MicroNote {
+  id           String   @id @default(uuid())
+  user_id      String
+  user         User     @relation(fields: [user_id], references: [id])
+  related_type String
+  related_id   String
+  date         DateTime @db.Date
+  mood         String?
+  content      String
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@index([user_id, date])
+  @@map("micro_notes")
+}
+
+model TraceEvent {
+  id           String   @id @default(uuid())
+  user_id      String
+  user         User     @relation(fields: [user_id], references: [id])
+  plan_id      String
+  plan         YearPlan @relation(fields: [plan_id], references: [id])
+  event_type   String
+  trace_tag    String
+  direction_id String?
+  source_id    String
+  occurred_at  DateTime
+  date         DateTime @db.Date
+  year         Int
+  month        Int
+  created_at   DateTime @default(now())
+
+  @@index([user_id, year, month])
+  @@index([plan_id, trace_tag])
+  @@map("trace_events")
+}
+
+model NightSession {
+  id           String   @id @default(uuid())
+  user_id      String
+  user         User     @relation(fields: [user_id], references: [id])
+  date         DateTime @db.Date
+  program_id   String
+  status       String
+  answers_json Json?
+  started_at   DateTime
+  finished_at  DateTime?
+
+  @@index([user_id, date])
+  @@map("night_sessions")
+}
+
+model ReviewSnapshot {
+  id           String   @id @default(uuid())
+  user_id      String
+  user         User     @relation(fields: [user_id], references: [id])
+  plan_id      String
+  plan         YearPlan @relation(fields: [plan_id], references: [id])
+  year         Int
+  content_json Json
+  poster_url   String?
+  created_at   DateTime @default(now())
+
+  @@map("review_snapshots")
+}
+
+model FeedbackTicket {
+  id         String   @id @default(uuid())
+  user_id    String
+  user       User     @relation(fields: [user_id], references: [id])
+  type       String
+  content    String
+  contact    String?
+  created_at DateTime @default(now())
+
+  @@map("feedback_tickets")
 }
 
 model Book {

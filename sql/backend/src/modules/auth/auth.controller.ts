@@ -1,4 +1,4 @@
-﻿import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { WechatLoginDto } from './dto/wechat-login.dto';
@@ -9,10 +9,10 @@ import { WechatRegisterDto } from './dto/wechat-register.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('wechat/login')
+  @Post('wechat_login')
   @ApiBody({ type: WechatLoginDto })
   login(@Body() dto: WechatLoginDto) {
-    return this.authService.loginWithWeChat(dto.code);
+    return this.authService.loginWithWeChat(dto);
   }
 
   @Post('wechat/register')

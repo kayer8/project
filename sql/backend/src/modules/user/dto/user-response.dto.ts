@@ -1,27 +1,27 @@
-﻿import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class UserResponseDto {
   @ApiProperty()
-  id!: number;
+  id!: string;
 
   @ApiProperty()
-  openId!: string;
+  openid!: string;
 
   @ApiProperty({ required: false })
-  unionId?: string | null;
+  unionid?: string | null;
 
   @ApiProperty({ required: false })
   nickname?: string | null;
 
   @ApiProperty({ required: false })
-  avatarUrl?: string | null;
+  avatar_url?: string | null;
 
   @ApiProperty({ required: false })
-  phone?: string | null;
+  timezone?: string | null;
 
   @ApiProperty()
-  createdAt!: Date;
+  created_at!: Date;
 
   @ApiProperty()
-  updatedAt!: Date;
+  updated_at!: Date;
 }

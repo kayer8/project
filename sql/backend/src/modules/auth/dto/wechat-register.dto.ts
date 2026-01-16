@@ -1,4 +1,4 @@
-﻿import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class WechatRegisterDto {
   @IsString()
@@ -11,5 +11,5 @@ export class WechatRegisterDto {
 
   @IsString()
   @IsOptional()
-  avatarUrl?: string;
+  avatar_url?: string;
 }
