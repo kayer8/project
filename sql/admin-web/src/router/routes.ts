@@ -5,6 +5,7 @@ import dashboardRoutes from './modules/dashboard';
 import contentRoutes from './modules/content';
 import userRoutes from './modules/user';
 import systemRoutes from './modules/system';
+import adminRoutes from './modules/admin';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -23,7 +24,13 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     component: DefaultLayout,
     redirect: '/dashboard',
-    children: [...dashboardRoutes, ...contentRoutes, ...userRoutes, ...systemRoutes],
+    children: [
+      ...dashboardRoutes,
+      ...adminRoutes,
+      ...contentRoutes,
+      ...userRoutes,
+      ...systemRoutes,
+    ],
   },
   {
     path: '/:pathMatch(.*)*',
