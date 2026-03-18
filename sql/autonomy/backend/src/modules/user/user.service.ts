@@ -48,7 +48,7 @@ export class UserService {
           include: {
             house: {
               include: {
-                community: true,
+                building: true,
               },
             },
             householdGroup: true,
@@ -115,15 +115,6 @@ export class UserService {
               },
             },
           },
-          {
-            memberRelations: {
-              some: {
-                house: {
-                  communityId,
-                },
-              },
-            },
-          },
         ],
       });
     }
@@ -153,7 +144,7 @@ export class UserService {
             include: {
               house: {
                 include: {
-                  community: true,
+                  building: true,
                 },
               },
             },
@@ -283,7 +274,6 @@ export class UserService {
     const communityNames = Array.from(
       new Set([
         ...user.communityRoles.map((item: any) => item.community.name),
-        ...user.memberRelations.map((item: any) => item.house.community.name),
       ]),
     );
 
@@ -291,6 +281,7 @@ export class UserService {
       id: user.id,
       realName: user.realName ?? '未实名',
       nickname: user.nickname ?? '未命名用户',
+      avatarUrl: user.avatarUrl ?? null,
       mobile: user.mobile,
       status: user.status,
       registerSource: user.registerSource,
@@ -311,6 +302,7 @@ export class UserService {
       ...listItem,
       wechatOpenid: user.wechatOpenid,
       wechatUnionid: user.wechatUnionid,
+      avatarUrl: user.avatarUrl ?? null,
       mobileVerifiedAt: user.mobileVerifiedAt,
       deletedAt: user.deletedAt,
       communityRoles: user.communityRoles.map((item: any) => ({
@@ -326,8 +318,7 @@ export class UserService {
         id: item.id,
         houseId: item.houseId,
         houseDisplayName: item.house.displayName,
-        communityId: item.house.communityId,
-        communityName: item.house.community.name,
+        buildingName: item.house.building.buildingName,
         householdGroupId: item.householdGroupId,
         householdType: householdGroupLabelMap[item.householdGroup.groupType] ?? item.householdGroup.groupType,
         relationType: item.relationType,

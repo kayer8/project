@@ -1,0 +1,20 @@
+<view class="page-shell" wx:if="{{record}}">
+  <view class="hero-panel">
+    <view class="hero-title">{{record.title}}</view>
+    <view class="hero-subtitle">{{record.owner}} · {{record.publishedAt}}</view>
+  </view>
+
+  <view class="card">
+    <view class="tag-row">
+      <view class="pill">{{record.category}}</view>
+      <view wx:if="{{record.completed}}" class="pill pill-success">已完成</view>
+      <view wx:else class="pill pill-warning">跟进中</view>
+    </view>
+    <view class="list-desc">{{record.summary}}</view>
+    <view wx:if="{{record.relatedBuilding}}" class="info-row">
+      <view class="info-label">关联楼栋</view>
+      <view class="info-value">{{record.relatedBuilding}}</view>
+    </view>
+    <view wx:for="{{record.content}}" wx:key="*this" class="content-block">{{item}}</view>
+  </view>
+</view>

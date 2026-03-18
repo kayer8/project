@@ -18,8 +18,6 @@ export interface MemberListItem {
   userName: string;
   nickname: string | null;
   mobile: string | null;
-  communityId: string;
-  communityName: string;
   buildingName: string;
   houseId: string;
   houseDisplayName: string;
@@ -59,7 +57,6 @@ export interface AdminMemberListQuery {
   status?: string;
   relationType?: string;
   houseId?: string;
-  communityId?: string;
 }
 
 export interface CreateAdminMemberPayload {

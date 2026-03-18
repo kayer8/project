@@ -1,0 +1,10 @@
+.hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.button-row {
+  margin-top: 24rpx;
+}

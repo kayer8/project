@@ -37,7 +37,6 @@ export class HouseService {
       include: {
         house: {
           include: {
-            community: true,
             building: true,
             householdGroups: {
               where: {
@@ -61,7 +60,6 @@ export class HouseService {
       relationId: item.id,
       houseId: item.houseId,
       displayName: item.house.displayName,
-      communityName: item.house.community.name,
       buildingName: item.house.building.buildingName,
       unitNo: item.house.unitNo,
       roomNo: item.house.roomNo,
@@ -92,7 +90,6 @@ export class HouseService {
         },
       },
       include: {
-        community: true,
         building: true,
         householdGroups: {
           include: {
@@ -156,10 +153,6 @@ export class HouseService {
       });
     }
 
-    if (query.communityId?.trim()) {
-      andWhere.push({ communityId: query.communityId.trim() });
-    }
-
     if (query.buildingId?.trim()) {
       andWhere.push({ buildingId: query.buildingId.trim() });
     }
@@ -179,7 +172,6 @@ export class HouseService {
           createdAt: 'desc',
         },
         include: {
-          community: true,
           building: true,
           householdGroups: {
             where: {
@@ -213,7 +205,6 @@ export class HouseService {
     const house = await this.prisma.house.findUnique({
       where: { id: houseId },
       include: {
-        community: true,
         building: true,
         householdGroups: {
           include: {
@@ -280,17 +271,15 @@ export class HouseService {
     return items;
   }
 
-  async listBuildings(communityId?: string) {
+  async listBuildings() {
     const items = await this.prisma.building.findMany({
-      where: communityId ? { communityId } : undefined,
-      orderBy: {
-        buildingName: 'asc',
-      },
+      orderBy: [{ sortNo: 'asc' }, { buildingName: 'asc' }],
       select: {
         id: true,
-        communityId: true,
         buildingName: true,
         buildingCode: true,
+        sortNo: true,
+        status: true,
       },
     });
 
@@ -298,12 +287,11 @@ export class HouseService {
   }
 
   async createAdmin(dto: CreateAdminHouseDto) {
-    await this.ensureCommunityAndBuilding(dto.communityId, dto.buildingId);
+    await this.ensureBuildingExists(dto.buildingId);
 
     const house = await this.prisma.$transaction(async (tx) => {
       const created = await tx.house.create({
         data: {
-          communityId: dto.communityId,
           buildingId: dto.buildingId,
           unitNo: dto.unitNo ?? '',
           floorNo: dto.floorNo ?? null,
@@ -334,25 +322,13 @@ export class HouseService {
   async updateAdmin(id: string, dto: UpdateAdminHouseDto) {
     await this.ensureHouseExists(id);
 
-    if (dto.communityId || dto.buildingId) {
-      const house = await this.prisma.house.findUnique({
-        where: { id },
-        select: {
-          communityId: true,
-          buildingId: true,
-        },
-      });
-
-      await this.ensureCommunityAndBuilding(
-        dto.communityId ?? house!.communityId,
-        dto.buildingId ?? house!.buildingId,
-      );
+    if (dto.buildingId) {
+      await this.ensureBuildingExists(dto.buildingId);
     }
 
     await this.prisma.house.update({
       where: { id },
       data: {
-        ...(dto.communityId ? { communityId: dto.communityId } : {}),
         ...(dto.buildingId ? { buildingId: dto.buildingId } : {}),
         ...(dto.unitNo !== undefined ? { unitNo: dto.unitNo ?? '' } : {}),
         ...(dto.floorNo !== undefined ? { floorNo: dto.floorNo ?? null } : {}),
@@ -404,8 +380,6 @@ export class HouseService {
 
     return {
       id: house.id,
-      communityId: house.communityId,
-      communityName: house.community.name,
       buildingId: house.buildingId,
       buildingName: house.building.buildingName,
       unitNo: house.unitNo,
@@ -424,8 +398,6 @@ export class HouseService {
   private mapHouseDetail(house: any) {
     return {
       id: house.id,
-      communityId: house.communityId,
-      communityName: house.community.name,
       buildingId: house.buildingId,
       buildingName: house.building.buildingName,
       unitNo: house.unitNo,
@@ -496,28 +468,16 @@ export class HouseService {
     }
   }
 
-  private async ensureCommunityAndBuilding(
-    communityId: string,
-    buildingId: string,
-  ) {
-    const [community, building] = await this.prisma.$transaction([
-      this.prisma.community.findUnique({
-        where: { id: communityId },
-        select: { id: true },
-      }),
-      this.prisma.building.findFirst({
-        where: {
-          id: buildingId,
-          communityId,
-        },
-        select: { id: true },
-      }),
-    ]);
+  private async ensureBuildingExists(buildingId: string) {
+    const building = await this.prisma.building.findUnique({
+      where: { id: buildingId },
+      select: { id: true },
+    });
 
-    if (!community || !building) {
+    if (!building) {
       throw new BusinessException(
         AppErrorCode.INVALID_OPERATION,
-        'Community or building is invalid',
+        'Building is invalid',
         HttpStatus.BAD_REQUEST,
       );
     }

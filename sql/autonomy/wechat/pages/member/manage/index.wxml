@@ -1,0 +1,43 @@
+<view class="page-shell" wx:if="{{house}}">
+  <view class="hero-panel">
+    <view class="hero-title">{{house.name}}</view>
+    <view class="hero-subtitle">{{house.groupName}} · 主角色 {{house.primaryRoleName}}</view>
+  </view>
+
+  <view class="card">
+    <view class="info-row">
+      <view class="info-label">投票代表</view>
+      <view class="info-value">{{house.voteRepresentativeName}}</view>
+    </view>
+    <view class="info-row">
+      <view class="info-label">主缴费人</view>
+      <view class="info-value">{{house.payerName}}</view>
+    </view>
+    <view class="info-row">
+      <view class="info-label">成员总数</view>
+      <view class="info-value">{{members.length}} 人</view>
+    </view>
+  </view>
+
+  <view class="button-row">
+    <button class="secondary-button" bindtap="handleAddMember">添加/邀请成员</button>
+    <button class="primary-button" bindtap="handleOpenRepresentative">投票代表设置</button>
+  </view>
+
+  <view wx:for="{{members}}" wx:key="id" class="list-card">
+    <view class="list-title">{{item.userName}}</view>
+    <view class="tag-row">
+      <view class="pill">{{item.identityType}}</view>
+      <view class="pill">{{item.relationLabel}}</view>
+      <view class="pill">{{item.statusLabel}}</view>
+      <view wx:if="{{item.isVoteRepresentative}}" class="pill pill-warning">投票代表</view>
+      <view wx:if="{{item.isPayer}}" class="pill pill-success">主缴费人</view>
+      <view wx:if="{{item.canActAsAgent}}" class="pill">可代办</view>
+    </view>
+    <view class="list-desc">{{item.mobileMasked}} · 生效时间 {{item.effectiveAt}}</view>
+    <view class="button-row">
+      <button class="secondary-button" data-id="{{item.id}}" bindtap="handleOpenDetail">成员详情</button>
+      <button class="secondary-button" data-name="{{item.userName}}" bindtap="handleRemoveMember">发起移除</button>
+    </view>
+  </view>
+</view>

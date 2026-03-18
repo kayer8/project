@@ -1,0 +1,15 @@
+.option-card {
+  padding: 24rpx;
+  border-radius: 24rpx;
+  border: 2rpx solid #d9e2ec;
+  margin-bottom: 16rpx;
+}
+
+.option-card-active {
+  border-color: #0f4c5c;
+  background: #f1f7f8;
+}
+
+.button-row {
+  margin-top: 24rpx;
+}

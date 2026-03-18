@@ -1,0 +1,33 @@
+<view class="page-shell">
+  <view class="card">
+    <view class="section-title">已绑定房屋</view>
+    <view class="list-desc">一个账号可绑定多套房屋，首页、投票和账单等上下文都以当前房屋为准。</view>
+    <view class="button-row">
+      <button class="secondary-button" bindtap="handleOpenSwitchPage">进入切换页</button>
+    </view>
+  </view>
+
+  <view wx:for="{{houses}}" wx:key="id" class="list-card">
+    <view class="list-title">{{item.name}}</view>
+    <view class="tag-row">
+      <view class="pill">{{item.statusLabel}}</view>
+      <view class="pill pill-success">{{item.identityLabel}}</view>
+      <view wx:if="{{item.id === currentHouseId}}" class="pill pill-warning">当前房屋</view>
+      <view wx:if="{{item.isVoteRepresentative}}" class="pill">投票代表</view>
+    </view>
+    <view class="list-desc">成员 {{item.memberCount}} 人 · 认证状态 {{item.authStatusLabel}}</view>
+    <view class="list-meta">投票资格：{{item.hasVoteRight ? '有' : '无'}}</view>
+    <view class="button-row">
+      <button class="secondary-button" data-id="{{item.id}}" bindtap="handleViewDetail">查看详情</button>
+      <button
+        wx:if="{{item.id !== currentHouseId}}"
+        class="primary-button"
+        data-id="{{item.id}}"
+        data-role="{{item.identityLabel}}"
+        bindtap="handleSwitchCurrent"
+      >
+        设为当前房屋
+      </button>
+    </view>
+  </view>
+</view>

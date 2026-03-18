@@ -15,7 +15,6 @@
     <t-card title="筛选条件">
       <div class="toolbar">
         <t-input v-model="filters.keyword" clearable placeholder="搜索姓名、昵称、手机号或房屋" />
-        <t-select v-model="filters.communityId" :options="communityOptions" />
         <t-select v-model="filters.relationType" :options="relationTypeOptions" />
         <t-select v-model="filters.status" :options="memberStatusOptions" />
         <div class="toolbar-actions">
@@ -38,8 +37,8 @@
 
         <template #location="{ row }">
           <div class="primary-cell">
-            <div class="primary-name">{{ row.communityName }}</div>
-            <div class="muted-text">{{ row.buildingName }} / {{ row.houseDisplayName }}</div>
+            <div class="primary-name">{{ row.buildingName }}</div>
+            <div class="muted-text">{{ row.houseDisplayName }}</div>
           </div>
         </template>
 
@@ -98,7 +97,6 @@
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import PageContainer from '@/components/PageContainer/index.vue';
-import { fetchCommunityOptions } from '@/modules/house/api';
 import { fetchMemberDetail, fetchMemberList, removeMember } from '@/modules/member/api';
 import type { MemberDetail, MemberListItem } from '@/modules/member/types';
 import {
@@ -115,16 +113,11 @@ const members = ref<MemberListItem[]>([]);
 const editingMember = ref<MemberDetail | null>(null);
 const dialogVisible = ref(false);
 const dialogMode = ref<'create' | 'edit'>('create');
-const communityOptions = ref([{ label: '全部社区', value: 'ALL' }]);
-const relationTypeOptions = [
-  { label: '全部关系', value: 'ALL' },
-  ...memberRelationOptions,
-];
+const relationTypeOptions = [{ label: '全部关系', value: 'ALL' }, ...memberRelationOptions];
 const filters = reactive({
   keyword: '',
   status: 'ALL',
   relationType: 'ALL',
-  communityId: 'ALL',
 });
 const pagination = reactive({
   page: 1,
@@ -134,7 +127,7 @@ const pagination = reactive({
 
 const columns = [
   { colKey: 'user', title: '用户', minWidth: 200 },
-  { colKey: 'location', title: '社区 / 房屋', minWidth: 220 },
+  { colKey: 'location', title: '楼栋 / 房屋', minWidth: 220 },
   { colKey: 'householdType', title: '住户组', width: 140 },
   { colKey: 'relation', title: '关系', width: 140 },
   { colKey: 'status', title: '状态', width: 100 },
@@ -152,7 +145,7 @@ const summaryCards = computed(() => {
     { title: '关系总数', value: pagination.total, description: '按接口分页总量展示' },
     { title: '当前页有效', value: activeCount, description: '当前页有效成员关系数量' },
     { title: '当前页主角色', value: primaryCount, description: '当前页主角色关系数量' },
-    { title: '当前页有失效日', value: expiringCount, description: '当前页设置了失效时间的关系' },
+    { title: '当前页有失效时', value: expiringCount, description: '当前页已设置失效时间的关系数量' },
   ];
 });
 
@@ -169,14 +162,6 @@ function getStatusTheme(status: MemberListItem['status']) {
   return 'default';
 }
 
-async function loadCommunities() {
-  const items = await fetchCommunityOptions();
-  communityOptions.value = [
-    { label: '全部社区', value: 'ALL' },
-    ...items.map((item) => ({ label: item.name, value: item.id })),
-  ];
-}
-
 async function loadList() {
   const result = await fetchMemberList({
     page: pagination.page,
@@ -184,7 +169,6 @@ async function loadList() {
     keyword: filters.keyword.trim() || undefined,
     status: filters.status === 'ALL' ? undefined : filters.status,
     relationType: filters.relationType === 'ALL' ? undefined : filters.relationType,
-    communityId: filters.communityId === 'ALL' ? undefined : filters.communityId,
   });
 
   members.value = result.items;
@@ -200,7 +184,6 @@ function resetFilters() {
   filters.keyword = '';
   filters.status = 'ALL';
   filters.relationType = 'ALL';
-  filters.communityId = 'ALL';
   pagination.page = 1;
   void loadList();
 }
@@ -245,7 +228,6 @@ async function handleDialogSuccess() {
 }
 
 onMounted(async () => {
-  await loadCommunities();
   await loadList();
 });
 </script>
@@ -253,7 +235,7 @@ onMounted(async () => {
 <style scoped>
 .toolbar {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  grid-template-columns: 2fr 1fr 1fr auto;
   gap: 12px;
 }
 

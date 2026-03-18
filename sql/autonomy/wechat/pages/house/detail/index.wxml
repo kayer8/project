@@ -1,0 +1,79 @@
+<view class="page-shell" wx:if="{{house}}">
+  <view class="hero-panel">
+    <view class="hero-title">{{house.name}}</view>
+    <view class="hero-subtitle">{{house.groupName}} · {{house.statusLabel}} · {{house.identityLabel}}</view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">房屋概览</view>
+    <view class="info-row">
+      <view class="info-label">主角色</view>
+      <view class="info-value">{{house.primaryRoleName}}</view>
+    </view>
+    <view class="info-row">
+      <view class="info-label">投票代表</view>
+      <view class="info-value">{{house.voteRepresentativeName}}</view>
+    </view>
+    <view class="info-row">
+      <view class="info-label">主缴费人</view>
+      <view class="info-value">{{house.payerName}}</view>
+    </view>
+    <view class="info-row">
+      <view class="info-label">成员数量</view>
+      <view class="info-value">{{house.memberCount}} 人</view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view class="section-title">成员预览</view>
+      <view class="section-link" bindtap="handleOpenMembers">成员管理</view>
+    </view>
+    <view wx:for="{{house.members}}" wx:key="id" class="list-card">
+      <view class="list-title">{{item.userName}}</view>
+      <view class="tag-row">
+        <view class="pill">{{item.identityType}}</view>
+        <view class="pill">{{item.relationLabel}}</view>
+        <view wx:if="{{item.isVoteRepresentative}}" class="pill pill-warning">投票代表</view>
+      </view>
+      <view class="list-meta">{{item.mobileMasked}} · {{item.statusLabel}}</view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view class="section-title">房屋相关公告</view>
+    </view>
+    <view
+      wx:for="{{house.notices}}"
+      wx:key="id"
+      class="list-card"
+      data-id="{{item.id}}"
+      bindtap="handleOpenAnnouncement"
+    >
+      <view class="list-title">{{item.title}}</view>
+      <view class="list-meta">{{item.time}}</view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view class="section-title">房屋相关投票</view>
+    </view>
+    <view
+      wx:for="{{house.votes}}"
+      wx:key="id"
+      class="list-card"
+      data-id="{{item.id}}"
+      bindtap="handleOpenVote"
+    >
+      <view class="list-title">{{item.title}}</view>
+      <view class="list-meta">{{item.statusLabel}}</view>
+    </view>
+  </view>
+
+  <view class="button-row">
+    <button class="secondary-button" bindtap="handleOpenMembers">家庭成员管理</button>
+    <button class="primary-button" bindtap="handleOpenRepresentative">投票代表设置</button>
+  </view>
+</view>

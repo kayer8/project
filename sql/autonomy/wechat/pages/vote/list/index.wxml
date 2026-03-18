@@ -1,0 +1,36 @@
+<view class="page-shell">
+  <view class="card">
+    <scroll-view class="tab-scroll" scroll-x enable-flex>
+      <view class="tab-row">
+        <view
+          wx:for="{{tabs}}"
+          wx:key="key"
+          class="tab-item {{activeTab === item.key ? 'tab-item-active' : ''}}"
+          data-key="{{item.key}}"
+          bindtap="handleTabChange"
+        >
+          {{item.label}}
+        </view>
+      </view>
+    </scroll-view>
+    <input class="text-input" placeholder="搜索投票标题" value="{{keyword}}" bindinput="handleKeywordInput" />
+  </view>
+
+  <view wx:if="{{votes.length}}">
+    <view wx:for="{{votes}}" wx:key="id" class="list-card" data-id="{{item.id}}" bindtap="handleOpenDetail">
+      <view class="list-title">{{item.title}}</view>
+      <view class="tag-row">
+        <view class="pill">{{item.typeLabel}}</view>
+        <view class="pill pill-warning">{{item.statusLabel}}</view>
+        <view class="pill">{{item.modeLabel}}</view>
+      </view>
+      <view class="list-desc">{{item.scopeLabel}} · 当前状态 {{item.myStatusLabel}}</view>
+      <view class="list-meta">{{item.startAt}} 至 {{item.endAt}}</view>
+    </view>
+  </view>
+  <view wx:else class="empty-block">当前筛选条件下没有投票</view>
+
+  <view class="button-row">
+    <button class="primary-button" bindtap="handleCreateVote">发起投票</button>
+  </view>
+</view>

@@ -15,7 +15,6 @@
     <t-card title="筛选条件">
       <div class="toolbar">
         <t-input v-model="filters.keyword" clearable placeholder="搜索房屋名称、楼栋或房号" />
-        <t-select v-model="filters.communityId" :options="communityOptions" />
         <t-select v-model="filters.buildingId" :options="buildingOptions" />
         <t-select v-model="filters.houseStatus" :options="houseStatusOptions" />
         <div class="toolbar-actions">
@@ -86,16 +85,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import PageContainer from '@/components/PageContainer/index.vue';
-import {
-  fetchBuildingOptions,
-  fetchCommunityOptions,
-  fetchHouseDetail,
-  fetchHouseList,
-  removeHouse,
-} from '@/modules/house/api';
+import { fetchBuildingOptions, fetchHouseDetail, fetchHouseList, removeHouse } from '@/modules/house/api';
 import type { HouseDetail, HouseListItem } from '@/modules/house/types';
 import { houseStatusLabelMap, houseStatusOptions } from '@/modules/house/types';
 import { formatDateTime, formatText } from '@/utils/format';
@@ -106,11 +99,9 @@ const houses = ref<HouseListItem[]>([]);
 const editingHouse = ref<HouseDetail | null>(null);
 const dialogVisible = ref(false);
 const dialogMode = ref<'create' | 'edit'>('create');
-const communityOptions = ref([{ label: '全部社区', value: 'ALL' }]);
 const buildingOptions = ref([{ label: '全部楼栋', value: 'ALL' }]);
 const filters = reactive({
   keyword: '',
-  communityId: 'ALL',
   buildingId: 'ALL',
   houseStatus: 'ALL',
 });
@@ -122,7 +113,6 @@ const pagination = reactive({
 
 const columns = [
   { colKey: 'displayName', title: '房屋', minWidth: 220 },
-  { colKey: 'communityName', title: '社区', width: 140 },
   { colKey: 'houseStatus', title: '房屋状态', width: 120 },
   { colKey: 'activeHouseholdType', title: '当前住户组', width: 140 },
   { colKey: 'memberCount', title: '成员数', width: 90 },
@@ -140,7 +130,7 @@ const summaryCards = computed(() => {
     { title: '房屋总数', value: pagination.total, description: '按接口分页总量展示' },
     { title: '当前页自住', value: selfOccupiedCount, description: '当前页自住房屋数量' },
     { title: '当前页出租', value: rentedCount, description: '当前页出租房屋数量' },
-    { title: '当前页成员数', value: memberCount, description: '当前页聚合的成员关系数' },
+    { title: '当前页成员数', value: memberCount, description: '当前页聚合的成员关系数量' },
   ];
 });
 
@@ -157,16 +147,8 @@ function getHouseStatusTheme(status: HouseListItem['houseStatus']) {
   return 'primary';
 }
 
-async function loadCommunities() {
-  const items = await fetchCommunityOptions();
-  communityOptions.value = [
-    { label: '全部社区', value: 'ALL' },
-    ...items.map((item) => ({ label: item.name, value: item.id })),
-  ];
-}
-
-async function loadBuildings(communityId?: string) {
-  const items = await fetchBuildingOptions(communityId || undefined);
+async function loadBuildings() {
+  const items = await fetchBuildingOptions();
   buildingOptions.value = [
     { label: '全部楼栋', value: 'ALL' },
     ...items.map((item) => ({
@@ -181,7 +163,6 @@ async function loadList() {
     page: pagination.page,
     pageSize: pagination.pageSize,
     keyword: filters.keyword.trim() || undefined,
-    communityId: filters.communityId === 'ALL' ? undefined : filters.communityId,
     buildingId: filters.buildingId === 'ALL' ? undefined : filters.buildingId,
     houseStatus: filters.houseStatus === 'ALL' ? undefined : filters.houseStatus,
   });
@@ -197,7 +178,6 @@ function handleSearch() {
 
 function resetFilters() {
   filters.keyword = '';
-  filters.communityId = 'ALL';
   filters.buildingId = 'ALL';
   filters.houseStatus = 'ALL';
   pagination.page = 1;
@@ -244,20 +224,7 @@ async function handleDialogSuccess() {
   await loadList();
 }
 
-watch(
-  () => filters.communityId,
-  async (communityId) => {
-    const actualCommunityId = communityId === 'ALL' ? undefined : communityId;
-    await loadBuildings(actualCommunityId);
-
-    if (!buildingOptions.value.some((item) => item.value === filters.buildingId)) {
-      filters.buildingId = 'ALL';
-    }
-  },
-);
-
 onMounted(async () => {
-  await loadCommunities();
   await loadBuildings();
   await loadList();
 });
@@ -266,7 +233,7 @@ onMounted(async () => {
 <style scoped>
 .toolbar {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  grid-template-columns: 2fr 1fr 1fr auto;
   gap: 12px;
 }
 

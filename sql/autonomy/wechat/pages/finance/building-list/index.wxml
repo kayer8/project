@@ -1,0 +1,12 @@
+<view class="page-shell">
+  <view class="hero-panel">
+    <view class="hero-title">各栋管理费收缴情况</view>
+    <view class="hero-subtitle">当前样本楼栋平均收缴率 {{averageRate}}</view>
+  </view>
+
+  <view wx:for="{{records}}" wx:key="id" class="list-card" data-id="{{item.id}}" bindtap="handleOpenDetail">
+    <view class="list-title">{{item.buildingName}} · {{item.month}}</view>
+    <view class="list-desc">总户数 {{item.totalHouseholds}} · 已缴 {{item.paidHouseholds}} · 未缴 {{item.unpaidHouseholds}}</view>
+    <view class="list-meta">收缴率 {{item.paidRate}} · {{item.trendLabel}}</view>
+  </view>
+</view>

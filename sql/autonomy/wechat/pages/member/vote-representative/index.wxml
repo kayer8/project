@@ -1,0 +1,50 @@
+<view class="page-shell" wx:if="{{house}}">
+  <view class="hero-panel">
+    <view class="hero-title">{{house.name}}</view>
+    <view class="hero-subtitle">当前投票代表：{{house.voteRepresentativeName}}</view>
+  </view>
+
+  <view class="card">
+    <view class="info-row">
+      <view class="info-label">主角色</view>
+      <view class="info-value">{{house.primaryRoleName}}</view>
+    </view>
+    <view class="info-row">
+      <view class="info-label">当前住户组</view>
+      <view class="info-value">{{house.groupName}}</view>
+    </view>
+  </view>
+
+  <view class="form-card">
+    <view class="field-block">
+      <view class="field-label">选择代表人</view>
+      <picker mode="selector" range="{{representativeOptions}}" value="{{representativeIndex}}" bindchange="handleRepresentativeChange">
+        <view class="picker-field">{{representativeOptions[representativeIndex]}}</view>
+      </picker>
+    </view>
+    <view class="field-block">
+      <view class="field-label">授权范围</view>
+      <picker mode="selector" range="{{scopeOptions}}" value="{{scopeIndex}}" bindchange="handleScopeChange">
+        <view class="picker-field">{{scopeOptions[scopeIndex]}}</view>
+      </picker>
+    </view>
+    <view class="field-block">
+      <view class="field-label">生效日期</view>
+      <picker mode="date" value="{{effectiveDate}}" data-field="effectiveDate" bindchange="handleDateChange">
+        <view class="picker-field">{{effectiveDate}}</view>
+      </picker>
+    </view>
+    <view class="field-block">
+      <view class="field-label">到期日期</view>
+      <picker mode="date" value="{{expireDate}}" data-field="expireDate" bindchange="handleDateChange">
+        <view class="picker-field">{{expireDate || '可选'}}</view>
+      </picker>
+    </view>
+    <view class="field-hint">正式表决默认采用一户一票。提交后仅表示前端设置申请，最终结果以后端审核和留痕为准。</view>
+  </view>
+
+  <view class="button-row">
+    <button class="secondary-button" bindtap="handleCancelAuthorization">取消授权</button>
+    <button class="primary-button" bindtap="handleSave">保存设置</button>
+  </view>
+</view>

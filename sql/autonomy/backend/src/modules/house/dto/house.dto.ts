@@ -9,11 +9,6 @@ export class AdminHouseListQueryDto extends PaginationDto {
   @IsString()
   keyword?: string;
 
-  @ApiPropertyOptional({ description: '社区 ID' })
-  @IsOptional()
-  @IsString()
-  communityId?: string;
-
   @ApiPropertyOptional({ description: '楼栋 ID' })
   @IsOptional()
   @IsString()
@@ -26,10 +21,6 @@ export class AdminHouseListQueryDto extends PaginationDto {
 }
 
 export class CreateAdminHouseDto {
-  @ApiProperty({ description: '社区 ID' })
-  @IsString()
-  communityId!: string;
-
   @ApiProperty({ description: '楼栋 ID' })
   @IsString()
   buildingId!: string;

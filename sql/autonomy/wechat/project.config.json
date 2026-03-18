@@ -1,14 +1,28 @@
 {
-  "appid": "touristappid",
+  "appid": "wxf84dfde3bfe6611a",
   "compileType": "miniprogram",
   "libVersion": "3.6.6",
-  "miniprogramRoot": "./",
+  "miniprogramRoot": "",
   "projectname": "autonomy-wechat",
   "setting": {
     "es6": true,
     "enhance": true,
     "postcss": true,
     "minified": true,
-    "urlCheck": false
+    "urlCheck": false,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
+  },
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "condition": {},
+  "editorSetting": {
+    "tabIndent": "insertSpaces",
+    "tabSize": 2
   }
 }

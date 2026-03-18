@@ -39,8 +39,7 @@ export interface HouseRelationRecord {
   id: string;
   houseId?: string;
   houseDisplayName: string;
-  communityId?: string;
-  communityName: string;
+  buildingName: string;
   householdGroupId?: string;
   householdType: string;
   relationType: MemberRelationType;

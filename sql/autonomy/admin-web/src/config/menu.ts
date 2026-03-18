@@ -12,6 +12,10 @@ export const menuItems = [
     path: '/houses/list',
   },
   {
+    title: '楼栋管理',
+    path: '/buildings/list',
+  },
+  {
     title: '成员关系',
     path: '/members/list',
   },

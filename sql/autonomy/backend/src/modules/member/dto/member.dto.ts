@@ -24,10 +24,6 @@ export class AdminMemberListQueryDto extends PaginationDto {
   @IsString()
   houseId?: string;
 
-  @ApiPropertyOptional({ description: '社区 ID' })
-  @IsOptional()
-  @IsString()
-  communityId?: string;
 }
 
 export class CreateAdminMemberDto {

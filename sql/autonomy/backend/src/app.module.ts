@@ -9,6 +9,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { UserModule } from './modules/user/user.module';
 import { HouseModule } from './modules/house/house.module';
 import { MemberModule } from './modules/member/member.module';
+import { BuildingModule } from './modules/building/building.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { MemberModule } from './modules/member/member.module';
     UserModule,
     HouseModule,
     MemberModule,
+    BuildingModule,
     AdminModule,
   ],
 })

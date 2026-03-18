@@ -9,10 +9,6 @@
   >
     <div class="form-grid">
       <div class="field">
-        <div class="field-label required">所属社区</div>
-        <t-select v-model="form.communityId" :options="communitySelectOptions" placeholder="请选择社区" />
-      </div>
-      <div class="field">
         <div class="field-label required">所属楼栋</div>
         <t-select v-model="form.buildingId" :options="buildingSelectOptions" placeholder="请选择楼栋" />
       </div>
@@ -38,7 +34,7 @@
       </div>
       <div class="field">
         <div class="field-label">建筑面积</div>
-        <t-input v-model="form.grossArea" placeholder="单位：㎡" />
+        <t-input v-model="form.grossArea" placeholder="单位：平方米" />
       </div>
     </div>
   </t-dialog>
@@ -47,15 +43,9 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
 import { MessagePlugin } from 'tdesign-vue-next';
-import {
-  createHouse,
-  fetchBuildingOptions,
-  fetchCommunityOptions,
-  updateHouse,
-} from '@/modules/house/api';
+import { createHouse, fetchBuildingOptions, updateHouse } from '@/modules/house/api';
 import type {
   BuildingOption,
-  CommunityOption,
   CreateAdminHousePayload,
   HouseDetail,
   UpdateAdminHousePayload,
@@ -74,11 +64,8 @@ const emit = defineEmits<{
 }>();
 
 const submitting = ref(false);
-const communities = ref<CommunityOption[]>([]);
 const buildings = ref<BuildingOption[]>([]);
-const lastCommunityId = ref('');
 const form = reactive({
-  communityId: '',
   buildingId: '',
   unitNo: '',
   floorNo: '',
@@ -90,12 +77,6 @@ const form = reactive({
 
 const houseStatusSelectOptions = computed(() =>
   houseStatusOptions.filter((item) => item.value !== 'ALL'),
-);
-const communitySelectOptions = computed(() =>
-  communities.value.map((item) => ({
-    label: item.name,
-    value: item.id,
-  })),
 );
 const buildingSelectOptions = computed(() =>
   buildings.value.map((item) => ({
@@ -119,7 +100,6 @@ function parseOptionalNumber(value: string, clearAsNull = false) {
 }
 
 function syncForm() {
-  form.communityId = props.initialValue?.communityId ?? '';
   form.buildingId = props.initialValue?.buildingId ?? '';
   form.unitNo = props.initialValue?.unitNo ?? '';
   form.floorNo =
@@ -133,27 +113,13 @@ function syncForm() {
     props.initialValue?.grossArea === null || props.initialValue?.grossArea === undefined
       ? ''
       : String(props.initialValue.grossArea);
-  lastCommunityId.value = form.communityId;
-}
-
-async function loadCommunities() {
-  communities.value = await fetchCommunityOptions();
-}
-
-async function loadBuildings(communityId?: string) {
-  buildings.value = await fetchBuildingOptions(communityId || undefined);
 }
 
 async function initializeOptions() {
-  await loadCommunities();
-  await loadBuildings(form.communityId || undefined);
+  buildings.value = await fetchBuildingOptions();
 }
 
 async function submit() {
-  if (!form.communityId) {
-    MessagePlugin.warning('请选择社区');
-    return;
-  }
   if (!form.buildingId) {
     MessagePlugin.warning('请选择楼栋');
     return;
@@ -171,7 +137,6 @@ async function submit() {
   try {
     const isEdit = props.mode === 'edit';
     const payload: UpdateAdminHousePayload = {
-      communityId: form.communityId,
       buildingId: form.buildingId,
       unitNo: form.unitNo.trim(),
       floorNo: parseOptionalNumber(form.floorNo, isEdit),
@@ -207,25 +172,6 @@ watch(
     await initializeOptions();
   },
   { immediate: true },
-);
-
-watch(
-  () => form.communityId,
-  async (communityId) => {
-    if (!props.visible || !communityId) {
-      return;
-    }
-
-    await loadBuildings(communityId);
-
-    if (communityId !== lastCommunityId.value) {
-      const stillExists = buildings.value.some((item) => item.id === form.buildingId);
-      if (!stillExists) {
-        form.buildingId = '';
-      }
-      lastCommunityId.value = communityId;
-    }
-  },
 );
 </script>
 

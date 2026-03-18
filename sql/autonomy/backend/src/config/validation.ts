@@ -39,6 +39,14 @@ class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  ADMIN_EMAIL?: string;
+
+  @IsOptional()
+  @IsString()
+  ADMIN_PASSWORD?: string;
+
+  @IsOptional()
+  @IsString()
   WECHAT_APPID?: string;
 
   @IsOptional()

@@ -1,0 +1,43 @@
+<view class="page-shell" wx:if="{{vote}}">
+  <view class="hero-panel">
+    <view class="hero-title">{{vote.title}}</view>
+    <view class="hero-subtitle">{{vote.houseName}} · {{vote.modeLabel}} · {{vote.statusLabel}}</view>
+  </view>
+
+  <view class="card">
+    <view class="info-row">
+      <view class="info-label">当前投票身份</view>
+      <view class="info-value">{{vote.houseName}} / {{vote.modeLabel}}</view>
+    </view>
+    <view class="info-row">
+      <view class="info-label">授权说明</view>
+      <view class="info-value">{{vote.mode === 'HOUSEHOLD' ? '需以本房屋投票代表身份提交' : '认证成员可独立提交'}}</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">请选择投票选项</view>
+    <view
+      wx:for="{{vote.options}}"
+      wx:key="id"
+      class="option-card {{selectedOptionId === item.id ? 'option-card-active' : ''}}"
+      data-id="{{item.id}}"
+      bindtap="handleSelectOption"
+    >
+      <view class="list-title">{{item.title}}</view>
+      <view class="list-desc">{{item.description}}</view>
+    </view>
+  </view>
+
+  <view class="form-card">
+    <view class="field-block">
+      <view class="field-label">补充意见</view>
+      <textarea class="text-area" placeholder="可填写补充意见" value="{{opinion}}" bindinput="handleOpinionInput"></textarea>
+    </view>
+    <view class="field-hint">当前页面为演示版本，提交后会模拟写入留痕。</view>
+  </view>
+
+  <view class="button-row">
+    <button class="primary-button" bindtap="handleSubmit">确认提交</button>
+  </view>
+</view>

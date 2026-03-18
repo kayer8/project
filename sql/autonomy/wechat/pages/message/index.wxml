@@ -1,0 +1,22 @@
+<view class="page-shell">
+  <view class="button-row top-action">
+    <button class="secondary-button" bindtap="handleMarkAllRead">全部标记已读</button>
+  </view>
+
+  <view
+    wx:for="{{messages}}"
+    wx:key="id"
+    class="list-card"
+    data-id="{{item.id}}"
+    data-target="{{item.targetRoute}}"
+    bindtap="handleOpenMessage"
+  >
+    <view class="list-title">{{item.title}}</view>
+    <view class="tag-row">
+      <view class="pill">{{item.category}}</view>
+      <view wx:if="{{item.unread}}" class="pill pill-warning">未读</view>
+    </view>
+    <view class="list-desc">{{item.content}}</view>
+    <view class="list-meta">{{item.publishedAt}}</view>
+  </view>
+</view>

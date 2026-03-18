@@ -54,10 +54,9 @@ export function fetchCommunityOptions() {
   });
 }
 
-export function fetchBuildingOptions(communityId?: string) {
+export function fetchBuildingOptions() {
   return request<BuildingOption[]>({
-    url: '/houses/options/buildings',
+    url: '/buildings/options',
     method: 'get',
-    params: communityId ? { communityId } : undefined,
   });
 }

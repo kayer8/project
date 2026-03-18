@@ -2,8 +2,6 @@ export type HouseStatus = 'SELF_OCCUPIED' | 'RENTED' | 'VACANT' | 'OTHER';
 
 export interface HouseListItem {
   id: string;
-  communityId: string;
-  communityName: string;
   buildingId: string;
   buildingName: string;
   unitNo: string;
@@ -70,7 +68,6 @@ export interface AdminHouseListQuery {
   page?: number;
   pageSize?: number;
   keyword?: string;
-  communityId?: string;
   buildingId?: string;
   houseStatus?: string;
 }
@@ -83,13 +80,13 @@ export interface CommunityOption {
 
 export interface BuildingOption {
   id: string;
-  communityId: string;
   buildingName: string;
   buildingCode: string;
+  sortNo: number | null;
+  status: 'ACTIVE' | 'DISABLED';
 }
 
 export interface CreateAdminHousePayload {
-  communityId: string;
   buildingId: string;
   unitNo?: string;
   floorNo?: number | null;

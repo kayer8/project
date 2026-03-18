@@ -8,9 +8,11 @@ import { AdminJwtStrategy } from './strategies/admin-jwt.strategy';
 import { UserModule } from '../user/user.module';
 import { HouseModule } from '../house/house.module';
 import { MemberModule } from '../member/member.module';
+import { BuildingModule } from '../building/building.module';
 import { AdminUsersController } from './admin-users.controller';
 import { AdminHousesController } from './admin-houses.controller';
 import { AdminMembersController } from './admin-members.controller';
+import { AdminBuildingsController } from './admin-buildings.controller';
 
 @Module({
   imports: [
@@ -29,12 +31,14 @@ import { AdminMembersController } from './admin-members.controller';
     UserModule,
     HouseModule,
     MemberModule,
+    BuildingModule,
   ],
   controllers: [
     AdminAuthController,
     AdminUsersController,
     AdminHousesController,
     AdminMembersController,
+    AdminBuildingsController,
   ],
   providers: [AdminAuthService, AdminJwtStrategy],
 })

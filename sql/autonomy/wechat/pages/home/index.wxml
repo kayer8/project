@@ -1,13 +1,138 @@
-<view class="page">
-  <view class="hero card">
-    <view class="hero-title">物业自治小程序</view>
-    <view class="hero-subtitle">居民端骨架已建立，后续在这里接入认证、投票、公开信息和家庭成员管理。</view>
+<view class="page-shell">
+  <view class="hero-panel">
+    <view class="hero-top">
+      <view>
+        <view class="hero-title">{{profile.communityName}}</view>
+        <view class="hero-subtitle">{{currentHouse ? currentHouse.name : '未选择房屋'}} · {{profile.currentIdentityLabel}}</view>
+      </view>
+      <view class="message-entry" bindtap="handleOpenMessage">
+        <text>消息</text>
+        <view wx:if="{{profile.unreadCount}}" class="message-badge">{{profile.unreadCount}}</view>
+      </view>
+    </view>
+
+    <view class="hero-status-row">
+      <view class="pill">{{profile.authStatusLabel}}</view>
+      <view wx:if="{{currentHouse && currentHouse.isVoteRepresentative}}" class="pill pill-success">当前为投票代表</view>
+      <view wx:elif="{{currentHouse && currentHouse.hasVoteRight}}" class="pill pill-warning">当前房屋有投票资格</view>
+    </view>
+
+    <view wx:if="{{currentHouse}}" class="current-house" bindtap="handleOpenHouseSwitch">
+      <view>
+        <view class="current-house-name">{{currentHouse.name}}</view>
+        <view class="muted-text">住户组：{{currentHouse.groupName}} · 成员 {{currentHouse.memberCount}} 人</view>
+      </view>
+      <view class="current-house-action">切换</view>
+    </view>
   </view>
 
-  <view class="section-list">
-    <view class="section-item card" wx:for="{{sections}}" wx:key="*this">
-      <view class="section-name">{{item}}</view>
-      <view class="section-desc">等待接入正式页面与接口</view>
+  <view class="grid-4">
+    <view class="stat-card">
+      <view class="stat-label">进行中投票</view>
+      <view class="stat-value">{{overview.ongoingVoteCount}}</view>
+    </view>
+    <view class="stat-card">
+      <view class="stat-label">最新公开</view>
+      <view class="stat-value">{{overview.latestDisclosureCount}}</view>
+    </view>
+    <view class="stat-card">
+      <view class="stat-label">管理事项</view>
+      <view class="stat-value">{{overview.monthlyTasksCount}}</view>
+    </view>
+    <view class="stat-card">
+      <view class="stat-label">楼栋收缴</view>
+      <view class="stat-value stat-value-small">{{overview.buildingPaidRateSummary}}</view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view class="section-title">快捷入口</view>
+    </view>
+    <view class="action-grid">
+      <view
+        wx:for="{{quickActions}}"
+        wx:key="title"
+        class="action-button"
+        data-path="{{item.path}}"
+        bindtap="handleQuickAction"
+      >
+        <view class="action-title">{{item.title}}</view>
+        <view class="action-desc">{{item.desc}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view class="section-title">最新公告</view>
+      <view class="section-link" bindtap="handleQuickAction" data-path="/pages/publicity/announcement-list/index">全部查看</view>
+    </view>
+    <view wx:if="{{announcements.length}}">
+      <view
+        wx:for="{{announcements}}"
+        wx:key="id"
+        class="list-card"
+        data-id="{{item.id}}"
+        bindtap="handleAnnouncementTap"
+      >
+        <view class="list-title">{{item.title}}</view>
+        <view class="tag-row">
+          <view wx:if="{{item.isPinned}}" class="pill pill-warning">置顶</view>
+          <view class="pill">{{item.category}}</view>
+        </view>
+        <view class="list-desc">{{item.summary}}</view>
+        <view class="list-meta">{{item.issuer}} · {{item.publishedAt}}</view>
+      </view>
+    </view>
+    <view wx:else class="empty-block">暂无公告</view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view class="section-title">投票提醒</view>
+      <view class="section-link" bindtap="handleQuickAction" data-path="/pages/vote/list/index">查看全部</view>
+    </view>
+    <view wx:if="{{voteReminders.length}}">
+      <view
+        wx:for="{{voteReminders}}"
+        wx:key="id"
+        class="list-card"
+        data-id="{{item.id}}"
+        bindtap="handleVoteTap"
+      >
+        <view class="list-title">{{item.title}}</view>
+        <view class="tag-row">
+          <view class="pill pill-warning">{{item.statusLabel}}</view>
+          <view class="pill">{{item.modeLabel}}</view>
+        </view>
+        <view class="list-desc">{{item.scopeLabel}}</view>
+        <view class="list-meta">{{item.startAt}} 至 {{item.endAt}}</view>
+      </view>
+    </view>
+    <view wx:else class="empty-block">当前没有需要关注的投票</view>
+  </view>
+
+  <view class="section">
+    <view class="section-head">
+      <view class="section-title">公开摘要</view>
+      <view class="section-link" bindtap="handleQuickAction" data-path="/pages/publicity/index">公开中心</view>
+    </view>
+    <view
+      wx:for="{{disclosureHighlights}}"
+      wx:key="id"
+      class="list-card"
+      data-id="{{item.id}}"
+      bindtap="handleDisclosureTap"
+    >
+      <view class="list-title">{{item.title}}</view>
+      <view class="tag-row">
+        <view class="pill">{{item.category}}</view>
+        <view wx:if="{{item.completed}}" class="pill pill-success">已完成</view>
+        <view wx:else class="pill pill-warning">跟进中</view>
+      </view>
+      <view class="list-desc">{{item.summary}}</view>
+      <view class="list-meta">{{item.owner}} · {{item.publishedAt}}</view>
     </view>
   </view>
 </view>

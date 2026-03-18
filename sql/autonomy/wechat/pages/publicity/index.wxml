@@ -1,0 +1,45 @@
+<view class="page-shell">
+  <view class="hero-panel">
+    <view class="hero-title">公开中心</view>
+    <view class="hero-subtitle">公告通知、管理公开、财务与楼栋缴费摘要都在这里集中查看。</view>
+  </view>
+
+  <view class="action-grid">
+    <view
+      wx:for="{{categories}}"
+      wx:key="title"
+      class="action-button"
+      data-path="{{item.path}}"
+      bindtap="handleOpenCategory"
+    >
+      <view class="action-title">{{item.title}}</view>
+      <view class="action-desc">{{item.desc}}</view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">最新公告</view>
+    <view wx:for="{{latestAnnouncements}}" wx:key="id" class="list-card" data-id="{{item.id}}" bindtap="handleOpenAnnouncement">
+      <view class="list-title">{{item.title}}</view>
+      <view class="list-meta">{{item.publishedAt}} · {{item.issuer}}</view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">管理公开</view>
+    <view wx:for="{{latestDisclosures}}" wx:key="id" class="list-card" data-id="{{item.id}}" bindtap="handleOpenDisclosure">
+      <view class="list-title">{{item.title}}</view>
+      <view class="list-desc">{{item.summary}}</view>
+      <view class="list-meta">{{item.publishedAt}} · {{item.owner}}</view>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">楼栋缴费摘要</view>
+    <view wx:for="{{latestBuildings}}" wx:key="id" class="list-card" data-id="{{item.id}}" bindtap="handleOpenBuilding">
+      <view class="list-title">{{item.buildingName}} · {{item.month}}</view>
+      <view class="list-desc">已缴 {{item.paidHouseholds}} / {{item.dueHouseholds}} 户</view>
+      <view class="list-meta">收缴率 {{item.paidRate}} · {{item.trendLabel}}</view>
+    </view>
+  </view>
+</view>

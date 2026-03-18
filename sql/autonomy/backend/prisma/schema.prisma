@@ -180,8 +180,6 @@ model Community {
   createdAt DateTime        @default(now()) @map("created_at")
   updatedAt DateTime        @updatedAt @map("updated_at")
 
-  buildings            Building[]
-  houses               House[]
   communityUserRoles   CommunityUserRole[]
   identityApplications IdentityApplication[]
 
@@ -191,8 +189,6 @@ model Community {
 
 model Building {
   id           String         @id @default(uuid())
-  communityId  String         @map("community_id")
-  community    Community      @relation(fields: [communityId], references: [id])
   buildingCode String         @map("building_code") @db.VarChar(30)
   buildingName String         @map("building_name") @db.VarChar(100)
   sortNo       Int?           @map("sort_no")
@@ -202,15 +198,13 @@ model Building {
 
   houses House[]
 
-  @@unique([communityId, buildingCode])
-  @@index([communityId, status])
+  @@unique([buildingCode])
+  @@index([status])
   @@map("buildings")
 }
 
 model House {
   id          String      @id @default(uuid())
-  communityId String      @map("community_id")
-  community   Community   @relation(fields: [communityId], references: [id])
   buildingId  String      @map("building_id")
   building    Building    @relation(fields: [buildingId], references: [id])
   unitNo      String      @default("") @map("unit_no") @db.VarChar(20)
@@ -229,7 +223,6 @@ model House {
   voteRepresentatives  VoteRepresentative[]
 
   @@unique([buildingId, unitNo, roomNo])
-  @@index([communityId, houseStatus])
   @@index([buildingId])
   @@map("houses")
 }

@@ -21,8 +21,8 @@ export class AdminHousesController {
   }
 
   @Get('options/buildings')
-  buildings(@Query('communityId') communityId?: string) {
-    return this.houseService.listBuildings(communityId);
+  buildings() {
+    return this.houseService.listBuildings();
   }
 
   @Get()

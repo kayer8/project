@@ -1,11 +1,270 @@
 page {
-  background: #f6f8fb;
-  color: #1f2937;
-  font-family: 'PingFang SC', sans-serif;
+  background: #edf2f7;
+  color: #17212b;
+  font-family: 'PingFang SC', 'Segoe UI', sans-serif;
+}
+
+.page-shell {
+  min-height: 100vh;
+  padding: 28rpx 24rpx 40rpx;
+}
+
+.hero-panel {
+  padding: 32rpx 28rpx;
+  border-radius: 28rpx;
+  background: linear-gradient(145deg, #0f4c5c, #1b5f75 55%, #2d728f);
+  color: #ffffff;
+  box-shadow: 0 22rpx 40rpx rgba(15, 76, 92, 0.22);
+}
+
+.hero-title {
+  font-size: 40rpx;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.hero-subtitle {
+  margin-top: 14rpx;
+  font-size: 26rpx;
+  line-height: 1.7;
+  opacity: 0.92;
 }
 
 .card {
   background: #ffffff;
-  border-radius: 24rpx;
-  box-shadow: 0 12rpx 36rpx rgba(15, 23, 42, 0.06);
+  border-radius: 26rpx;
+  box-shadow: 0 12rpx 30rpx rgba(15, 23, 42, 0.06);
+}
+
+.section {
+  margin-top: 24rpx;
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.section-link {
+  font-size: 24rpx;
+  color: #0f4c5c;
+}
+
+.muted-text {
+  color: #687482;
+  font-size: 24rpx;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  background: #e6f3f5;
+  color: #0f4c5c;
+}
+
+.pill-warning {
+  background: #fff3d6;
+  color: #a16207;
+}
+
+.pill-success {
+  background: #e5f7ea;
+  color: #166534;
+}
+
+.pill-danger {
+  background: #fee8e7;
+  color: #b42318;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18rpx;
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18rpx;
+}
+
+.stat-card {
+  padding: 24rpx;
+}
+
+.stat-label {
+  color: #687482;
+  font-size: 24rpx;
+}
+
+.stat-value {
+  margin-top: 14rpx;
+  font-size: 42rpx;
+  font-weight: 700;
+}
+
+.list-card {
+  padding: 24rpx;
+}
+
+.list-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.list-meta {
+  margin-top: 12rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  color: #687482;
+  font-size: 24rpx;
+}
+
+.list-desc {
+  margin-top: 12rpx;
+  color: #3c4752;
+  font-size: 25rpx;
+  line-height: 1.7;
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18rpx;
+}
+
+.action-button {
+  padding: 24rpx 20rpx;
+  border-radius: 22rpx;
+  background: #ffffff;
+  box-shadow: 0 12rpx 28rpx rgba(15, 23, 42, 0.06);
+}
+
+.action-title {
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.action-desc {
+  margin-top: 8rpx;
+  color: #687482;
+  font-size: 24rpx;
+  line-height: 1.6;
+}
+
+.info-card {
+  padding: 26rpx 24rpx;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 24rpx;
+  padding: 16rpx 0;
+  border-bottom: 1px solid #eff3f6;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  color: #687482;
+  font-size: 25rpx;
+}
+
+.info-value {
+  flex: 1;
+  text-align: right;
+  font-size: 26rpx;
+  line-height: 1.6;
+}
+
+.form-card {
+  padding: 24rpx;
+}
+
+.field-block {
+  margin-bottom: 22rpx;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 12rpx;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.field-hint {
+  margin-top: 8rpx;
+  color: #687482;
+  font-size: 22rpx;
+}
+
+.text-input,
+.text-area,
+.picker-field {
+  width: 100%;
+  padding: 22rpx 20rpx;
+  border-radius: 18rpx;
+  background: #f7fafc;
+  border: 1px solid #dce6ec;
+  font-size: 26rpx;
+  box-sizing: border-box;
+}
+
+.text-area {
+  min-height: 180rpx;
+}
+
+.button-row {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.primary-button,
+.secondary-button {
+  flex: 1;
+  text-align: center;
+  padding: 24rpx 16rpx;
+  border-radius: 18rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.primary-button {
+  background: #0f4c5c;
+  color: #ffffff;
+}
+
+.secondary-button {
+  background: #e5eef2;
+  color: #0f4c5c;
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.empty-block {
+  padding: 40rpx 24rpx;
+  text-align: center;
+  color: #687482;
+  font-size: 24rpx;
 }

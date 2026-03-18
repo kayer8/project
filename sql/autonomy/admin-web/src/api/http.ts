@@ -4,7 +4,7 @@ import { appConfig } from '@/config/app';
 import { storage } from '@/utils/storage';
 
 const http = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:3000/admin/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://192.168.1.3:3000/admin/v1',
   timeout: 10000,
 });
 

@@ -35,7 +35,6 @@ export class MemberService {
         user: true,
         house: {
           include: {
-            community: true,
             building: true,
           },
         },
@@ -59,7 +58,6 @@ export class MemberService {
         user: true,
         house: {
           include: {
-            community: true,
             building: true,
           },
         },
@@ -109,14 +107,6 @@ export class MemberService {
       andWhere.push({ houseId: query.houseId.trim() });
     }
 
-    if (query.communityId?.trim()) {
-      andWhere.push({
-        house: {
-          communityId: query.communityId.trim(),
-        },
-      });
-    }
-
     const where = andWhere.length > 0 ? { AND: andWhere } : undefined;
 
     const [items, total] = await this.prisma.$transaction([
@@ -131,7 +121,6 @@ export class MemberService {
           user: true,
           house: {
             include: {
-              community: true,
               building: true,
             },
           },
@@ -156,7 +145,6 @@ export class MemberService {
         user: true,
         house: {
           include: {
-            community: true,
             building: true,
           },
         },
@@ -332,8 +320,6 @@ export class MemberService {
       userName: relation.user.realName ?? relation.user.nickname ?? '未命名用户',
       nickname: relation.user.nickname,
       mobile: relation.user.mobile,
-      communityId: relation.house.communityId,
-      communityName: relation.house.community.name,
       buildingName: relation.house.building.buildingName,
       houseId: relation.houseId,
       houseDisplayName: relation.house.displayName,

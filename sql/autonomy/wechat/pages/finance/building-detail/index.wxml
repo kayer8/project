@@ -1,0 +1,34 @@
+<view class="page-shell" wx:if="{{record}}">
+  <view class="hero-panel">
+    <view class="hero-title">{{record.buildingName}}</view>
+    <view class="hero-subtitle">{{record.month}} · 收缴率 {{record.paidRate}}</view>
+  </view>
+
+  <view class="card">
+    <view class="info-row">
+      <view class="info-label">总户数</view>
+      <view class="info-value">{{record.totalHouseholds}} 户</view>
+    </view>
+    <view class="info-row">
+      <view class="info-label">应缴户数</view>
+      <view class="info-value">{{record.dueHouseholds}} 户</view>
+    </view>
+    <view class="info-row">
+      <view class="info-label">已缴户数</view>
+      <view class="info-value">{{record.paidHouseholds}} 户</view>
+    </view>
+    <view class="info-row">
+      <view class="info-label">未缴户数</view>
+      <view class="info-value">{{record.unpaidHouseholds}} 户</view>
+    </view>
+    <view class="info-row">
+      <view class="info-label">趋势</view>
+      <view class="info-value">{{record.trendLabel}}</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="section-title">本栋重点说明</view>
+    <view wx:for="{{record.highlights}}" wx:key="*this" class="content-block">{{item}}</view>
+  </view>
+</view>

@@ -36,7 +36,7 @@
               <div class="mono">{{ user.wechatOpenid }}</div>
               <div class="label">UnionID</div>
               <div class="mono">{{ formatText(user.wechatUnionid) }}</div>
-              <div class="label">手机号验证</div>
+              <div class="label">手机验证</div>
               <div>{{ formatDateTime(user.mobileVerifiedAt, '未验证') }}</div>
               <div class="label">创建时间</div>
               <div>{{ formatDateTime(user.createdAt) }}</div>
@@ -60,9 +60,7 @@
                 <div class="item-title">
                   {{ item.communityName }} / {{ communityRoleLabelMap[item.roleType] }}
                 </div>
-                <div class="item-sub">
-                  状态：{{ communityRoleStatusLabelMap[item.status] }}
-                </div>
+                <div class="item-sub">状态：{{ communityRoleStatusLabelMap[item.status] }}</div>
                 <div class="item-sub">
                   生效：{{ formatDateTime(item.effectiveAt) }}
                   <span v-if="item.expiredAt"> / 失效：{{ formatDateTime(item.expiredAt) }}</span>
@@ -197,7 +195,7 @@ const dialogVisible = ref(false);
 
 const houseColumns = [
   { colKey: 'houseDisplayName', title: '房屋', width: 180 },
-  { colKey: 'communityName', title: '社区', width: 120 },
+  { colKey: 'buildingName', title: '楼栋', width: 140 },
   { colKey: 'householdType', title: '住户组', width: 120 },
   { colKey: 'relationType', title: '关系类型', width: 120 },
   { colKey: 'status', title: '状态', width: 100 },

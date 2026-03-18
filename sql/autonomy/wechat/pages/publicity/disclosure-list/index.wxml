@@ -1,0 +1,26 @@
+<view class="page-shell">
+  <scroll-view class="tab-scroll" scroll-x enable-flex>
+    <view class="tab-row">
+      <view
+        wx:for="{{categories}}"
+        wx:key="*this"
+        class="tab-item {{activeCategory === item ? 'tab-item-active' : ''}}"
+        data-category="{{item}}"
+        bindtap="handleCategoryChange"
+      >
+        {{item === 'ALL' ? '全部' : item}}
+      </view>
+    </view>
+  </scroll-view>
+
+  <view wx:for="{{records}}" wx:key="id" class="list-card" data-id="{{item.id}}" bindtap="handleOpenDetail">
+    <view class="list-title">{{item.title}}</view>
+    <view class="tag-row">
+      <view class="pill">{{item.category}}</view>
+      <view wx:if="{{item.completed}}" class="pill pill-success">已完成</view>
+      <view wx:else class="pill pill-warning">跟进中</view>
+    </view>
+    <view class="list-desc">{{item.summary}}</view>
+    <view class="list-meta">{{item.owner}} · {{item.publishedAt}}</view>
+  </view>
+</view>

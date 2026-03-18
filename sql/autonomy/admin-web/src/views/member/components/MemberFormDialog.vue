@@ -163,7 +163,7 @@ async function loadBaseOptions() {
   }));
 
   houseOptions.value = houseResult.items.map((item) => ({
-    label: `${item.communityName} / ${item.buildingName} / ${item.displayName}`,
+    label: `${item.buildingName} / ${item.displayName}`,
     value: item.id,
   }));
 
@@ -176,7 +176,7 @@ async function loadBaseOptions() {
 
   if (props.initialValue && !houseOptions.value.some((item) => item.value === props.initialValue?.houseId)) {
     houseOptions.value.unshift({
-      label: props.initialValue.houseDisplayName,
+      label: `${props.initialValue.buildingName} / ${props.initialValue.houseDisplayName}`,
       value: props.initialValue.houseId,
     });
   }

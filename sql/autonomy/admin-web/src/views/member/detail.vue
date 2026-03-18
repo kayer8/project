@@ -26,8 +26,6 @@
               <div>{{ formatText(member.mobile, '未绑定') }}</div>
               <div class="label">用户状态</div>
               <div>{{ member.userStatus }}</div>
-              <div class="label">社区</div>
-              <div>{{ member.communityName }}</div>
               <div class="label">楼栋</div>
               <div>{{ member.buildingName }}</div>
               <div class="label">房屋</div>

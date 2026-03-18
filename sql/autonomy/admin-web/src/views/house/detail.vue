@@ -20,8 +20,6 @@
             <div class="info-grid">
               <div class="label">展示名称</div>
               <div>{{ house.displayName }}</div>
-              <div class="label">所属社区</div>
-              <div>{{ house.communityName }}</div>
               <div class="label">所属楼栋</div>
               <div>{{ house.buildingName }}</div>
               <div class="label">单元号</div>

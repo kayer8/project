@@ -11,7 +11,9 @@
     "test": "jest",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "seed:hjy-housing": "ts-node scripts/seed-hjy-housing.ts",
+    "cleanup:non-hjy-housing": "ts-node scripts/cleanup-non-hjy-housing.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",

@@ -1,0 +1,20 @@
+<view class="page-shell" wx:if="{{record}}">
+  <view class="hero-panel">
+    <view class="hero-title">{{record.title}}</view>
+    <view class="hero-subtitle">{{record.issuer}} · {{record.publishedAt}}</view>
+  </view>
+
+  <view class="card">
+    <view class="tag-row">
+      <view class="pill">{{record.category}}</view>
+      <view wx:if="{{record.isPinned}}" class="pill pill-warning">置顶</view>
+    </view>
+    <view class="list-desc">{{record.summary}}</view>
+    <view wx:for="{{record.content}}" wx:key="*this" class="content-block">{{item}}</view>
+    <view class="list-meta">阅读量 {{record.readCount}}</view>
+  </view>
+
+  <view class="button-row">
+    <button class="secondary-button" bindtap="handleShare">分享</button>
+  </view>
+</view>
