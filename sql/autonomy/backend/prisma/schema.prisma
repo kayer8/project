@@ -7,23 +7,144 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model User {
-  id         String   @id @default(uuid())
-  openid     String   @unique
-  unionid    String?
-  nickname   String?
-  avatar_url String?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+enum UserStatus {
+  ACTIVE
+  DISABLED
+  DELETED
+}
 
+enum CommunityStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum BuildingStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum HouseStatus {
+  SELF_OCCUPIED
+  RENTED
+  VACANT
+  OTHER
+}
+
+enum HouseholdGroupType {
+  OWNER_HOUSEHOLD
+  TENANT_HOUSEHOLD
+  CO_LIVING_HOUSEHOLD
+}
+
+enum HouseholdGroupStatus {
+  ACTIVE
+  INACTIVE
+  CLOSED
+}
+
+enum MemberRelationType {
+  MAIN_OWNER
+  FAMILY_MEMBER
+  MAIN_TENANT
+  CO_RESIDENT
+  AGENT
+}
+
+enum MemberRelationStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  INACTIVE
+  EXPIRED
+  REMOVED
+}
+
+enum CommunityUserRoleType {
+  COMMITTEE_MEMBER
+  BUILDING_LEADER
+  VOLUNTEER
+}
+
+enum CommunityUserRoleStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+}
+
+enum IdentityApplicationType {
+  OWNER_VERIFY
+  TENANT_VERIFY
+  COMMITTEE_VERIFY
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+  SUPPLEMENT_REQUIRED
+}
+
+enum MemberChangeRequestType {
+  ADD_MEMBER
+  REMOVE_MEMBER
+  EXPIRE_MEMBER
+  CHANGE_PERMISSION
+  CHANGE_PRIMARY_ROLE
+}
+
+enum VoteRepresentativeScopeType {
+  LONG_TERM
+  SINGLE_VOTE
+}
+
+enum VoteRepresentativeStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum AuditActorType {
+  USER
+  ADMIN
+  SYSTEM
+}
+
+model User {
+  id               String     @id @default(uuid())
+  mobile           String?    @unique @db.VarChar(20)
+  mobileVerifiedAt DateTime?  @map("mobile_verified_at")
+  wechatOpenid     String     @unique @map("wechat_openid") @db.VarChar(64)
+  wechatUnionid    String?    @unique @map("wechat_unionid") @db.VarChar(64)
+  nickname         String?    @db.VarChar(100)
+  avatarUrl        String?    @map("avatar_url") @db.VarChar(500)
+  realName         String?    @map("real_name") @db.VarChar(50)
+  status           UserStatus @default(ACTIVE)
+  registerSource   String     @default("wechat_miniapp") @map("register_source") @db.VarChar(30)
+  lastLoginAt      DateTime?  @map("last_login_at")
+  lastLoginIp      String?    @map("last_login_ip") @db.VarChar(45)
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+  deletedAt        DateTime?  @map("deleted_at")
+
+  communityRoles             CommunityUserRole[]
+  identityApplications       IdentityApplication[]
+  memberRelations            HouseMemberRelation[]
+  memberChangeRequestsAsOp   MemberChangeRequest[] @relation("MemberChangeOperator")
+  memberChangeRequestsTarget MemberChangeRequest[] @relation("MemberChangeTarget")
+  createdVoteRepresentatives VoteRepresentative[]  @relation("VoteRepresentativeCreatorUser")
+  auditLogs                  AuditLog[]            @relation("AuditActorUser")
+
+  @@index([status])
+  @@index([createdAt])
   @@map("users")
 }
 
 model AdminRole {
-  id               String   @id @default(uuid())
-  name             String   @unique
-  permissions_json Json
-  created_at       DateTime @default(now())
+  id              String   @id @default(uuid())
+  name            String   @unique @db.VarChar(50)
+  permissionsJson Json     @map("permissions_json")
+  createdAt       DateTime @default(now()) @map("created_at")
 
   admins AdminUser[]
 
@@ -31,31 +152,261 @@ model AdminRole {
 }
 
 model AdminUser {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  password_hash String?
-  name          String
-  role_id       String
-  role          AdminRole @relation(fields: [role_id], references: [id])
-  is_active     Boolean   @default(true)
-  created_at    DateTime  @default(now())
-  updated_at    DateTime  @updatedAt
+  id           String    @id @default(uuid())
+  email        String    @unique @db.VarChar(120)
+  passwordHash String?   @map("password_hash") @db.VarChar(255)
+  name         String    @db.VarChar(50)
+  roleId       String    @map("role_id")
+  role         AdminRole @relation(fields: [roleId], references: [id])
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
-  audit_logs AuditLog[] @relation("AdminActor")
+  identityApplicationsReviewed IdentityApplication[] @relation("IdentityApplicationReviewer")
+  memberChangeRequestsReviewed MemberChangeRequest[] @relation("MemberChangeRequestReviewer")
+  createdVoteRepresentatives   VoteRepresentative[]  @relation("VoteRepresentativeCreatorAdmin")
+  auditLogs                    AuditLog[]            @relation("AuditActorAdmin")
 
   @@map("admin_users")
 }
 
-model AuditLog {
-  id             String    @id @default(uuid())
-  actor_admin_id String
-  actor          AdminUser @relation("AdminActor", fields: [actor_admin_id], references: [id])
-  action         String
-  resource_type  String
-  resource_id    String
-  diff_json      Json?
-  created_at     DateTime  @default(now())
+model Community {
+  id        String          @id @default(uuid())
+  code      String          @unique @db.VarChar(50)
+  name      String          @db.VarChar(100)
+  address   String?         @db.VarChar(255)
+  status    CommunityStatus @default(ACTIVE)
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
 
-  @@index([resource_type, resource_id])
+  buildings            Building[]
+  houses               House[]
+  communityUserRoles   CommunityUserRole[]
+  identityApplications IdentityApplication[]
+
+  @@index([status])
+  @@map("communities")
+}
+
+model Building {
+  id           String         @id @default(uuid())
+  communityId  String         @map("community_id")
+  community    Community      @relation(fields: [communityId], references: [id])
+  buildingCode String         @map("building_code") @db.VarChar(30)
+  buildingName String         @map("building_name") @db.VarChar(100)
+  sortNo       Int?           @map("sort_no")
+  status       BuildingStatus @default(ACTIVE)
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+
+  houses House[]
+
+  @@unique([communityId, buildingCode])
+  @@index([communityId, status])
+  @@map("buildings")
+}
+
+model House {
+  id          String      @id @default(uuid())
+  communityId String      @map("community_id")
+  community   Community   @relation(fields: [communityId], references: [id])
+  buildingId  String      @map("building_id")
+  building    Building    @relation(fields: [buildingId], references: [id])
+  unitNo      String      @default("") @map("unit_no") @db.VarChar(20)
+  floorNo     Int?        @map("floor_no")
+  roomNo      String      @map("room_no") @db.VarChar(20)
+  displayName String      @map("display_name") @db.VarChar(100)
+  houseStatus HouseStatus @default(SELF_OCCUPIED) @map("house_status")
+  grossArea   Float?      @map("gross_area")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  householdGroups      HouseholdGroup[]
+  memberRelations      HouseMemberRelation[]
+  identityApplications IdentityApplication[]
+  memberChangeRequests MemberChangeRequest[]
+  voteRepresentatives  VoteRepresentative[]
+
+  @@unique([buildingId, unitNo, roomNo])
+  @@index([communityId, houseStatus])
+  @@index([buildingId])
+  @@map("houses")
+}
+
+model HouseholdGroup {
+  // 约束说明：同一套房任一时刻只允许一个当前有效的住户组，该约束由服务层保证。
+  id        String               @id @default(uuid())
+  houseId   String               @map("house_id")
+  house     House                @relation(fields: [houseId], references: [id])
+  groupType HouseholdGroupType   @map("group_type")
+  status    HouseholdGroupStatus @default(ACTIVE)
+  startedAt DateTime             @default(now()) @map("started_at")
+  endedAt   DateTime?            @map("ended_at")
+  remark    String?              @db.VarChar(255)
+  createdAt DateTime             @default(now()) @map("created_at")
+  updatedAt DateTime             @updatedAt @map("updated_at")
+
+  memberRelations      HouseMemberRelation[]
+  memberChangeRequests MemberChangeRequest[]
+
+  @@index([houseId, status])
+  @@index([groupType, status])
+  @@map("household_groups")
+}
+
+model HouseMemberRelation {
+  // 约束说明：同一套房任一时刻只允许一个主角色，同一用户在同一套房任一时刻只允许一条有效关系，该约束由服务层保证。
+  id                  String               @id @default(uuid())
+  houseId             String               @map("house_id")
+  house               House                @relation(fields: [houseId], references: [id])
+  householdGroupId    String               @map("household_group_id")
+  householdGroup      HouseholdGroup       @relation(fields: [householdGroupId], references: [id])
+  userId              String               @map("user_id")
+  user                User                 @relation(fields: [userId], references: [id])
+  relationType        MemberRelationType   @map("relation_type")
+  relationLabel       String?              @map("relation_label") @db.VarChar(50)
+  isPrimaryRole       Boolean              @default(false) @map("is_primary_role")
+  canViewBill         Boolean              @default(false) @map("can_view_bill")
+  canPayBill          Boolean              @default(false) @map("can_pay_bill")
+  canActAsAgent       Boolean              @default(false) @map("can_act_as_agent")
+  canJoinConsultation Boolean              @default(false) @map("can_join_consultation")
+  canBeVoteDelegate   Boolean              @default(false) @map("can_be_vote_delegate")
+  status              MemberRelationStatus @default(PENDING)
+  effectiveAt         DateTime             @default(now()) @map("effective_at")
+  expiredAt           DateTime?            @map("expired_at")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+
+  grantedVoteRepresentatives VoteRepresentative[] @relation("VoteRepresentativeGrantor")
+  representativeRecords      VoteRepresentative[] @relation("VoteRepresentativeRelation")
+
+  @@index([houseId, status])
+  @@index([householdGroupId, status])
+  @@index([userId, status])
+  @@map("house_member_relations")
+}
+
+model CommunityUserRole {
+  id          String                  @id @default(uuid())
+  userId      String                  @map("user_id")
+  user        User                    @relation(fields: [userId], references: [id])
+  communityId String                  @map("community_id")
+  community   Community               @relation(fields: [communityId], references: [id])
+  roleType    CommunityUserRoleType   @map("role_type")
+  status      CommunityUserRoleStatus @default(ACTIVE)
+  effectiveAt DateTime                @default(now()) @map("effective_at")
+  expiredAt   DateTime?               @map("expired_at")
+  createdAt   DateTime                @default(now()) @map("created_at")
+  updatedAt   DateTime                @updatedAt @map("updated_at")
+
+  @@index([communityId, roleType, status])
+  @@index([userId, status])
+  @@map("community_user_roles")
+}
+
+model IdentityApplication {
+  id              String                  @id @default(uuid())
+  userId          String                  @map("user_id")
+  user            User                    @relation(fields: [userId], references: [id])
+  communityId     String                  @map("community_id")
+  community       Community               @relation(fields: [communityId], references: [id])
+  houseId         String?                 @map("house_id")
+  house           House?                  @relation(fields: [houseId], references: [id])
+  applicationType IdentityApplicationType @map("application_type")
+  formJson        Json                    @map("form_json")
+  attachmentsJson Json?                   @map("attachments_json")
+  status          ReviewStatus            @default(PENDING)
+  reviewerAdminId String?                 @map("reviewer_admin_id")
+  reviewerAdmin   AdminUser?              @relation("IdentityApplicationReviewer", fields: [reviewerAdminId], references: [id])
+  reviewedAt      DateTime?               @map("reviewed_at")
+  reviewNote      String?                 @map("review_note") @db.VarChar(255)
+  rejectReason    String?                 @map("reject_reason") @db.VarChar(255)
+  createdAt       DateTime                @default(now()) @map("created_at")
+  updatedAt       DateTime                @updatedAt @map("updated_at")
+
+  @@index([userId, status])
+  @@index([communityId, status])
+  @@index([houseId, status])
+  @@map("identity_applications")
+}
+
+model MemberChangeRequest {
+  id                 String                  @id @default(uuid())
+  houseId            String                  @map("house_id")
+  house              House                   @relation(fields: [houseId], references: [id])
+  householdGroupId   String                  @map("household_group_id")
+  householdGroup     HouseholdGroup          @relation(fields: [householdGroupId], references: [id])
+  requestType        MemberChangeRequestType @map("request_type")
+  operatorUserId     String                  @map("operator_user_id")
+  operatorUser       User                    @relation("MemberChangeOperator", fields: [operatorUserId], references: [id])
+  targetUserId       String?                 @map("target_user_id")
+  targetUser         User?                   @relation("MemberChangeTarget", fields: [targetUserId], references: [id])
+  targetName         String?                 @map("target_name") @db.VarChar(50)
+  targetMobile       String?                 @map("target_mobile") @db.VarChar(20)
+  targetRelationType MemberRelationType?     @map("target_relation_type")
+  permissionJson     Json?                   @map("permission_json")
+  attachmentsJson    Json?                   @map("attachments_json")
+  status             ReviewStatus            @default(PENDING)
+  reviewerAdminId    String?                 @map("reviewer_admin_id")
+  reviewerAdmin      AdminUser?              @relation("MemberChangeRequestReviewer", fields: [reviewerAdminId], references: [id])
+  reviewedAt         DateTime?               @map("reviewed_at")
+  reviewNote         String?                 @map("review_note") @db.VarChar(255)
+  createdAt          DateTime                @default(now()) @map("created_at")
+  updatedAt          DateTime                @updatedAt @map("updated_at")
+
+  @@index([houseId, status])
+  @@index([householdGroupId, status])
+  @@index([operatorUserId, status])
+  @@index([targetUserId, status])
+  @@map("member_change_requests")
+}
+
+model VoteRepresentative {
+  // 约束说明：同一套房任一时刻只允许一个有效投票代表；单次投票授权只允许一条有效记录，该约束由服务层保证。
+  id                       String                      @id @default(uuid())
+  houseId                  String                      @map("house_id")
+  house                    House                       @relation(fields: [houseId], references: [id])
+  representativeRelationId String                      @map("representative_relation_id")
+  representativeRelation   HouseMemberRelation         @relation("VoteRepresentativeRelation", fields: [representativeRelationId], references: [id])
+  grantorRelationId        String?                     @map("grantor_relation_id")
+  grantorRelation          HouseMemberRelation?        @relation("VoteRepresentativeGrantor", fields: [grantorRelationId], references: [id])
+  scopeType                VoteRepresentativeScopeType @map("scope_type")
+  voteId                   String?                     @map("vote_id") @db.VarChar(64)
+  effectiveAt              DateTime                    @default(now()) @map("effective_at")
+  expiredAt                DateTime?                   @map("expired_at")
+  status                   VoteRepresentativeStatus    @default(ACTIVE)
+  cancelReason             String?                     @map("cancel_reason") @db.VarChar(255)
+  createdByUserId          String?                     @map("created_by_user_id")
+  createdByUser            User?                       @relation("VoteRepresentativeCreatorUser", fields: [createdByUserId], references: [id])
+  createdByAdminId         String?                     @map("created_by_admin_id")
+  createdByAdmin           AdminUser?                  @relation("VoteRepresentativeCreatorAdmin", fields: [createdByAdminId], references: [id])
+  createdAt                DateTime                    @default(now()) @map("created_at")
+  updatedAt                DateTime                    @updatedAt @map("updated_at")
+
+  @@index([houseId, status])
+  @@index([representativeRelationId, status])
+  @@index([voteId])
+  @@map("vote_representatives")
+}
+
+model AuditLog {
+  id           String         @id @default(uuid())
+  actorType    AuditActorType @map("actor_type")
+  actorUserId  String?        @map("actor_user_id")
+  actorUser    User?          @relation("AuditActorUser", fields: [actorUserId], references: [id])
+  actorAdminId String?        @map("actor_admin_id")
+  actorAdmin   AdminUser?     @relation("AuditActorAdmin", fields: [actorAdminId], references: [id])
+  action       String         @db.VarChar(100)
+  resourceType String         @map("resource_type") @db.VarChar(100)
+  resourceId   String         @map("resource_id") @db.VarChar(64)
+  snapshotJson Json?          @map("snapshot_json")
+  ip           String?        @db.VarChar(45)
+  userAgent    String?        @map("user_agent") @db.VarChar(500)
+  createdAt    DateTime       @default(now()) @map("created_at")
+
+  @@index([resourceType, resourceId])
+  @@index([createdAt])
+  @@index([actorType, createdAt])
   @@map("audit_logs")
 }

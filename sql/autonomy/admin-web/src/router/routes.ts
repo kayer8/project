@@ -2,6 +2,7 @@ import type { RouteRecordRaw } from 'vue-router';
 import DefaultLayout from '@/layouts/default/index.vue';
 import BlankLayout from '@/layouts/blank/index.vue';
 import dashboardRoutes from './modules/dashboard';
+import userRoutes from './modules/user';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -20,7 +21,7 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     component: DefaultLayout,
     redirect: '/dashboard',
-    children: [...dashboardRoutes],
+    children: [...dashboardRoutes, ...userRoutes],
   },
   {
     path: '/:pathMatch(.*)*',

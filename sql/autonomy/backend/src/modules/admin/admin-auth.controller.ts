@@ -6,6 +6,15 @@ import { AdminJwtAuthGuard } from '../../common/guards/admin-jwt-auth.guard';
 import { Admin } from '../../common/decorators/admin.decorator';
 import { AdminAuthUser } from './interfaces/admin-auth-user.interface';
 
+class AdminLoginDto {
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  @MinLength(4)
+  password!: string;
+}
+
 @ApiTags('admin-auth')
 @Controller('admin/v1')
 export class AdminAuthController {
@@ -22,13 +31,4 @@ export class AdminAuthController {
   getMe(@Admin() admin: AdminAuthUser) {
     return this.adminAuthService.getMe(admin);
   }
-}
-
-class AdminLoginDto {
-  @IsEmail()
-  email!: string;
-
-  @IsString()
-  @MinLength(4)
-  password!: string;
 }

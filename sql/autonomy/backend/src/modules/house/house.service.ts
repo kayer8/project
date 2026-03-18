@@ -1,0 +1,525 @@
+import { HttpStatus, Injectable } from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
+import { BusinessException } from '../../common/exceptions/business.exception';
+import { AppErrorCode } from '../../common/exceptions/app-error-code';
+import {
+  AdminHouseListQueryDto,
+  CreateAdminHouseDto,
+  UpdateAdminHouseDto,
+} from './dto/house.dto';
+
+const householdGroupLabelMap: Record<string, string> = {
+  OWNER_HOUSEHOLD: '业主住户组',
+  TENANT_HOUSEHOLD: '租户住户组',
+  CO_LIVING_HOUSEHOLD: '合住住户组',
+};
+
+const memberRelationLabelMap: Record<string, string> = {
+  MAIN_OWNER: '主业主',
+  FAMILY_MEMBER: '家庭成员',
+  MAIN_TENANT: '主租户',
+  CO_RESIDENT: '同住成员',
+  AGENT: '代办人',
+};
+
+@Injectable()
+export class HouseService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async listMine(userId: string) {
+    const relations = await this.prisma.houseMemberRelation.findMany({
+      where: {
+        userId,
+        status: {
+          in: ['ACTIVE', 'PENDING'],
+        },
+      },
+      include: {
+        house: {
+          include: {
+            community: true,
+            building: true,
+            householdGroups: {
+              where: {
+                status: 'ACTIVE',
+              },
+            },
+            _count: {
+              select: {
+                memberRelations: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return relations.map((item) => ({
+      relationId: item.id,
+      houseId: item.houseId,
+      displayName: item.house.displayName,
+      communityName: item.house.community.name,
+      buildingName: item.house.building.buildingName,
+      unitNo: item.house.unitNo,
+      roomNo: item.house.roomNo,
+      houseStatus: item.house.houseStatus,
+      relationType: item.relationType,
+      relationLabel: memberRelationLabelMap[item.relationType] ?? item.relationType,
+      isPrimaryRole: item.isPrimaryRole,
+      status: item.status,
+      memberCount: item.house._count.memberRelations,
+      activeHouseholdType: item.house.householdGroups[0]
+        ? householdGroupLabelMap[item.house.householdGroups[0].groupType] ??
+          item.house.householdGroups[0].groupType
+        : null,
+    }));
+  }
+
+  async getMineHouse(userId: string, houseId: string) {
+    const house = await this.prisma.house.findFirst({
+      where: {
+        id: houseId,
+        memberRelations: {
+          some: {
+            userId,
+            status: {
+              in: ['ACTIVE', 'PENDING'],
+            },
+          },
+        },
+      },
+      include: {
+        community: true,
+        building: true,
+        householdGroups: {
+          include: {
+            memberRelations: {
+              include: {
+                user: true,
+              },
+              orderBy: {
+                createdAt: 'asc',
+              },
+            },
+          },
+          orderBy: {
+            startedAt: 'desc',
+          },
+        },
+        voteRepresentatives: {
+          where: {
+            status: 'ACTIVE',
+          },
+          include: {
+            representativeRelation: {
+              include: {
+                user: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+      },
+    });
+
+    if (!house) {
+      throw new BusinessException(
+        AppErrorCode.HOUSE_NOT_FOUND,
+        'House not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    return this.mapHouseDetail(house);
+  }
+
+  async listAdmin(query: AdminHouseListQueryDto) {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const skip = (page - 1) * pageSize;
+
+    const andWhere: any[] = [];
+
+    if (query.keyword?.trim()) {
+      const keyword = query.keyword.trim();
+      andWhere.push({
+        OR: [
+          { displayName: { contains: keyword } },
+          { roomNo: { contains: keyword } },
+          { building: { buildingName: { contains: keyword } } },
+        ],
+      });
+    }
+
+    if (query.communityId?.trim()) {
+      andWhere.push({ communityId: query.communityId.trim() });
+    }
+
+    if (query.buildingId?.trim()) {
+      andWhere.push({ buildingId: query.buildingId.trim() });
+    }
+
+    if (query.houseStatus?.trim()) {
+      andWhere.push({ houseStatus: query.houseStatus.trim() });
+    }
+
+    const where = andWhere.length > 0 ? { AND: andWhere } : undefined;
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.house.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          community: true,
+          building: true,
+          householdGroups: {
+            where: {
+              status: 'ACTIVE',
+            },
+          },
+          memberRelations: {
+            where: {
+              status: {
+                in: ['ACTIVE', 'PENDING'],
+              },
+            },
+            include: {
+              user: true,
+            },
+          },
+        },
+      }),
+      this.prisma.house.count({ where }),
+    ]);
+
+    return {
+      items: items.map((item) => this.mapHouseListItem(item)),
+      total,
+      page,
+      pageSize,
+    };
+  }
+
+  async getAdminDetail(houseId: string) {
+    const house = await this.prisma.house.findUnique({
+      where: { id: houseId },
+      include: {
+        community: true,
+        building: true,
+        householdGroups: {
+          include: {
+            memberRelations: {
+              include: {
+                user: true,
+              },
+              orderBy: {
+                createdAt: 'asc',
+              },
+            },
+          },
+          orderBy: {
+            startedAt: 'desc',
+          },
+        },
+        memberRelations: {
+          include: {
+            user: true,
+            householdGroup: true,
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+        },
+        voteRepresentatives: {
+          include: {
+            representativeRelation: {
+              include: {
+                user: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+      },
+    });
+
+    if (!house) {
+      throw new BusinessException(
+        AppErrorCode.HOUSE_NOT_FOUND,
+        'House not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    return this.mapHouseDetail(house);
+  }
+
+  async listCommunities() {
+    const items = await this.prisma.community.findMany({
+      orderBy: {
+        name: 'asc',
+      },
+      select: {
+        id: true,
+        name: true,
+        code: true,
+      },
+    });
+
+    return items;
+  }
+
+  async listBuildings(communityId?: string) {
+    const items = await this.prisma.building.findMany({
+      where: communityId ? { communityId } : undefined,
+      orderBy: {
+        buildingName: 'asc',
+      },
+      select: {
+        id: true,
+        communityId: true,
+        buildingName: true,
+        buildingCode: true,
+      },
+    });
+
+    return items;
+  }
+
+  async createAdmin(dto: CreateAdminHouseDto) {
+    await this.ensureCommunityAndBuilding(dto.communityId, dto.buildingId);
+
+    const house = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.house.create({
+        data: {
+          communityId: dto.communityId,
+          buildingId: dto.buildingId,
+          unitNo: dto.unitNo ?? '',
+          floorNo: dto.floorNo ?? null,
+          roomNo: dto.roomNo,
+          displayName: dto.displayName,
+          houseStatus: (dto.houseStatus as any) ?? 'SELF_OCCUPIED',
+          grossArea: dto.grossArea ?? null,
+        },
+      });
+
+      const defaultGroupType =
+        dto.houseStatus === 'RENTED' ? 'TENANT_HOUSEHOLD' : 'OWNER_HOUSEHOLD';
+
+      await tx.householdGroup.create({
+        data: {
+          houseId: created.id,
+          groupType: defaultGroupType as any,
+          status: 'ACTIVE',
+        },
+      });
+
+      return created;
+    });
+
+    return this.getAdminDetail(house.id);
+  }
+
+  async updateAdmin(id: string, dto: UpdateAdminHouseDto) {
+    await this.ensureHouseExists(id);
+
+    if (dto.communityId || dto.buildingId) {
+      const house = await this.prisma.house.findUnique({
+        where: { id },
+        select: {
+          communityId: true,
+          buildingId: true,
+        },
+      });
+
+      await this.ensureCommunityAndBuilding(
+        dto.communityId ?? house!.communityId,
+        dto.buildingId ?? house!.buildingId,
+      );
+    }
+
+    await this.prisma.house.update({
+      where: { id },
+      data: {
+        ...(dto.communityId ? { communityId: dto.communityId } : {}),
+        ...(dto.buildingId ? { buildingId: dto.buildingId } : {}),
+        ...(dto.unitNo !== undefined ? { unitNo: dto.unitNo ?? '' } : {}),
+        ...(dto.floorNo !== undefined ? { floorNo: dto.floorNo ?? null } : {}),
+        ...(dto.roomNo ? { roomNo: dto.roomNo } : {}),
+        ...(dto.displayName ? { displayName: dto.displayName } : {}),
+        ...(dto.houseStatus ? { houseStatus: dto.houseStatus as any } : {}),
+        ...(dto.grossArea !== undefined ? { grossArea: dto.grossArea ?? null } : {}),
+      },
+    });
+
+    return this.getAdminDetail(id);
+  }
+
+  async removeAdmin(id: string) {
+    await this.ensureHouseExists(id);
+
+    const [memberCount, identityCount, voteCount] = await this.prisma.$transaction([
+      this.prisma.houseMemberRelation.count({ where: { houseId: id } }),
+      this.prisma.identityApplication.count({ where: { houseId: id } }),
+      this.prisma.voteRepresentative.count({ where: { houseId: id } }),
+    ]);
+
+    if (memberCount > 0 || identityCount > 0 || voteCount > 0) {
+      throw new BusinessException(
+        AppErrorCode.INVALID_OPERATION,
+        'House has related data and cannot be deleted',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.householdGroup.deleteMany({
+        where: { houseId: id },
+      }),
+      this.prisma.house.delete({
+        where: { id },
+      }),
+    ]);
+
+    return {
+      id,
+      removed: true,
+    };
+  }
+
+  private mapHouseListItem(house: any) {
+    const primaryRelation = house.memberRelations.find((item: any) => item.isPrimaryRole);
+    const activeHousehold = house.householdGroups[0];
+
+    return {
+      id: house.id,
+      communityId: house.communityId,
+      communityName: house.community.name,
+      buildingId: house.buildingId,
+      buildingName: house.building.buildingName,
+      unitNo: house.unitNo,
+      roomNo: house.roomNo,
+      displayName: house.displayName,
+      houseStatus: house.houseStatus,
+      activeHouseholdType: activeHousehold
+        ? householdGroupLabelMap[activeHousehold.groupType] ?? activeHousehold.groupType
+        : null,
+      memberCount: house.memberRelations.length,
+      primaryRoleName: primaryRelation?.user?.realName ?? primaryRelation?.user?.nickname ?? null,
+      createdAt: house.createdAt,
+    };
+  }
+
+  private mapHouseDetail(house: any) {
+    return {
+      id: house.id,
+      communityId: house.communityId,
+      communityName: house.community.name,
+      buildingId: house.buildingId,
+      buildingName: house.building.buildingName,
+      unitNo: house.unitNo,
+      floorNo: house.floorNo,
+      roomNo: house.roomNo,
+      displayName: house.displayName,
+      houseStatus: house.houseStatus,
+      grossArea: house.grossArea,
+      createdAt: house.createdAt,
+      updatedAt: house.updatedAt,
+      householdGroups: house.householdGroups.map((group: any) => ({
+        id: group.id,
+        groupType: group.groupType,
+        groupTypeLabel: householdGroupLabelMap[group.groupType] ?? group.groupType,
+        status: group.status,
+        startedAt: group.startedAt,
+        endedAt: group.endedAt,
+        memberCount: group.memberRelations?.length ?? 0,
+      })),
+      members: house.memberRelations?.map((item: any) => ({
+        id: item.id,
+        userId: item.userId,
+        userName: item.user.realName ?? item.user.nickname ?? '未命名用户',
+        mobile: item.user.mobile,
+        relationType: item.relationType,
+        relationLabel: memberRelationLabelMap[item.relationType] ?? item.relationType,
+        householdGroupId: item.householdGroupId,
+        householdType: item.householdGroup
+          ? householdGroupLabelMap[item.householdGroup.groupType] ?? item.householdGroup.groupType
+          : null,
+        isPrimaryRole: item.isPrimaryRole,
+        canViewBill: item.canViewBill,
+        canPayBill: item.canPayBill,
+        canActAsAgent: item.canActAsAgent,
+        canJoinConsultation: item.canJoinConsultation,
+        canBeVoteDelegate: item.canBeVoteDelegate,
+        status: item.status,
+        effectiveAt: item.effectiveAt,
+        expiredAt: item.expiredAt,
+      })),
+      activeVoteRepresentatives: house.voteRepresentatives?.map((item: any) => ({
+        id: item.id,
+        scopeType: item.scopeType,
+        voteId: item.voteId,
+        effectiveAt: item.effectiveAt,
+        expiredAt: item.expiredAt,
+        representativeUserId: item.representativeRelation.userId,
+        representativeUserName:
+          item.representativeRelation.user.realName ??
+          item.representativeRelation.user.nickname ??
+          '未命名用户',
+      })),
+    };
+  }
+
+  private async ensureHouseExists(id: string) {
+    const house = await this.prisma.house.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!house) {
+      throw new BusinessException(
+        AppErrorCode.HOUSE_NOT_FOUND,
+        'House not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+  }
+
+  private async ensureCommunityAndBuilding(
+    communityId: string,
+    buildingId: string,
+  ) {
+    const [community, building] = await this.prisma.$transaction([
+      this.prisma.community.findUnique({
+        where: { id: communityId },
+        select: { id: true },
+      }),
+      this.prisma.building.findFirst({
+        where: {
+          id: buildingId,
+          communityId,
+        },
+        select: { id: true },
+      }),
+    ]);
+
+    if (!community || !building) {
+      throw new BusinessException(
+        AppErrorCode.INVALID_OPERATION,
+        'Community or building is invalid',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+}

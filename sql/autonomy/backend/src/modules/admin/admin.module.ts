@@ -5,6 +5,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AdminAuthController } from './admin-auth.controller';
 import { AdminAuthService } from './admin-auth.service';
 import { AdminJwtStrategy } from './strategies/admin-jwt.strategy';
+import { UserModule } from '../user/user.module';
+import { HouseModule } from '../house/house.module';
+import { MemberModule } from '../member/member.module';
+import { AdminUsersController } from './admin-users.controller';
+import { AdminHousesController } from './admin-houses.controller';
+import { AdminMembersController } from './admin-members.controller';
 
 @Module({
   imports: [
@@ -20,8 +26,16 @@ import { AdminJwtStrategy } from './strategies/admin-jwt.strategy';
         },
       }),
     }),
+    UserModule,
+    HouseModule,
+    MemberModule,
   ],
-  controllers: [AdminAuthController],
+  controllers: [
+    AdminAuthController,
+    AdminUsersController,
+    AdminHousesController,
+    AdminMembersController,
+  ],
   providers: [AdminAuthService, AdminJwtStrategy],
 })
 export class AdminModule {}

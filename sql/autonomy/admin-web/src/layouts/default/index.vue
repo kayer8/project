@@ -2,7 +2,16 @@
   <div class="default-layout">
     <aside class="sidebar">
       <div class="brand">物业自治</div>
-      <RouterLink class="nav-link" to="/dashboard">工作台</RouterLink>
+      <nav class="nav-list">
+        <RouterLink
+          v-for="item in menuItems"
+          :key="item.path"
+          class="nav-link"
+          :to="item.path"
+        >
+          {{ item.title }}
+        </RouterLink>
+      </nav>
     </aside>
     <main class="content">
       <RouterView />
@@ -10,7 +19,9 @@
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { menuItems } from '@/config/menu';
+</script>
 
 <style scoped>
 .default-layout {
@@ -39,6 +50,17 @@
   color: #dbe4f0;
   text-decoration: none;
   background: rgba(255, 255, 255, 0.04);
+}
+
+.nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nav-link.router-link-active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
 }
 
 .content {
