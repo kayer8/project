@@ -1,0 +1,2 @@
+[console_scripts]
+polymarket-edge = polymarket_edge.cli:app

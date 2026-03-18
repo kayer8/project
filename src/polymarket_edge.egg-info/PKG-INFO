@@ -1,0 +1,148 @@
+Metadata-Version: 2.4
+Name: polymarket-edge
+Version: 0.1.0
+Summary: Negative-risk bundle scanner and execution framework for Polymarket
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: httpx>=0.28.1
+Requires-Dist: python-dotenv>=1.0.1
+Requires-Dist: rich>=14.0.0
+Requires-Dist: typer>=0.24.1
+Provides-Extra: trade
+Requires-Dist: py-clob-client>=0.34.6; extra == "trade"
+Provides-Extra: dev
+Requires-Dist: pytest>=9.0.0; extra == "dev"
+
+# Polymarket Edge
+
+`稳赚不赔` 在 Polymarket 上并不存在。这个项目做的是更现实的一类机会筛选: 只扫描官方公开接口里已经标成 `negRisk` 的事件，检查 `buy-all-YES` 是否出现了明显错价，也就是同一事件全部结果各买一份 YES 后，总成本是否低于最终必然兑付的 `1 USDC`。
+
+默认实现是保守版:
+
+- 只扫描负风险事件
+- 默认跳过 `negRiskAugmented` 事件
+- 默认跳过 `feesEnabled=true` 的市场
+- 默认跳过 spread 过宽、深度不够、bundle size 低于最小下单量的腿
+- 默认只做扫描和 `paper-trade`
+- `live-trade` 需要显式确认你有资格交易，本项目不提供任何地理限制绕过能力
+
+## Strategy
+
+项目实现的是最容易验证的一条路径:
+
+1. 从 `gamma-api.polymarket.com/events` 拉取活跃事件。
+2. 只保留带 `negRisk` / `enableNegRisk` 的事件。
+3. 拉取每条腿 YES token 的 order book。
+4. 按真实盘口深度模拟买入固定 `bundle_size`。
+5. 计算:
+
+   - `total_cost`: 买齐所有 YES 的总成本
+   - `payout`: 一组 bundle 到结算时固定兑付的金额，等于 `bundle_size`
+   - `gross_profit = payout - total_cost`
+   - `profit_ratio = gross_profit / payout`
+   - `roi_on_cost = gross_profit / total_cost`
+   - `annualized_simple`
+
+这不是无风险承诺。主要风险仍然包括:
+
+- 市场并非真正完整覆盖，尤其是 augmented / placeholder outcomes
+- 订单簿在你下单前就变化
+- 多腿下单不是原子执行
+- 资金占用直到结算
+- 结算争议、规则误读、市场暂停
+- 合规和地区可用性限制
+
+## Install
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -e .[dev]
+```
+
+如果你确实要接官方下单客户端:
+
+```bash
+pip install -e .[trade]
+```
+
+## Usage
+
+基础扫描:
+
+```bash
+polymarket-edge scan
+```
+
+只看某个事件:
+
+```bash
+polymarket-edge scan --event-slug harvey-weinstein-prison-time
+```
+
+调高门槛:
+
+```bash
+polymarket-edge scan --bundle-size 10 --min-profit-ratio 0.02 --min-profit-usdc 2
+```
+
+输出 JSON:
+
+```bash
+polymarket-edge scan --json --json-output runs/latest_scan.json
+```
+
+纸面执行:
+
+```bash
+polymarket-edge paper-trade --rank 1
+```
+
+真实执行前需要先配置 `.env`，并确认你有资格交易:
+
+```bash
+POLYMARKET_CONFIRM_NON_US=1
+POLYMARKET_PRIVATE_KEY=...
+POLYMARKET_FUNDER=...
+```
+
+然后:
+
+```bash
+polymarket-edge live-trade --rank 1 --execute
+```
+
+## Config
+
+参考 [`.env.example`](/e:/ai-work/project/.env.example)。
+
+关键参数:
+
+- `PM_BUNDLE_SIZE`: 每条腿买多少 share
+- `PM_MIN_PROFIT_RATIO`: 最低毛利率，相对最终兑付金额
+- `PM_MIN_PROFIT_USDC`: 最低绝对毛利
+- `PM_MAX_DAYS_TO_RESOLUTION`: 最长持有天数
+- `PM_MAX_SPREAD`: 单腿最大 spread
+- `PM_INCLUDE_AUGMENTED`: 是否包含 augmented 事件
+- `PM_INCLUDE_FEE_ENABLED`: 是否包含 fee-enabled 市场
+
+## Project Layout
+
+```text
+src/polymarket_edge/client.py      Public API client
+src/polymarket_edge/scanner.py     Negative-risk bundle logic
+src/polymarket_edge/executors.py   Paper and live executors
+src/polymarket_edge/cli.py         CLI entry points
+tests/                             Unit tests
+```
+
+## Sources
+
+项目实现和风控边界基于 Polymarket 当前公开文档与接口:
+
+- API overview: https://docs.polymarket.com/developers/CLOB/introduction
+- Gamma markets/events schema: https://docs.polymarket.com/developers/gamma-markets-api/get-markets
+- Order book endpoints: https://docs.polymarket.com/developers/CLOB/orders/get-order-book-summary
+- Batch order books: https://docs.polymarket.com/developers/CLOB/orders/get-multiple-order-books-summaries
+- Quickstart / official client flow: https://docs.polymarket.com/quickstart/orders/first-order
+- Negative risk: https://docs.polymarket.com/developers/neg-risk/overview
