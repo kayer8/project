@@ -1,7 +1,7 @@
 <template>
   <PageContainer
-    title="用户数据管理"
-    description="接入真实后台接口，支持居民账号的筛选、分页、新建、编辑和删除。"
+    title="成员关系管理"
+    description="支持住户成员关系的筛选、分页、新建、编辑和删除，并关联到真实用户与房屋。"
   >
     <t-row :gutter="[16, 16]">
       <t-col :span="3" v-for="item in summaryCards" :key="item.title">
@@ -14,44 +14,54 @@
 
     <t-card title="筛选条件">
       <div class="toolbar">
-        <t-input v-model="filters.keyword" clearable placeholder="搜索姓名、昵称、手机号、OpenID" />
-        <t-select v-model="filters.status" :options="userStatusOptions" />
+        <t-input v-model="filters.keyword" clearable placeholder="搜索姓名、昵称、手机号或房屋" />
         <t-select v-model="filters.communityId" :options="communityOptions" />
+        <t-select v-model="filters.relationType" :options="relationTypeOptions" />
+        <t-select v-model="filters.status" :options="memberStatusOptions" />
         <div class="toolbar-actions">
           <t-button theme="primary" @click="handleSearch">查询</t-button>
           <t-button variant="outline" @click="resetFilters">重置</t-button>
-          <t-button variant="outline" theme="primary" @click="openCreate">新建用户</t-button>
+          <t-button variant="outline" theme="primary" @click="openCreate">新建关系</t-button>
         </div>
       </div>
     </t-card>
 
-    <t-card title="用户列表">
-      <t-table :data="users" :columns="columns" row-key="id" size="small" table-layout="fixed">
+    <t-card title="成员列表">
+      <t-table :data="members" :columns="columns" row-key="id" size="small" table-layout="fixed">
         <template #user="{ row }">
-          <div class="user-cell">
-            <div class="user-name">{{ row.realName }}</div>
-            <div class="user-sub">{{ row.nickname }}</div>
-            <div class="user-sub">{{ row.id }}</div>
+          <div class="primary-cell">
+            <div class="primary-name">{{ row.userName }}</div>
+            <div class="muted-text">{{ formatText(row.nickname, '无昵称') }}</div>
+            <div class="muted-text">{{ formatText(row.mobile, '未绑定手机号') }}</div>
+          </div>
+        </template>
+
+        <template #location="{ row }">
+          <div class="primary-cell">
+            <div class="primary-name">{{ row.communityName }}</div>
+            <div class="muted-text">{{ row.buildingName }} / {{ row.houseDisplayName }}</div>
+          </div>
+        </template>
+
+        <template #relation="{ row }">
+          <div class="tag-group">
+            <t-tag v-if="row.isPrimaryRole" theme="primary" variant="light">主角色</t-tag>
+            <span>{{ memberRelationLabelMap[row.relationType] }}</span>
           </div>
         </template>
 
         <template #status="{ row }">
-          <t-tag :theme="getUserStatusTheme(row.status)" variant="light">
-            {{ userStatusLabelMap[row.status] }}
+          <t-tag :theme="getStatusTheme(row.status)" variant="light">
+            {{ memberRelationStatusLabelMap[row.status] }}
           </t-tag>
         </template>
 
-        <template #communities="{ row }">
-          <div class="tag-group">
-            <t-tag v-for="community in row.communityNames" :key="community" variant="light">
-              {{ community }}
-            </t-tag>
-            <span v-if="row.communityNames.length === 0" class="muted-text">未绑定社区</span>
-          </div>
+        <template #effectiveAt="{ row }">
+          {{ formatDateTime(row.effectiveAt) }}
         </template>
 
-        <template #lastLoginAt="{ row }">
-          {{ formatDateTime(row.lastLoginAt) }}
+        <template #expiredAt="{ row }">
+          {{ formatDateTime(row.expiredAt, '未失效') }}
         </template>
 
         <template #actions="{ row }">
@@ -75,10 +85,10 @@
       </div>
     </t-card>
 
-    <UserFormDialog
+    <MemberFormDialog
       v-model:visible="dialogVisible"
       :mode="dialogMode"
-      :initial-value="editingUser"
+      :initial-value="editingMember"
       @success="handleDialogSuccess"
     />
   </PageContainer>
@@ -89,24 +99,31 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import PageContainer from '@/components/PageContainer/index.vue';
 import { fetchCommunityOptions } from '@/modules/house/api';
-import { fetchUserDetail, fetchUserList, removeUser } from '@/modules/user/api';
-import type { UserDetail, UserListItem } from '@/modules/user/types';
+import { fetchMemberDetail, fetchMemberList, removeMember } from '@/modules/member/api';
+import type { MemberDetail, MemberListItem } from '@/modules/member/types';
 import {
-  userStatusLabelMap,
-  userStatusOptions,
-} from '@/modules/user/types';
-import { formatDateTime } from '@/utils/format';
-import UserFormDialog from './components/UserFormDialog.vue';
+  memberRelationLabelMap,
+  memberRelationOptions,
+  memberRelationStatusLabelMap,
+  memberStatusOptions,
+} from '@/modules/member/types';
+import { formatDateTime, formatText } from '@/utils/format';
+import MemberFormDialog from './components/MemberFormDialog.vue';
 
 const router = useRouter();
-const users = ref<UserListItem[]>([]);
-const editingUser = ref<UserDetail | null>(null);
+const members = ref<MemberListItem[]>([]);
+const editingMember = ref<MemberDetail | null>(null);
 const dialogVisible = ref(false);
 const dialogMode = ref<'create' | 'edit'>('create');
 const communityOptions = ref([{ label: '全部社区', value: 'ALL' }]);
+const relationTypeOptions = [
+  { label: '全部关系', value: 'ALL' },
+  ...memberRelationOptions,
+];
 const filters = reactive({
   keyword: '',
   status: 'ALL',
+  relationType: 'ALL',
   communityId: 'ALL',
 });
 const pagination = reactive({
@@ -116,37 +133,40 @@ const pagination = reactive({
 });
 
 const columns = [
-  { colKey: 'user', title: '用户', width: 220 },
-  { colKey: 'mobile', title: '手机号', width: 150 },
+  { colKey: 'user', title: '用户', minWidth: 200 },
+  { colKey: 'location', title: '社区 / 房屋', minWidth: 220 },
+  { colKey: 'householdType', title: '住户组', width: 140 },
+  { colKey: 'relation', title: '关系', width: 140 },
   { colKey: 'status', title: '状态', width: 100 },
-  { colKey: 'primaryRoleLabel', title: '主关系', width: 120 },
-  { colKey: 'houseCount', title: '关联房屋', width: 100 },
-  { colKey: 'communities', title: '所属社区', minWidth: 220 },
-  { colKey: 'lastLoginAt', title: '最近登录', width: 160 },
+  { colKey: 'effectiveAt', title: '生效时间', width: 160 },
+  { colKey: 'expiredAt', title: '失效时间', width: 160 },
   { colKey: 'actions', title: '操作', width: 180, fixed: 'right' },
 ];
 
 const summaryCards = computed(() => {
-  const activeCount = users.value.filter((item) => item.status === 'ACTIVE').length;
-  const disabledCount = users.value.filter((item) => item.status === 'DISABLED').length;
-  const houseCount = users.value.reduce((sum, item) => sum + item.houseCount, 0);
+  const activeCount = members.value.filter((item) => item.status === 'ACTIVE').length;
+  const primaryCount = members.value.filter((item) => item.isPrimaryRole).length;
+  const expiringCount = members.value.filter((item) => Boolean(item.expiredAt)).length;
 
   return [
-    { title: '用户总数', value: pagination.total, description: '按接口分页总量展示' },
-    { title: '当前页正常', value: activeCount, description: '当前页正常账号数量' },
-    { title: '当前页停用', value: disabledCount, description: '当前页停用账号数量' },
-    { title: '当前页关联房屋', value: houseCount, description: '当前页聚合的房屋关系数' },
+    { title: '关系总数', value: pagination.total, description: '按接口分页总量展示' },
+    { title: '当前页有效', value: activeCount, description: '当前页有效成员关系数量' },
+    { title: '当前页主角色', value: primaryCount, description: '当前页主角色关系数量' },
+    { title: '当前页有失效日', value: expiringCount, description: '当前页设置了失效时间的关系' },
   ];
 });
 
-function getUserStatusTheme(status: UserListItem['status']) {
+function getStatusTheme(status: MemberListItem['status']) {
   if (status === 'ACTIVE') {
     return 'success';
   }
-  if (status === 'DISABLED') {
+  if (status === 'PENDING') {
     return 'warning';
   }
-  return 'danger';
+  if (status === 'REJECTED' || status === 'REMOVED') {
+    return 'danger';
+  }
+  return 'default';
 }
 
 async function loadCommunities() {
@@ -158,15 +178,16 @@ async function loadCommunities() {
 }
 
 async function loadList() {
-  const result = await fetchUserList({
+  const result = await fetchMemberList({
     page: pagination.page,
     pageSize: pagination.pageSize,
     keyword: filters.keyword.trim() || undefined,
     status: filters.status === 'ALL' ? undefined : filters.status,
+    relationType: filters.relationType === 'ALL' ? undefined : filters.relationType,
     communityId: filters.communityId === 'ALL' ? undefined : filters.communityId,
   });
 
-  users.value = result.items;
+  members.value = result.items;
   pagination.total = result.total;
 }
 
@@ -178,6 +199,7 @@ function handleSearch() {
 function resetFilters() {
   filters.keyword = '';
   filters.status = 'ALL';
+  filters.relationType = 'ALL';
   filters.communityId = 'ALL';
   pagination.page = 1;
   void loadList();
@@ -190,35 +212,35 @@ function handlePageChange(pageInfo: { current: number; pageSize: number }) {
 }
 
 function goDetail(id: string) {
-  void router.push(`/users/${id}`);
+  void router.push(`/members/${id}`);
 }
 
 function openCreate() {
   dialogMode.value = 'create';
-  editingUser.value = null;
+  editingMember.value = null;
   dialogVisible.value = true;
 }
 
 async function openEdit(id: string) {
   dialogMode.value = 'edit';
-  editingUser.value = await fetchUserDetail(id);
+  editingMember.value = await fetchMemberDetail(id);
   dialogVisible.value = true;
 }
 
 async function handleDelete(id: string) {
-  if (!window.confirm('确认删除这个用户吗？')) {
+  if (!window.confirm('确认删除这个成员关系吗？')) {
     return;
   }
 
-  await removeUser(id);
-  if (users.value.length === 1 && pagination.page > 1) {
+  await removeMember(id);
+  if (members.value.length === 1 && pagination.page > 1) {
     pagination.page -= 1;
   }
   await loadList();
 }
 
 async function handleDialogSuccess() {
-  editingUser.value = null;
+  editingMember.value = null;
   await loadList();
 }
 
@@ -231,7 +253,7 @@ onMounted(async () => {
 <style scoped>
 .toolbar {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr auto;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
   gap: 12px;
 }
 
@@ -247,19 +269,18 @@ onMounted(async () => {
 }
 
 .summary-desc,
-.user-sub,
 .muted-text {
   margin-top: 8px;
   color: #64748b;
 }
 
-.user-cell {
+.primary-cell {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.user-name {
+.primary-name {
   font-weight: 600;
 }
 

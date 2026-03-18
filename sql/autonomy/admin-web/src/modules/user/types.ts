@@ -26,8 +26,10 @@ export type ReviewStatus =
   | 'SUPPLEMENT_REQUIRED';
 
 export interface CommunityRoleRecord {
+  communityId?: string;
   communityName: string;
   roleType: CommunityRoleType;
+  roleLabel?: string;
   status: CommunityRoleStatus;
   effectiveAt: string;
   expiredAt?: string | null;
@@ -35,10 +37,14 @@ export interface CommunityRoleRecord {
 
 export interface HouseRelationRecord {
   id: string;
+  houseId?: string;
   houseDisplayName: string;
+  communityId?: string;
   communityName: string;
+  householdGroupId?: string;
   householdType: string;
   relationType: MemberRelationType;
+  relationLabel?: string;
   isPrimaryRole: boolean;
   canViewBill: boolean;
   canPayBill: boolean;
@@ -54,9 +60,11 @@ export interface IdentityApplicationRecord {
   id: string;
   applicationType: IdentityApplicationType;
   status: ReviewStatus;
+  houseId?: string | null;
   houseDisplayName?: string | null;
   submittedAt: string;
   reviewedAt?: string | null;
+  rejectReason?: string | null;
 }
 
 export interface UserListItem {
@@ -82,6 +90,33 @@ export interface UserDetail extends UserListItem {
   houseRelations: HouseRelationRecord[];
   identityApplications: IdentityApplicationRecord[];
 }
+
+export interface PaginatedUserList {
+  items: UserListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface AdminUserListQuery {
+  page?: number;
+  pageSize?: number;
+  keyword?: string;
+  status?: string;
+  communityId?: string;
+}
+
+export interface CreateAdminUserPayload {
+  wechatOpenid: string;
+  wechatUnionid?: string;
+  nickname?: string;
+  realName?: string;
+  mobile?: string;
+  avatarUrl?: string;
+  status?: UserAccountStatus;
+}
+
+export type UpdateAdminUserPayload = Partial<CreateAdminUserPayload>;
 
 export const userStatusLabelMap: Record<UserAccountStatus, string> = {
   ACTIVE: '正常',
@@ -131,3 +166,10 @@ export const reviewStatusLabelMap: Record<ReviewStatus, string> = {
   WITHDRAWN: '已撤回',
   SUPPLEMENT_REQUIRED: '待补充资料',
 };
+
+export const userStatusOptions = [
+  { label: '全部状态', value: 'ALL' },
+  { label: userStatusLabelMap.ACTIVE, value: 'ACTIVE' },
+  { label: userStatusLabelMap.DISABLED, value: 'DISABLED' },
+  { label: userStatusLabelMap.DELETED, value: 'DELETED' },
+];

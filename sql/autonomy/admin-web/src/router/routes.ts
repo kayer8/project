@@ -3,6 +3,8 @@ import DefaultLayout from '@/layouts/default/index.vue';
 import BlankLayout from '@/layouts/blank/index.vue';
 import dashboardRoutes from './modules/dashboard';
 import userRoutes from './modules/user';
+import houseRoutes from './modules/house';
+import memberRoutes from './modules/member';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -21,7 +23,7 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     component: DefaultLayout,
     redirect: '/dashboard',
-    children: [...dashboardRoutes, ...userRoutes],
+    children: [...dashboardRoutes, ...userRoutes, ...houseRoutes, ...memberRoutes],
   },
   {
     path: '/:pathMatch(.*)*',

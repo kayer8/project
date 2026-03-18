@@ -1,182 +1,46 @@
-import type { UserDetail, UserListItem } from './types';
+import { request } from '@/api/request';
+import type {
+  AdminUserListQuery,
+  CreateAdminUserPayload,
+  PaginatedUserList,
+  UpdateAdminUserPayload,
+  UserDetail,
+} from './types';
 
-const mockUserDetails: UserDetail[] = [
-  {
-    id: 'user_001',
-    realName: '张明',
-    nickname: '明叔',
-    mobile: '13800001111',
-    status: 'ACTIVE',
-    registerSource: 'wechat_miniapp',
-    communityNames: ['海棠花园'],
-    houseCount: 2,
-    primaryRoleLabel: '主业主',
-    lastLoginAt: '2026-03-18 09:10',
-    createdAt: '2026-03-01 10:22',
-    wechatOpenid: 'wx_openid_user_001',
-    wechatUnionid: 'wx_unionid_user_001',
-    mobileVerifiedAt: '2026-03-01 10:25',
-    deletedAt: null,
-    communityRoles: [
-      {
-        communityName: '海棠花园',
-        roleType: 'COMMITTEE_MEMBER',
-        status: 'ACTIVE',
-        effectiveAt: '2026-03-05 09:00',
-        expiredAt: null,
-      },
-    ],
-    houseRelations: [
-      {
-        id: 'rel_001',
-        houseDisplayName: '2栋-1单元-1202',
-        communityName: '海棠花园',
-        householdType: '业主住户组',
-        relationType: 'MAIN_OWNER',
-        isPrimaryRole: true,
-        canViewBill: true,
-        canPayBill: true,
-        canActAsAgent: false,
-        canJoinConsultation: true,
-        canBeVoteDelegate: true,
-        status: 'ACTIVE',
-        effectiveAt: '2026-03-01 10:30',
-        expiredAt: null,
-      },
-      {
-        id: 'rel_002',
-        houseDisplayName: '3栋-2单元-801',
-        communityName: '海棠花园',
-        householdType: '业主住户组',
-        relationType: 'FAMILY_MEMBER',
-        isPrimaryRole: false,
-        canViewBill: true,
-        canPayBill: false,
-        canActAsAgent: false,
-        canJoinConsultation: true,
-        canBeVoteDelegate: false,
-        status: 'ACTIVE',
-        effectiveAt: '2026-03-06 14:00',
-        expiredAt: null,
-      },
-    ],
-    identityApplications: [
-      {
-        id: 'ia_001',
-        applicationType: 'OWNER_VERIFY',
-        status: 'APPROVED',
-        houseDisplayName: '2栋-1单元-1202',
-        submittedAt: '2026-03-01 10:10',
-        reviewedAt: '2026-03-01 15:00',
-      },
-      {
-        id: 'ia_002',
-        applicationType: 'COMMITTEE_VERIFY',
-        status: 'APPROVED',
-        houseDisplayName: null,
-        submittedAt: '2026-03-05 08:40',
-        reviewedAt: '2026-03-05 12:00',
-      },
-    ],
-  },
-  {
-    id: 'user_002',
-    realName: '李婷',
-    nickname: '婷婷',
-    mobile: '13900002222',
-    status: 'ACTIVE',
-    registerSource: 'wechat_miniapp',
-    communityNames: ['海棠花园'],
-    houseCount: 1,
-    primaryRoleLabel: '主租户',
-    lastLoginAt: '2026-03-17 20:33',
-    createdAt: '2026-03-03 18:00',
-    wechatOpenid: 'wx_openid_user_002',
-    wechatUnionid: null,
-    mobileVerifiedAt: '2026-03-03 18:03',
-    deletedAt: null,
-    communityRoles: [],
-    houseRelations: [
-      {
-        id: 'rel_003',
-        houseDisplayName: '5栋-1单元-1601',
-        communityName: '海棠花园',
-        householdType: '租户住户组',
-        relationType: 'MAIN_TENANT',
-        isPrimaryRole: true,
-        canViewBill: true,
-        canPayBill: true,
-        canActAsAgent: false,
-        canJoinConsultation: true,
-        canBeVoteDelegate: true,
-        status: 'ACTIVE',
-        effectiveAt: '2026-03-03 18:20',
-        expiredAt: '2027-03-02 23:59',
-      },
-    ],
-    identityApplications: [
-      {
-        id: 'ia_003',
-        applicationType: 'TENANT_VERIFY',
-        status: 'APPROVED',
-        houseDisplayName: '5栋-1单元-1601',
-        submittedAt: '2026-03-03 18:05',
-        reviewedAt: '2026-03-04 11:30',
-      },
-    ],
-  },
-  {
-    id: 'user_003',
-    realName: '周阿姨',
-    nickname: '周姨',
-    mobile: null,
-    status: 'DISABLED',
-    registerSource: 'wechat_miniapp',
-    communityNames: ['紫荆苑'],
-    houseCount: 1,
-    primaryRoleLabel: '代办人',
-    lastLoginAt: null,
-    createdAt: '2026-02-25 09:12',
-    wechatOpenid: 'wx_openid_user_003',
-    wechatUnionid: null,
-    mobileVerifiedAt: null,
-    deletedAt: null,
-    communityRoles: [],
-    houseRelations: [
-      {
-        id: 'rel_004',
-        houseDisplayName: '1栋-2单元-402',
-        communityName: '紫荆苑',
-        householdType: '业主住户组',
-        relationType: 'AGENT',
-        isPrimaryRole: false,
-        canViewBill: true,
-        canPayBill: false,
-        canActAsAgent: true,
-        canJoinConsultation: false,
-        canBeVoteDelegate: false,
-        status: 'ACTIVE',
-        effectiveAt: '2026-02-25 09:20',
-        expiredAt: null,
-      },
-    ],
-    identityApplications: [
-      {
-        id: 'ia_004',
-        applicationType: 'OWNER_VERIFY',
-        status: 'REJECTED',
-        houseDisplayName: '1栋-2单元-402',
-        submittedAt: '2026-02-25 09:10',
-        reviewedAt: '2026-02-25 16:00',
-      },
-    ],
-  },
-];
-
-export async function fetchUserList(): Promise<UserListItem[]> {
-  return mockUserDetails.map(({ communityRoles, houseRelations, identityApplications, ...item }) => item);
+export function fetchUserList(params: AdminUserListQuery) {
+  return request<PaginatedUserList>({
+    url: '/users',
+    method: 'get',
+    params,
+  });
 }
 
-export async function fetchUserDetail(id: string): Promise<UserDetail | null> {
-  return mockUserDetails.find((item) => item.id === id) ?? null;
+export function fetchUserDetail(id: string) {
+  return request<UserDetail>({
+    url: `/users/${id}`,
+    method: 'get',
+  });
+}
+
+export function createUser(payload: CreateAdminUserPayload) {
+  return request<UserDetail>({
+    url: '/users',
+    method: 'post',
+    data: payload,
+  });
+}
+
+export function updateUser(id: string, payload: UpdateAdminUserPayload) {
+  return request<UserDetail>({
+    url: `/users/${id}`,
+    method: 'patch',
+    data: payload,
+  });
+}
+
+export function removeUser(id: string) {
+  return request<{ id: string; removed: boolean }>({
+    url: `/users/${id}`,
+    method: 'delete',
+  });
 }
