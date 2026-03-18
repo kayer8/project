@@ -1,0 +1,12 @@
+{
+  "name": "autonomy-wechat",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "miniprogram-api-typings": "^3.12.0",
+    "typescript": "^5.3.3"
+  }
+}

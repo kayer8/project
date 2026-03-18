@@ -1,0 +1,61 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id         String   @id @default(uuid())
+  openid     String   @unique
+  unionid    String?
+  nickname   String?
+  avatar_url String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("users")
+}
+
+model AdminRole {
+  id               String   @id @default(uuid())
+  name             String   @unique
+  permissions_json Json
+  created_at       DateTime @default(now())
+
+  admins AdminUser[]
+
+  @@map("admin_roles")
+}
+
+model AdminUser {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password_hash String?
+  name          String
+  role_id       String
+  role          AdminRole @relation(fields: [role_id], references: [id])
+  is_active     Boolean   @default(true)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  audit_logs AuditLog[] @relation("AdminActor")
+
+  @@map("admin_users")
+}
+
+model AuditLog {
+  id             String    @id @default(uuid())
+  actor_admin_id String
+  actor          AdminUser @relation("AdminActor", fields: [actor_admin_id], references: [id])
+  action         String
+  resource_type  String
+  resource_id    String
+  diff_json      Json?
+  created_at     DateTime  @default(now())
+
+  @@index([resource_type, resource_id])
+  @@map("audit_logs")
+}

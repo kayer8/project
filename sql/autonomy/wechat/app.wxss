@@ -1,0 +1,11 @@
+page {
+  background: #f6f8fb;
+  color: #1f2937;
+  font-family: 'PingFang SC', sans-serif;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 24rpx;
+  box-shadow: 0 12rpx 36rpx rgba(15, 23, 42, 0.06);
+}

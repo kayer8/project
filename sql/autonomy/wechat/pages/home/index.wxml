@@ -1,0 +1,13 @@
+<view class="page">
+  <view class="hero card">
+    <view class="hero-title">物业自治小程序</view>
+    <view class="hero-subtitle">居民端骨架已建立，后续在这里接入认证、投票、公开信息和家庭成员管理。</view>
+  </view>
+
+  <view class="section-list">
+    <view class="section-item card" wx:for="{{sections}}" wx:key="*this">
+      <view class="section-name">{{item}}</view>
+      <view class="section-desc">等待接入正式页面与接口</view>
+    </view>
+  </view>
+</view>
