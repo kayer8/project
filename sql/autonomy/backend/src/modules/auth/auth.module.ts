@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { WechatService } from './wechat.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { UserModule } from '../user/user.module';
+import { HouseModule } from '../house/house.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { UserModule } from '../user/user.module';
       }),
     }),
     UserModule,
+    HouseModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, WechatService, JwtStrategy],

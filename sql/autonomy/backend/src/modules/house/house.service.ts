@@ -286,6 +286,25 @@ export class HouseService {
     return items;
   }
 
+  async listRegistrationHouses(buildingId: string) {
+    await this.ensureBuildingExists(buildingId);
+
+    return this.prisma.house.findMany({
+      where: {
+        buildingId,
+      },
+      orderBy: [{ floorNo: 'asc' }, { roomNo: 'asc' }],
+      select: {
+        id: true,
+        buildingId: true,
+        displayName: true,
+        floorNo: true,
+        roomNo: true,
+        houseStatus: true,
+      },
+    });
+  }
+
   async createAdmin(dto: CreateAdminHouseDto) {
     await this.ensureBuildingExists(dto.buildingId);
 
@@ -468,7 +487,7 @@ export class HouseService {
     }
   }
 
-  private async ensureBuildingExists(buildingId: string) {
+  async ensureBuildingExists(buildingId: string) {
     const building = await this.prisma.building.findUnique({
       where: { id: buildingId },
       select: { id: true },

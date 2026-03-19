@@ -85,6 +85,19 @@ enum ReviewStatus {
   SUPPLEMENT_REQUIRED
 }
 
+enum ResidentArchiveStatus {
+  ACTIVE
+  DISABLED
+  SYNCED
+}
+
+enum RegistrationRequestStatus {
+  PENDING
+  REVIEWED
+  REJECTED
+  CANCELLED
+}
+
 enum MemberChangeRequestType {
   ADD_MEMBER
   REMOVE_MEMBER
@@ -134,6 +147,8 @@ model User {
   memberChangeRequestsTarget MemberChangeRequest[] @relation("MemberChangeTarget")
   createdVoteRepresentatives VoteRepresentative[]  @relation("VoteRepresentativeCreatorUser")
   auditLogs                  AuditLog[]            @relation("AuditActorUser")
+  matchedResidentArchives    ResidentArchive[]     @relation("ResidentArchiveMatchedUser")
+  registrationRequests       RegistrationRequest[] @relation("UserRegistrationRequests")
 
   @@index([status])
   @@index([createdAt])
@@ -197,6 +212,8 @@ model Building {
   updatedAt    DateTime       @updatedAt @map("updated_at")
 
   houses House[]
+  residentArchives    ResidentArchive[]
+  registrationRequests RegistrationRequest[]
 
   @@unique([buildingCode])
   @@index([status])
@@ -221,6 +238,8 @@ model House {
   identityApplications IdentityApplication[]
   memberChangeRequests MemberChangeRequest[]
   voteRepresentatives  VoteRepresentative[]
+  residentArchives     ResidentArchive[]
+  registrationRequests RegistrationRequest[]
 
   @@unique([buildingId, unitNo, roomNo])
   @@index([buildingId])
@@ -322,6 +341,51 @@ model IdentityApplication {
   @@index([communityId, status])
   @@index([houseId, status])
   @@map("identity_applications")
+}
+
+model ResidentArchive {
+  id            String               @id @default(uuid())
+  mobile        String               @db.VarChar(20)
+  realName      String?              @map("real_name") @db.VarChar(50)
+  buildingId    String?              @map("building_id")
+  building      Building?            @relation(fields: [buildingId], references: [id])
+  houseId       String?              @map("house_id")
+  house         House?               @relation(fields: [houseId], references: [id])
+  relationType  MemberRelationType?  @map("relation_type")
+  relationLabel String?              @map("relation_label") @db.VarChar(50)
+  status        ResidentArchiveStatus @default(ACTIVE)
+  matchedUserId String?              @map("matched_user_id")
+  matchedUser   User?                @relation("ResidentArchiveMatchedUser", fields: [matchedUserId], references: [id])
+  matchedAt     DateTime?            @map("matched_at")
+  remark        String?              @db.VarChar(255)
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+
+  @@index([mobile, status])
+  @@index([houseId, status])
+  @@index([matchedUserId, status])
+  @@map("resident_archives")
+}
+
+model RegistrationRequest {
+  id          String                    @id @default(uuid())
+  userId      String                    @map("user_id")
+  user        User                      @relation("UserRegistrationRequests", fields: [userId], references: [id])
+  mobile      String                    @db.VarChar(20)
+  buildingId  String                    @map("building_id")
+  building    Building                   @relation(fields: [buildingId], references: [id])
+  houseId     String?                   @map("house_id")
+  house       House?                    @relation(fields: [houseId], references: [id])
+  status      RegistrationRequestStatus @default(PENDING)
+  reviewNote  String?                   @map("review_note") @db.VarChar(255)
+  submittedAt DateTime                  @default(now()) @map("submitted_at")
+  createdAt   DateTime                  @default(now()) @map("created_at")
+  updatedAt   DateTime                  @updatedAt @map("updated_at")
+
+  @@index([userId, status])
+  @@index([mobile, status])
+  @@index([buildingId, status])
+  @@map("registration_requests")
 }
 
 model MemberChangeRequest {

@@ -65,6 +65,16 @@ export class UserService {
             createdAt: 'desc',
           },
         },
+        registrationRequests: {
+          include: {
+            building: true,
+            house: true,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 1,
+        },
       },
     });
 
@@ -168,6 +178,12 @@ export class UserService {
     });
   }
 
+  findByMobile(mobile: string) {
+    return this.prisma.user.findUnique({
+      where: { mobile },
+    });
+  }
+
   async createAdmin(dto: CreateAdminUserDto) {
     const user = await this.prisma.user.create({
       data: {
@@ -226,6 +242,7 @@ export class UserService {
     nickname?: string;
     avatarUrl?: string;
     mobile?: string;
+    realName?: string;
   }) {
     return this.prisma.user.create({
       data: {
@@ -234,20 +251,34 @@ export class UserService {
         nickname: params.nickname ?? '未命名用户',
         avatarUrl: params.avatarUrl ?? null,
         mobile: params.mobile ?? null,
+        realName: params.realName ?? null,
+        ...(params.mobile ? { mobileVerifiedAt: new Date() } : {}),
       },
     });
   }
 
   updateWeChatProfile(
     userId: string,
-    updates: { nickname?: string; avatarUrl?: string; mobile?: string },
+    updates: {
+      wechatOpenid?: string;
+      wechatUnionid?: string | null;
+      nickname?: string;
+      avatarUrl?: string;
+      mobile?: string;
+      realName?: string;
+    },
   ) {
     return this.prisma.user.update({
       where: { id: userId },
       data: {
+        ...(updates.wechatOpenid ? { wechatOpenid: updates.wechatOpenid } : {}),
+        ...(updates.wechatUnionid !== undefined
+          ? { wechatUnionid: updates.wechatUnionid || null }
+          : {}),
         ...(updates.nickname ? { nickname: updates.nickname } : {}),
         ...(updates.avatarUrl ? { avatarUrl: updates.avatarUrl } : {}),
-        ...(updates.mobile ? { mobile: updates.mobile } : {}),
+        ...(updates.mobile ? { mobile: updates.mobile, mobileVerifiedAt: new Date() } : {}),
+        ...(updates.realName !== undefined ? { realName: updates.realName || null } : {}),
       },
     });
   }
@@ -297,6 +328,12 @@ export class UserService {
 
   private mapUserDetail(user: any) {
     const listItem = this.mapUserListItem(user);
+    const latestRegistrationRequest = user.registrationRequests?.[0] ?? null;
+    const residentStatus = user.memberRelations.some((item: any) => item.status === 'ACTIVE')
+      ? 'SYNCED'
+      : latestRegistrationRequest?.status === 'PENDING'
+        ? 'UNVERIFIED'
+        : 'REGISTERED';
 
     return {
       ...listItem,
@@ -343,6 +380,20 @@ export class UserService {
         reviewedAt: item.reviewedAt,
         rejectReason: item.rejectReason,
       })),
+      residentStatus,
+      latestRegistrationRequest: latestRegistrationRequest
+        ? {
+            id: latestRegistrationRequest.id,
+            mobile: latestRegistrationRequest.mobile,
+            status: latestRegistrationRequest.status,
+            buildingId: latestRegistrationRequest.buildingId,
+            buildingName: latestRegistrationRequest.building?.buildingName ?? null,
+            houseId: latestRegistrationRequest.houseId,
+            houseDisplayName: latestRegistrationRequest.house?.displayName ?? null,
+            reviewNote: latestRegistrationRequest.reviewNote,
+            submittedAt: latestRegistrationRequest.submittedAt,
+          }
+        : null,
     };
   }
 }

@@ -14,16 +14,51 @@ export interface WechatLoginResult {
   user: WechatAuthUser | null;
 }
 
-export interface WechatRegisterPayload {
-  code: string;
-  nickname: string;
-  avatarUrl?: string;
+export interface PhoneSyncResult {
+  matched: boolean;
+  needRegistrationRequest: boolean;
+  message: string;
+  accessToken: string;
+  user: WechatAuthUser;
   mobile?: string;
 }
 
-export interface WechatProfile {
-  nickname: string;
-  avatarUrl: string;
+export interface RegisterBuildingOption {
+  id: string;
+  buildingName: string;
+  buildingCode: string;
+  sortNo: number | null;
+  status: string;
+}
+
+export interface RegisterHouseOption {
+  id: string;
+  buildingId: string;
+  displayName: string;
+  floorNo: number | null;
+  roomNo: string;
+  houseStatus: string;
+}
+
+export interface SubmitRegistrationRequestPayload {
+  buildingId: string;
+  houseId?: string;
+}
+
+export interface SubmitRegistrationRequestResult {
+  submitted: boolean;
+  residentStatus: string;
+  latestRegistrationRequest: {
+    id: string;
+    mobile: string;
+    status: string;
+    buildingId: string;
+    buildingName: string | null;
+    houseId: string | null;
+    houseDisplayName: string | null;
+    reviewNote: string | null;
+    submittedAt: string;
+  };
 }
 
 export function getWechatLoginCode() {
@@ -34,6 +69,7 @@ export function getWechatLoginCode() {
           resolve(res.code);
           return;
         }
+
         reject(new Error('微信登录失败，请稍后重试'));
       },
       fail: (error) => reject(new Error(error.errMsg || '微信登录失败')),
@@ -41,31 +77,7 @@ export function getWechatLoginCode() {
   });
 }
 
-export function getWechatProfile() {
-  return new Promise<WechatProfile>((resolve) => {
-    wx.getUserProfile({
-      desc: '用于完善头像昵称并创建账号',
-      success: (res) => {
-        resolve({
-          nickname: res.userInfo.nickName || '微信用户',
-          avatarUrl: res.userInfo.avatarUrl || '',
-        });
-      },
-      fail: () => {
-        resolve({
-          nickname: '微信用户',
-          avatarUrl: '',
-        });
-      },
-    });
-  });
-}
-
-export function loginWithWechat(payload: {
-  code: string;
-  nickname?: string;
-  avatarUrl?: string;
-}) {
+export function loginWithWechat(payload: { code: string }) {
   return request<WechatLoginResult>({
     url: '/auth/wechat_login',
     method: 'POST',
@@ -74,11 +86,35 @@ export function loginWithWechat(payload: {
   });
 }
 
-export function registerWithWechat(payload: WechatRegisterPayload) {
-  return request<WechatLoginResult>({
-    url: '/auth/wechat/register',
+export function syncWechatPhone(payload: { code: string; phoneCode: string }) {
+  return request<PhoneSyncResult>({
+    url: '/auth/wechat/phone-sync',
     method: 'POST',
     data: payload,
     auth: false,
+  });
+}
+
+export function listRegisterBuildings() {
+  return request<RegisterBuildingOption[]>({
+    url: '/auth/register/buildings',
+    method: 'GET',
+    auth: false,
+  });
+}
+
+export function listRegisterHouses(buildingId: string) {
+  return request<RegisterHouseOption[]>({
+    url: `/auth/register/houses?buildingId=${encodeURIComponent(buildingId)}`,
+    method: 'GET',
+    auth: false,
+  });
+}
+
+export function submitRegistrationRequest(payload: SubmitRegistrationRequestPayload) {
+  return request<SubmitRegistrationRequestResult>({
+    url: '/auth/wechat/registration-request',
+    method: 'POST',
+    data: payload,
   });
 }

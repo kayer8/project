@@ -1,0 +1,16 @@
+<view class="page-shell">
+  <view class="hero-panel">
+    <view class="hero-title">物业自治</view>
+    <view class="hero-subtitle">
+      正在检查你的微信账号是否已注册，并准备进入对应流程。
+    </view>
+  </view>
+
+  <view class="section card info-card">
+    <view wx:if="{{checking}}" class="empty-block">正在校验登录状态，请稍候…</view>
+    <view wx:else>
+      <view class="list-desc">{{errorMessage || '登录失败，请重试'}}</view>
+      <button class="primary-button login-retry" bindtap="handleRetry">重新检查</button>
+    </view>
+  </view>
+</view>

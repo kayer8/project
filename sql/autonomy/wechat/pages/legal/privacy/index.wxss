@@ -1,0 +1,3 @@
+.list-desc + .list-desc {
+  margin-top: 12rpx;
+}

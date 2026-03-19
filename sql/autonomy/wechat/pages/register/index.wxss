@@ -1,0 +1,13 @@
+.register-link-row {
+  margin-top: 18rpx;
+}
+
+.section-link {
+  margin-left: 8rpx;
+}
+
+.static-field {
+  display: flex;
+  align-items: center;
+  color: #17212b;
+}

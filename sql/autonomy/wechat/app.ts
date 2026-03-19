@@ -7,7 +7,5 @@ App<IAppOption>({
   globalData: {
     accessToken: '',
     sessionUser: null,
-    currentHouseId: '',
-    currentUserRole: '',
   },
 });

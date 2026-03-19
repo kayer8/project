@@ -2,58 +2,32 @@ import { request } from './request';
 
 export interface CurrentUserDetail {
   id: string;
-  realName: string;
-  nickname: string;
+  realName: string | null;
+  nickname: string | null;
   avatarUrl: string | null;
   mobile: string | null;
   status: string;
   registerSource: string;
-  communityNames: string[];
-  houseCount: number;
-  primaryRoleLabel: string;
-  lastLoginAt: string | null;
-  createdAt: string;
-  wechatOpenid: string;
-  wechatUnionid: string | null;
-  mobileVerifiedAt: string | null;
-  deletedAt: string | null;
-  communityRoles: Array<{
-    communityId?: string;
-    communityName: string;
-    roleType: string;
-    roleLabel?: string;
+  residentStatus: 'SYNCED' | 'UNVERIFIED' | 'REGISTERED';
+  latestRegistrationRequest: {
+    id: string;
+    mobile: string;
     status: string;
-    effectiveAt: string;
-    expiredAt?: string | null;
-  }>;
+    buildingId: string;
+    buildingName: string | null;
+    houseId: string | null;
+    houseDisplayName: string | null;
+    reviewNote: string | null;
+    submittedAt: string;
+  } | null;
   houseRelations: Array<{
     id: string;
-    houseId?: string;
+    houseId: string;
     houseDisplayName: string;
     buildingName: string;
-    householdGroupId?: string;
-    householdType: string;
-    relationType: string;
-    relationLabel?: string;
+    relationLabel: string;
+    status: string;
     isPrimaryRole: boolean;
-    canViewBill: boolean;
-    canPayBill: boolean;
-    canActAsAgent: boolean;
-    canJoinConsultation: boolean;
-    canBeVoteDelegate: boolean;
-    status: string;
-    effectiveAt: string;
-    expiredAt?: string | null;
-  }>;
-  identityApplications: Array<{
-    id: string;
-    applicationType: string;
-    status: string;
-    houseId?: string | null;
-    houseDisplayName?: string | null;
-    submittedAt: string;
-    reviewedAt?: string | null;
-    rejectReason?: string | null;
   }>;
 }
 

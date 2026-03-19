@@ -1,33 +1,9 @@
 {
   "pages": [
+    "pages/login/index",
+    "pages/register/index",
     "pages/home/index",
-    "pages/vote/list/index",
-    "pages/publicity/index",
-    "pages/profile/index",
-    "pages/auth/login/index",
-    "pages/auth/identity-select/index",
-    "pages/auth/rules/index",
-    "pages/auth/owner-submit/index",
-    "pages/auth/tenant-submit/index",
-    "pages/auth/committee-submit/index",
-    "pages/auth/result/index",
-    "pages/house/list/index",
-    "pages/house/detail/index",
-    "pages/house/switch/index",
-    "pages/member/manage/index",
-    "pages/member/add/index",
-    "pages/member/detail/index",
-    "pages/member/vote-representative/index",
-    "pages/vote/detail/index",
-    "pages/vote/join/index",
-    "pages/vote/result/index",
-    "pages/publicity/announcement-list/index",
-    "pages/publicity/announcement-detail/index",
-    "pages/publicity/disclosure-list/index",
-    "pages/publicity/disclosure-detail/index",
-    "pages/finance/building-list/index",
-    "pages/finance/building-detail/index",
-    "pages/message/index"
+    "pages/legal/privacy/index"
   ],
   "window": {
     "navigationBarTitleText": "物业自治",
@@ -35,30 +11,6 @@
     "navigationBarTextStyle": "white",
     "backgroundTextStyle": "light",
     "backgroundColor": "#edf2f7"
-  },
-  "tabBar": {
-    "color": "#6b7280",
-    "selectedColor": "#0f4c5c",
-    "backgroundColor": "#ffffff",
-    "borderStyle": "black",
-    "list": [
-      {
-        "pagePath": "pages/home/index",
-        "text": "首页"
-      },
-      {
-        "pagePath": "pages/vote/list/index",
-        "text": "投票"
-      },
-      {
-        "pagePath": "pages/publicity/index",
-        "text": "公开"
-      },
-      {
-        "pagePath": "pages/profile/index",
-        "text": "我的"
-      }
-    ]
   },
   "style": "v2",
   "sitemapLocation": "sitemap.json"
