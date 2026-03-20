@@ -247,6 +247,28 @@ model House {
   @@map("houses")
 }
 
+model ManagementFeePeriod {
+  id              String               @id @default(uuid())
+  periodKey       String               @unique @map("period_key") @db.VarChar(40)
+  periodMonth     String               @map("period_month") @db.VarChar(7)
+  chargeStartDate DateTime             @map("charge_start_date")
+  chargeEndDate   DateTime             @map("charge_end_date")
+  dueDate         DateTime             @map("due_date")
+  pricingMode     String               @default("AREA_UNIFORM") @map("pricing_mode") @db.VarChar(30)
+  unitPrice       Float?               @map("unit_price")
+  baseAmount      Float                @default(0) @map("base_amount")
+  defaultArea     Float                @default(88) @map("default_area")
+  pricingRuleJson Json?                @map("pricing_rule_json")
+  note            String?              @db.VarChar(255)
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  records ManagementFeeRecord[]
+
+  @@index([chargeStartDate, chargeEndDate])
+  @@map("management_fee_periods")
+}
+
 model HouseholdGroup {
   // 约束说明：同一套房任一时刻只允许一个当前有效的住户组，该约束由服务层保证。
   id        String               @id @default(uuid())
@@ -471,13 +493,20 @@ model AuditLog {
 
 model ManagementFeeRecord {
   id            String    @id @default(uuid())
+  periodId      String?   @map("period_id")
   periodKey     String    @map("period_key") @db.VarChar(40) @default("")
   periodMonth   String    @map("period_month") @db.VarChar(7)
   houseId       String    @map("house_id")
   house         House     @relation(fields: [houseId], references: [id])
+  period        ManagementFeePeriod? @relation(fields: [periodId], references: [id])
   chargeStartDate DateTime? @map("charge_start_date")
   chargeEndDate   DateTime? @map("charge_end_date")
   dueDate         DateTime? @map("due_date")
+  grossAreaSnapshot Float?  @map("gross_area_snapshot")
+  unitPriceSnapshot Float?  @map("unit_price_snapshot")
+  baseAmountSnapshot Float? @map("base_amount_snapshot")
+  receivableAmount  Float?  @map("receivable_amount")
+  paidAmount        Float?  @map("paid_amount")
   paymentStatus String    @map("payment_status") @db.VarChar(20)
   source        String    @default("manual_import") @db.VarChar(30)
   paidAt        DateTime? @map("paid_at")
@@ -487,6 +516,7 @@ model ManagementFeeRecord {
 
   @@unique([periodKey, houseId])
   @@index([periodKey, paymentStatus])
+  @@index([periodId, paymentStatus])
   @@index([periodMonth, paymentStatus])
   @@index([houseId])
   @@map("management_fee_records")

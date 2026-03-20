@@ -25,6 +25,14 @@ const disclosureRoutes: RouteRecordRaw[] = [
       title: '管理费公开',
     },
   },
+  {
+    path: 'disclosures/management-fees/:periodKey',
+    name: 'AutonomyDisclosureManagementFeeLedger',
+    component: () => import('@/views/disclosure/management-fee-ledger.vue'),
+    meta: {
+      title: '管理费缴费账目',
+    },
+  },
 ];
 
 export default disclosureRoutes;

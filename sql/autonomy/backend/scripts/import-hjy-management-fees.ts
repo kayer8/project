@@ -8,12 +8,18 @@ import {
   HouseholdGroupType,
 } from '@prisma/client';
 import { actualBuildings } from './import-hjy-management-fees.data';
+import {
+  buildManagementFeeSnapshots,
+  getLegacyManagementFeePeriodSeedData,
+  upsertManagementFeePeriod,
+} from './management-fee-period-helpers';
 
 const PERIOD_MONTH = '2026-03';
 const BUILDING_PREFIX = 'HJY#';
 const CHARGE_START_DATE = new Date('2026-03-01T00:00:00+08:00');
 const CHARGE_END_DATE = new Date('2026-05-31T23:59:59+08:00');
 const DUE_DATE = new Date('2026-05-31T23:59:59+08:00');
+const PERIOD_KEY = '2026-03-01_2026-05-31';
 
 function loadLocalEnv(): void {
   const envPath = join(process.cwd(), '.env');
@@ -174,6 +180,18 @@ async function main(): Promise<void> {
   };
 
   try {
+    const period = await upsertManagementFeePeriod(
+      prisma,
+      getLegacyManagementFeePeriodSeedData({
+        periodKey: PERIOD_KEY,
+        periodMonth: PERIOD_MONTH,
+        chargeStartDate: CHARGE_START_DATE,
+        chargeEndDate: CHARGE_END_DATE,
+        dueDate: DUE_DATE,
+        note: '按楼栋照片人工导入初始化账期',
+      }),
+    );
+
     for (const item of actualBuildings) {
       const buildingCode = `${BUILDING_PREFIX}${item.buildingNo}`;
       const buildingName = `和景苑小区${item.buildingNo}栋`;
@@ -282,29 +300,54 @@ async function main(): Promise<void> {
         }
 
         const isPaid = paidSet.has(roomNo);
+        const snapshots = buildManagementFeeSnapshots(
+          {
+            pricingMode: period.pricingMode as 'AREA_TIERED',
+            unitPrice: period.unitPrice,
+            baseAmount: period.baseAmount,
+            defaultArea: period.defaultArea,
+            pricingRuleJson: (period.pricingRuleJson as Record<string, unknown> | null) ?? null,
+          },
+          guessGrossArea(roomNo),
+        );
 
         await prisma.managementFeeRecord.upsert({
           where: {
-            periodMonth_houseId: {
-              periodMonth: PERIOD_MONTH,
+            periodKey_houseId: {
+              periodKey: PERIOD_KEY,
               houseId: house.id,
             },
           },
           update: {
+            periodId: period.id,
+            periodKey: PERIOD_KEY,
+            periodMonth: PERIOD_MONTH,
             chargeStartDate: CHARGE_START_DATE,
             chargeEndDate: CHARGE_END_DATE,
             dueDate: DUE_DATE,
+            grossAreaSnapshot: snapshots.grossAreaSnapshot,
+            unitPriceSnapshot: snapshots.unitPriceSnapshot,
+            baseAmountSnapshot: snapshots.baseAmountSnapshot,
+            receivableAmount: snapshots.receivableAmount,
+            paidAmount: isPaid ? snapshots.receivableAmount : 0,
             paymentStatus: isPaid ? 'PAID' : 'PENDING',
             source: 'manual_import',
             paidAt: isPaid ? buildPaidDate(paidIndex) : null,
             note: `按楼栋照片人工导入：${buildingName}`,
           },
           create: {
+            periodId: period.id,
+            periodKey: PERIOD_KEY,
             periodMonth: PERIOD_MONTH,
             houseId: house.id,
             chargeStartDate: CHARGE_START_DATE,
             chargeEndDate: CHARGE_END_DATE,
             dueDate: DUE_DATE,
+            grossAreaSnapshot: snapshots.grossAreaSnapshot,
+            unitPriceSnapshot: snapshots.unitPriceSnapshot,
+            baseAmountSnapshot: snapshots.baseAmountSnapshot,
+            receivableAmount: snapshots.receivableAmount,
+            paidAmount: isPaid ? snapshots.receivableAmount : 0,
             paymentStatus: isPaid ? 'PAID' : 'PENDING',
             source: 'manual_import',
             paidAt: isPaid ? buildPaidDate(paidIndex) : null,
@@ -321,7 +364,7 @@ async function main(): Promise<void> {
 
       await prisma.managementFeeRecord.deleteMany({
         where: {
-          periodMonth: PERIOD_MONTH,
+          periodKey: PERIOD_KEY,
           house: {
             buildingId: building.id,
           },

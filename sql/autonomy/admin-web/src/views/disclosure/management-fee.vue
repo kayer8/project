@@ -1,161 +1,97 @@
 <template>
   <PageContainer title="管理费公开">
     <template #actions>
-      <t-button variant="outline" @click="filterVisible = !filterVisible">
-        {{ filterVisible ? '收起筛选' : '筛选' }}
-      </t-button>
-      <t-button variant="outline" @click="loadData">刷新统计</t-button>
+      <t-button theme="primary" @click="dialogVisible = true">新增时段</t-button>
+      <t-button variant="outline" @click="handleRefresh">刷新统计</t-button>
     </template>
 
     <section class="admin-panel">
       <div class="admin-panel__header">
         <div>
-          <div class="admin-panel__title">统计明细</div>
+          <div class="admin-panel__title">管理时段</div>
         </div>
       </div>
       <div class="admin-panel__body">
-        <div v-if="filterVisible" class="inline-filter-panel">
-          <div class="inline-filter-panel__header">
-            <div class="inline-filter-panel__title">筛选查询</div>
-          </div>
-          <div class="filter-grid">
-            <t-input
-              v-model="filters.periodMonth"
-              clearable
-              placeholder="统计月份，例如 2026-03"
-            />
-            <t-input v-model="filters.keyword" clearable placeholder="搜索楼栋、房号或房屋名称" />
-            <t-select v-model="filters.buildingId" :options="buildingOptions" />
-            <t-select v-model="filters.paymentStatus" :options="managementFeeStatusOptions" />
-            <div class="toolbar-actions">
-              <t-button theme="primary" @click="handleSearch">查询</t-button>
-              <t-button variant="outline" @click="resetFilters">重置</t-button>
+        <t-table :data="periods" :columns="periodColumns" row-key="periodKey" size="small" bordered hover>
+          <template #periodRange="{ row }">
+            <t-button variant="text" theme="primary" class="period-link" @click="openPeriodLedger(row)">
+              {{ formatPeriodRangeLabel(row.chargeStartDate, row.chargeEndDate) }}
+            </t-button>
+            <div class="table-subtext">
+              {{ formatDate(row.chargeStartDate) }} 至 {{ formatDate(row.chargeEndDate) }}
             </div>
-          </div>
-        </div>
+          </template>
 
-        <t-tabs v-model="activeTableTab" theme="card" class="management-fee-tabs">
-          <t-tab-panel value="building" label="楼栋汇总">
-            <t-table
-              :data="buildingStats"
-              :columns="buildingColumns"
-              row-key="buildingId"
-              size="small"
-              bordered
-              hover
-            >
-              <template #receivableAmount="{ row }">{{ formatCurrency(row.receivableAmount) }}</template>
-              <template #paidAmount="{ row }">{{ formatCurrency(row.paidAmount) }}</template>
-              <template #outstandingAmount="{ row }">{{ formatCurrency(row.outstandingAmount) }}</template>
-              <template #paymentRate="{ row }">{{ formatPercent(row.paymentRate) }}</template>
-              <template #paidHouseRate="{ row }">{{ formatPercent(row.paidHouseRate) }}</template>
-            </t-table>
-          </t-tab-panel>
+          <template #dueDate="{ row }">
+            {{ formatDate(row.dueDate) }}
+          </template>
 
-          <t-tab-panel value="house" label="房屋台账">
-            <t-table
-              :data="houseRecords"
-              :columns="houseColumns"
-              row-key="id"
-              size="small"
-              table-layout="fixed"
-              bordered
-              hover
-            >
-              <template #displayName="{ row }">
-                <div class="table-primary-cell">
-                  <div class="table-primary-cell__title">{{ row.displayName }}</div>
-                  <div class="table-subtext">{{ row.buildingName }} / {{ row.roomNo }}</div>
-                </div>
-              </template>
-
-              <template #grossArea="{ row }">{{ formatArea(row.grossArea) }}</template>
-              <template #unitPrice="{ row }">{{ formatUnitPrice(row.unitPrice) }}</template>
-              <template #receivableAmount="{ row }">{{ formatCurrency(row.receivableAmount) }}</template>
-              <template #paidAmount="{ row }">{{ formatCurrency(row.paidAmount) }}</template>
-              <template #outstandingAmount="{ row }">{{ formatCurrency(row.outstandingAmount) }}</template>
-              <template #paymentRate="{ row }">{{ formatPercent(row.paymentRate) }}</template>
-              <template #paymentStatus="{ row }">
-                <t-tag :theme="getStatusTheme(row.paymentStatus)" variant="light-outline">
-                  {{ row.paymentStatusLabel }}
-                </t-tag>
-              </template>
-              <template #lastPaidAt="{ row }">
-                {{ formatDateTime(row.lastPaidAt) }}
-              </template>
-              <template #actions="{ row }">
-                <div class="action-link-group">
-                  <t-button variant="text" theme="primary" @click="openDetail(row)">详情</t-button>
-                </div>
-              </template>
-            </t-table>
-
-            <div class="table-pagination">
-              <t-pagination
-                :current="pagination.page"
-                :page-size="pagination.pageSize"
-                :total="pagination.total"
-                show-jumper
-                show-page-size
-                @change="handlePageChange"
-              />
+          <template #pricingRule="{ row }">
+            <div class="table-primary-cell">
+              <div class="table-primary-cell__title">{{ formatPricingRule(row) }}</div>
+              <div class="table-subtext">统一单价</div>
             </div>
-          </t-tab-panel>
-        </t-tabs>
+          </template>
+
+          <template #actions="{ row }">
+            <div class="action-link-group">
+              <t-button variant="text" theme="primary" @click="openPeriodLedger(row)">
+                进入账本
+              </t-button>
+            </div>
+          </template>
+        </t-table>
       </div>
     </section>
 
     <t-dialog
-      v-model:visible="detailVisible"
-      header="管理费统计详情"
+      v-model:visible="dialogVisible"
+      header="新增管理时段"
       width="640px"
-      :footer="false"
-      destroy-on-close
+      :confirm-loading="submitting"
+      confirm-btn="创建时段"
+      @confirm="handleCreatePeriod"
+      @close="resetForm"
     >
-      <div v-if="currentRecord" class="detail-grid">
-        <div class="detail-grid__item">
-          <span>房屋</span>
-          <strong>{{ currentRecord.displayName }}</strong>
+      <div class="form-grid">
+        <div class="field">
+          <div class="field-label required">管理开始日期</div>
+          <t-date-picker
+            v-model="periodForm.chargeStartDate"
+            clearable
+            format="YYYY-MM-DD"
+            value-type="YYYY-MM-DD"
+            placeholder="请选择开始日期"
+          />
         </div>
-        <div class="detail-grid__item">
-          <span>楼栋</span>
-          <strong>{{ currentRecord.buildingName }}</strong>
+        <div class="field">
+          <div class="field-label required">管理结束日期</div>
+          <t-date-picker
+            v-model="periodForm.chargeEndDate"
+            clearable
+            format="YYYY-MM-DD"
+            value-type="YYYY-MM-DD"
+            placeholder="请选择结束日期"
+          />
         </div>
-        <div class="detail-grid__item">
-          <span>建筑面积</span>
-          <strong>{{ formatArea(currentRecord.grossArea) }}</strong>
+        <div class="field field--full">
+          <div class="field-label required">截止日期</div>
+          <t-date-picker
+            v-model="periodForm.dueDate"
+            clearable
+            format="YYYY-MM-DD"
+            value-type="YYYY-MM-DD"
+            placeholder="请选择截止日期"
+          />
         </div>
-        <div class="detail-grid__item">
-          <span>单价</span>
-          <strong>{{ formatUnitPrice(currentRecord.unitPrice) }}</strong>
+        <div class="field">
+          <div class="field-label required">每平米单价</div>
+          <t-input-number v-model="periodForm.unitPrice" theme="normal" placeholder="请输入单价" />
         </div>
-        <div class="detail-grid__item">
-          <span>基础服务费</span>
-          <strong>{{ formatCurrency(currentRecord.baseAmount) }}</strong>
+        <div class="field">
+          <div class="field-label">固定费用</div>
+          <t-input-number v-model="periodForm.baseAmount" theme="normal" placeholder="默认 0" />
         </div>
-        <div class="detail-grid__item">
-          <span>应收金额</span>
-          <strong>{{ formatCurrency(currentRecord.receivableAmount) }}</strong>
-        </div>
-        <div class="detail-grid__item">
-          <span>实收金额</span>
-          <strong>{{ formatCurrency(currentRecord.paidAmount) }}</strong>
-        </div>
-        <div class="detail-grid__item">
-          <span>未收金额</span>
-          <strong>{{ formatCurrency(currentRecord.outstandingAmount) }}</strong>
-        </div>
-        <div class="detail-grid__item">
-          <span>截至日期</span>
-          <strong>{{ currentRecord.dueDate }}</strong>
-        </div>
-        <div class="detail-grid__item">
-          <span>最近缴纳</span>
-          <strong>{{ formatDateTime(currentRecord.lastPaidAt) }}</strong>
-        </div>
-      </div>
-      <div class="dialog-note">
-        当前统计口径为占位算法：按面积分档单价 + 每户固定基础服务费，后续可替换为正式收费规则。
       </div>
     </t-dialog>
   </PageContainer>
@@ -163,194 +99,169 @@
 
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
+import { MessagePlugin } from 'tdesign-vue-next';
+import { useRouter } from 'vue-router';
 import PageContainer from '@/components/PageContainer/index.vue';
-import { formatDateTime } from '@/utils/format';
-import {
-  fetchManagementFeeBuildings,
-  fetchManagementFeeBuildingOptions,
-  fetchManagementFeeHouses,
-  fetchManagementFeeSummary,
-} from '@/modules/management-fee/api';
-import type {
-  ManagementFeeBuildingStat,
-  ManagementFeeHouseRecord,
-  ManagementFeeSummary,
-} from '@/modules/management-fee/types';
-import { managementFeeStatusOptions } from '@/modules/management-fee/types';
+import { formatDate } from '@/utils/format';
+import { createManagementFeePeriod, fetchManagementFeePeriods } from '@/modules/management-fee/api';
+import type { ManagementFeePeriodItem } from '@/modules/management-fee/types';
 
-const summary = ref<ManagementFeeSummary | null>(null);
-const buildingStats = ref<ManagementFeeBuildingStat[]>([]);
-const houseRecords = ref<ManagementFeeHouseRecord[]>([]);
-const detailVisible = ref(false);
-const currentRecord = ref<ManagementFeeHouseRecord | null>(null);
-const activeTableTab = ref<'building' | 'house'>('building');
-const filterVisible = ref(false);
-const buildingOptions = ref([{ label: '全部楼栋', value: 'ALL' }]);
-const filters = reactive({
-  periodMonth: '',
-  keyword: '',
-  buildingId: 'ALL',
-  paymentStatus: 'ALL',
-});
-const pagination = reactive({
-  page: 1,
-  pageSize: 20,
-  total: 0,
+const router = useRouter();
+const periods = ref<ManagementFeePeriodItem[]>([]);
+const dialogVisible = ref(false);
+const submitting = ref(false);
+const periodForm = reactive({
+  chargeStartDate: '',
+  chargeEndDate: '',
+  dueDate: '',
+  unitPrice: 2.68,
+  baseAmount: 18,
 });
 
-const buildingColumns = [
-  { colKey: 'buildingName', title: '楼栋', minWidth: 160 },
-  { colKey: 'houseCount', title: '户数', width: 100 },
-  { colKey: 'receivableAmount', title: '应收金额', width: 140 },
-  { colKey: 'paidAmount', title: '已收金额', width: 140 },
-  { colKey: 'outstandingAmount', title: '未收金额', width: 140 },
-  { colKey: 'paymentRate', title: '收缴率', width: 110 },
-  { colKey: 'paidHouseRate', title: '缴清户占比', width: 120 },
+const periodColumns = [
+  { colKey: 'periodRange', title: '管理时段', minWidth: 280 },
+  { colKey: 'pricingRule', title: '收费标准', minWidth: 220 },
+  { colKey: 'houseCount', title: '房屋数', width: 100 },
+  { colKey: 'paidHouseholds', title: '已缴清', width: 100 },
+  { colKey: 'unpaidHouseholds', title: '未缴纳', width: 100 },
+  { colKey: 'dueDate', title: '截止日期', width: 140 },
+  { colKey: 'actions', title: '操作', width: 120, fixed: 'right' },
 ];
 
-const houseColumns = [
-  { colKey: 'displayName', title: '房屋信息', minWidth: 240, ellipsis: true },
-  { colKey: 'grossArea', title: '面积', width: 110 },
-  { colKey: 'unitPrice', title: '单价', width: 110 },
-  { colKey: 'receivableAmount', title: '应收', width: 120 },
-  { colKey: 'paidAmount', title: '已收', width: 120 },
-  { colKey: 'outstandingAmount', title: '未收', width: 120 },
-  { colKey: 'paymentRate', title: '进度', width: 110 },
-  { colKey: 'paymentStatus', title: '状态', width: 120 },
-  { colKey: 'lastPaidAt', title: '最近缴纳', width: 160 },
-  { colKey: 'actions', title: '操作', width: 100, fixed: 'right' },
-];
+function getMonthEndLabel(dateText?: string | null) {
+  const value = dateText ? new Date(dateText) : null;
+  if (!value || Number.isNaN(value.getTime())) {
+    return '-';
+  }
 
-function formatCurrency(value: number) {
-  return `¥ ${value.toFixed(2)}`;
+  const month = value.getMonth() + 1;
+  const day = value.getDate();
+  const monthEnd = new Date(value.getFullYear(), month, 0).getDate();
+  return day === monthEnd ? `${month}月底` : `${month}月${day}日`;
 }
 
-function formatUnitPrice(value: number) {
-  return `¥ ${value.toFixed(2)}/㎡`;
+function formatPeriodRangeLabel(start?: string | null, end?: string | null) {
+  const startDate = start ? new Date(start) : null;
+  if (!startDate || Number.isNaN(startDate.getTime())) {
+    return '-';
+  }
+
+  return `${startDate.getFullYear()}年${startDate.getMonth() + 1}月 - ${getMonthEndLabel(end)}`;
 }
 
-function formatArea(value: number) {
-  return `${value.toFixed(2)} ㎡`;
+function formatPricingRule(period: ManagementFeePeriodItem) {
+  return `¥ ${Number(period.unitPrice ?? 0).toFixed(2)}/㎡ + 固定 ¥ ${Number(period.baseAmount ?? 0).toFixed(2)}`;
 }
 
-function formatPercent(value: number) {
-  return `${value.toFixed(2)}%`;
+async function loadPeriodList() {
+  periods.value = await fetchManagementFeePeriods();
 }
 
-function getStatusTheme(status: ManagementFeeHouseRecord['paymentStatus']) {
-  if (status === 'PAID') return 'success';
-  if (status === 'PARTIAL') return 'warning';
-  if (status === 'OVERDUE') return 'danger';
-  return 'default';
+function openPeriodLedger(period: ManagementFeePeriodItem) {
+  void router.push({
+    name: 'AutonomyDisclosureManagementFeeLedger',
+    params: { periodKey: period.periodKey },
+  });
 }
 
-async function loadBuildingOptions() {
-  const items = await fetchManagementFeeBuildingOptions();
-  buildingOptions.value = [
-    { label: '全部楼栋', value: 'ALL' },
-    ...items.map((item) => ({
-      label: `${item.buildingName} (${item.buildingCode})`,
-      value: item.id,
-    })),
-  ];
+async function handleRefresh() {
+  await loadPeriodList();
 }
 
-async function loadData() {
-  const periodMonth = filters.periodMonth.trim() || undefined;
-  const [summaryResult, buildingResult, houseResult] = await Promise.all([
-    fetchManagementFeeSummary(periodMonth),
-    fetchManagementFeeBuildings(periodMonth),
-    fetchManagementFeeHouses({
-      page: pagination.page,
-      pageSize: pagination.pageSize,
-      periodMonth,
-      keyword: filters.keyword.trim() || undefined,
-      buildingId: filters.buildingId === 'ALL' ? undefined : filters.buildingId,
-      paymentStatus:
-        filters.paymentStatus === 'ALL'
-          ? undefined
-          : (filters.paymentStatus as ManagementFeeHouseRecord['paymentStatus']),
-    }),
-  ]);
+function resetForm() {
+  periodForm.chargeStartDate = '';
+  periodForm.chargeEndDate = '';
+  periodForm.dueDate = '';
+  periodForm.unitPrice = 2.68;
+  periodForm.baseAmount = 18;
+  submitting.value = false;
+}
 
-  summary.value = summaryResult;
-  buildingStats.value = buildingResult.items;
-  houseRecords.value = houseResult.items;
-  pagination.total = houseResult.total;
+async function handleCreatePeriod() {
+  if (!periodForm.chargeStartDate) {
+    MessagePlugin.warning('请选择管理开始日期');
+    return;
+  }
 
-  if (!filters.periodMonth) {
-    filters.periodMonth = houseResult.periodMonth;
+  if (!periodForm.chargeEndDate) {
+    MessagePlugin.warning('请选择管理结束日期');
+    return;
+  }
+
+  if (!periodForm.dueDate) {
+    MessagePlugin.warning('请选择截止日期');
+    return;
+  }
+
+  if (periodForm.unitPrice === undefined || periodForm.unitPrice === null) {
+    MessagePlugin.warning('请输入每平米单价');
+    return;
+  }
+
+  submitting.value = true;
+  try {
+    await createManagementFeePeriod({
+      chargeStartDate: periodForm.chargeStartDate,
+      chargeEndDate: periodForm.chargeEndDate,
+      dueDate: periodForm.dueDate,
+      unitPrice: Number(periodForm.unitPrice),
+      baseAmount: Number(periodForm.baseAmount || 0),
+    });
+    MessagePlugin.success('管理时段创建成功');
+    dialogVisible.value = false;
+    resetForm();
+    await loadPeriodList();
+  } finally {
+    submitting.value = false;
   }
 }
 
-function handleSearch() {
-  pagination.page = 1;
-  void loadData();
-}
-
-function resetFilters() {
-  filters.periodMonth = summary.value?.periodMonth ?? '';
-  filters.keyword = '';
-  filters.buildingId = 'ALL';
-  filters.paymentStatus = 'ALL';
-  pagination.page = 1;
-  void loadData();
-}
-
-function handlePageChange(pageInfo: { current: number; pageSize: number }) {
-  pagination.page = pageInfo.current;
-  pagination.pageSize = pageInfo.pageSize;
-  void loadData();
-}
-
-function openDetail(record: ManagementFeeHouseRecord) {
-  currentRecord.value = record;
-  detailVisible.value = true;
-}
-
 onMounted(async () => {
-  await loadBuildingOptions();
-  await loadData();
+  await loadPeriodList();
 });
 </script>
 
 <style scoped lang="scss">
-.management-fee-tabs {
-  :deep(.t-tabs__content) {
-    padding-top: 16px;
-  }
+.period-link {
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.detail-grid {
+.form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 16px;
 }
 
-.detail-grid__item {
+.field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 12px;
-  border: 1px solid var(--td-component-border);
-  border-radius: 8px;
-  background: #f8fafc;
+  gap: 8px;
 }
 
-.detail-grid__item span {
-  font-size: 12px;
-  color: #667085;
+.field--full {
+  grid-column: 1 / -1;
 }
 
-.detail-grid__item strong {
+.field-label {
   font-size: 14px;
-  color: #1f2329;
+  font-weight: 600;
+  color: #334155;
 }
 
-.dialog-note {
-  margin-top: 16px;
-  color: #667085;
-  font-size: 12px;
-  line-height: 1.6;
+.field-label.required::after {
+  content: ' *';
+  color: #d54941;
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .field--full {
+    grid-column: auto;
+  }
 }
 </style>

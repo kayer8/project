@@ -275,6 +275,17 @@ a {
   align-items: center;
 }
 
+.page-header__search-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.page-header__search-input {
+  width: 280px;
+}
+
 .page-body {
   display: flex;
   flex-direction: column;
@@ -623,6 +634,14 @@ a {
   .quick-grid,
   .settings-grid {
     grid-template-columns: 1fr;
+  }
+
+  .page-header__search-actions {
+    width: 100%;
+  }
+
+  .page-header__search-input {
+    width: 100%;
   }
 
   .mini-list__item {

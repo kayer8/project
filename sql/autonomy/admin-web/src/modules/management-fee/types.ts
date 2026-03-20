@@ -1,12 +1,15 @@
 export type ManagementFeePaymentStatus = 'PAID' | 'PARTIAL' | 'PENDING' | 'OVERDUE';
 
 export interface ManagementFeeSummary {
-  periodMonth: string;
+  periodKey: string;
+  periodMonth: string | null;
   chargeStartDate?: string | null;
   chargeEndDate?: string | null;
   dueDate?: string | null;
   calculationRule: {
     version: string;
+    pricingMode: 'AREA_UNIFORM' | 'AREA_TIERED';
+    unitPrice: number | null;
     baseAmount: number;
     defaultArea: number;
     description: string;
@@ -40,7 +43,8 @@ export interface ManagementFeeBuildingStat {
 }
 
 export interface ManagementFeeBuildingStatResponse {
-  periodMonth: string;
+  periodKey: string;
+  periodMonth: string | null;
   chargeStartDate?: string | null;
   chargeEndDate?: string | null;
   dueDate?: string | null;
@@ -50,6 +54,8 @@ export interface ManagementFeeBuildingStatResponse {
 
 export interface ManagementFeeHouseRecord {
   id: string;
+  periodKey: string;
+  periodMonth: string;
   houseId: string;
   buildingId: string;
   buildingName: string;
@@ -76,16 +82,32 @@ export interface ManagementFeeHouseListResponse {
   total: number;
   page: number;
   pageSize: number;
-  periodMonth: string;
+  periodKey: string;
+  periodMonth: string | null;
 }
 
 export interface ManagementFeeHouseQuery {
+  periodKey?: string;
   periodMonth?: string;
   keyword?: string;
   buildingId?: string;
   paymentStatus?: ManagementFeePaymentStatus;
   page?: number;
   pageSize?: number;
+}
+
+export interface UpdateManagementFeeStatusPayload {
+  paymentStatus: ManagementFeePaymentStatus;
+}
+
+export interface CreateManagementFeePeriodPayload {
+  chargeStartDate: string;
+  chargeEndDate: string;
+  dueDate: string;
+  unitPrice: number;
+  baseAmount?: number;
+  defaultArea?: number;
+  note?: string;
 }
 
 export interface ManagementFeeBuildingOption {
@@ -96,6 +118,21 @@ export interface ManagementFeeBuildingOption {
   status: 'ACTIVE' | 'DISABLED';
 }
 
+export interface ManagementFeePeriodItem {
+  periodKey: string;
+  periodMonth: string;
+  chargeStartDate?: string | null;
+  chargeEndDate?: string | null;
+  dueDate?: string | null;
+  pricingMode: 'AREA_UNIFORM' | 'AREA_TIERED';
+  unitPrice: number | null;
+  baseAmount: number;
+  defaultArea: number;
+  houseCount: number;
+  paidHouseholds: number;
+  unpaidHouseholds: number;
+}
+
 export const managementFeeStatusOptions = [
   { label: '全部状态', value: 'ALL' },
   { label: '已缴清', value: 'PAID' },
@@ -103,3 +140,7 @@ export const managementFeeStatusOptions = [
   { label: '待缴纳', value: 'PENDING' },
   { label: '逾期未缴', value: 'OVERDUE' },
 ];
+
+export const editableManagementFeeStatusOptions = managementFeeStatusOptions.filter(
+  (item) => item.value !== 'ALL',
+);

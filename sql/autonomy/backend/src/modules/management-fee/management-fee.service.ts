@@ -1,14 +1,39 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   AdminManagementFeeHouseQueryDto,
+  CreateManagementFeePeriodDto,
   ManagementFeePeriodQueryDto,
 } from './dto/management-fee.dto';
 
 type PaymentStatus = 'PAID' | 'PARTIAL' | 'PENDING' | 'OVERDUE';
+type PricingMode = 'AREA_UNIFORM' | 'AREA_TIERED';
+
+interface PricingTier {
+  minArea: number;
+  maxArea: number | null;
+  unitPrice: number;
+}
+
+interface ResolvedPeriod {
+  id: string | null;
+  periodKey: string;
+  periodMonth: string | null;
+  chargeStartDate: Date | null;
+  chargeEndDate: Date | null;
+  dueDate: Date | null;
+  pricingMode: PricingMode;
+  unitPrice: number | null;
+  baseAmount: number;
+  defaultArea: number;
+  pricingRuleJson: { tiers?: PricingTier[] } | null;
+  note?: string | null;
+}
 
 interface ManagementFeeHouseRecord {
   id: string;
+  periodKey: string;
+  periodMonth: string;
   houseId: string;
   buildingId: string;
   buildingName: string;
@@ -36,34 +61,190 @@ const PAYMENT_STATUS_LABEL_MAP: Record<PaymentStatus, string> = {
   OVERDUE: '逾期未缴',
 };
 
+const LEGACY_UNIT_PRICE = 2.68;
+const LEGACY_TIERS: PricingTier[] = [{ minArea: 0, maxArea: null, unitPrice: LEGACY_UNIT_PRICE }];
+const LEGACY_PRICING_MODE: PricingMode = 'AREA_UNIFORM';
+const UNIFORM_PRICING_MODE: PricingMode = 'AREA_UNIFORM';
 const DEFAULT_AREA = 88;
-const BASE_AMOUNT = 18;
+const LEGACY_BASE_AMOUNT = 18;
 
 @Injectable()
 export class ManagementFeeService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getAdminSummary(query: ManagementFeePeriodQueryDto) {
-    const periodMonth = await this.resolvePeriodMonth(query.periodMonth);
-    const records = await this.loadHouseRecords(periodMonth);
+  async listPeriods() {
+    const periods = await this.prisma.managementFeePeriod.findMany({
+      include: {
+        records: {
+          select: {
+            paymentStatus: true,
+          },
+        },
+      },
+      orderBy: [{ chargeStartDate: 'desc' }, { chargeEndDate: 'desc' }, { createdAt: 'desc' }],
+    });
+
+    if (periods.length > 0) {
+      return periods.map((item) => {
+        const paidHouseholds = item.records.filter((record) => record.paymentStatus === 'PAID').length;
+        const houseCount = item.records.length;
+
+        return {
+          periodKey: item.periodKey,
+          periodMonth: item.periodMonth,
+          chargeStartDate: item.chargeStartDate.toISOString(),
+          chargeEndDate: item.chargeEndDate.toISOString(),
+          dueDate: item.dueDate.toISOString(),
+          pricingMode: item.pricingMode,
+          unitPrice: item.unitPrice,
+          baseAmount: item.baseAmount,
+          defaultArea: item.defaultArea,
+          houseCount,
+          paidHouseholds,
+          unpaidHouseholds: Math.max(houseCount - paidHouseholds, 0),
+        };
+      });
+    }
+
+    return this.listLegacyPeriods();
+  }
+
+  async createPeriod(dto: CreateManagementFeePeriodDto) {
+    const periodKey = `${dto.chargeStartDate}_${dto.chargeEndDate}`;
+    const chargeStartDate = this.createDateTime(dto.chargeStartDate, 'start');
+    const chargeEndDate = this.createDateTime(dto.chargeEndDate, 'end');
+    const dueDate = this.createDateTime(dto.dueDate, 'end');
+    const baseAmount = this.round(dto.baseAmount ?? 0);
+    const defaultArea = this.round(dto.defaultArea ?? DEFAULT_AREA);
+    const unitPrice = this.round(dto.unitPrice);
+
+    if (chargeEndDate.getTime() < chargeStartDate.getTime()) {
+      throw new BadRequestException('管理结束日期不能早于管理开始日期');
+    }
+
+    if (dueDate.getTime() < chargeEndDate.getTime()) {
+      throw new BadRequestException('截止日期不能早于管理结束日期');
+    }
+
+    if (unitPrice < 0) {
+      throw new BadRequestException('收费单价不能小于 0');
+    }
+
+    const existed = await this.prisma.managementFeePeriod.findUnique({
+      where: { periodKey },
+      select: { id: true },
+    });
+
+    if (existed) {
+      throw new BadRequestException('该管理时段已存在');
+    }
+
+    const houses = await this.prisma.house.findMany({
+      select: {
+        id: true,
+        grossArea: true,
+      },
+      orderBy: [{ building: { sortNo: 'asc' } }, { displayName: 'asc' }],
+    });
+
+    if (houses.length === 0) {
+      throw new BadRequestException('当前没有可初始化的房屋');
+    }
+
+    const period = await this.prisma.managementFeePeriod.create({
+      data: {
+        periodKey,
+        periodMonth: dto.chargeStartDate.slice(0, 7),
+        chargeStartDate,
+        chargeEndDate,
+        dueDate,
+        pricingMode: UNIFORM_PRICING_MODE,
+        unitPrice,
+        baseAmount,
+        defaultArea,
+        pricingRuleJson: {
+          type: UNIFORM_PRICING_MODE,
+          unitPrice,
+        },
+        note: dto.note?.trim() || null,
+      },
+    });
+
+    await this.prisma.managementFeeRecord.createMany({
+      data: houses.map((house) => {
+        const snapshots = this.buildSnapshots({
+          grossArea: house.grossArea,
+          pricingMode: UNIFORM_PRICING_MODE,
+          unitPrice,
+          baseAmount,
+          defaultArea,
+          pricingRuleJson: null,
+        });
+
+        return {
+          periodId: period.id,
+          periodKey: period.periodKey,
+          periodMonth: period.periodMonth,
+          houseId: house.id,
+          chargeStartDate,
+          chargeEndDate,
+          dueDate,
+          grossAreaSnapshot: snapshots.grossArea,
+          unitPriceSnapshot: snapshots.unitPrice,
+          baseAmountSnapshot: snapshots.baseAmount,
+          receivableAmount: snapshots.receivableAmount,
+          paidAmount: 0,
+          paymentStatus: 'PENDING',
+          source: 'manual_create',
+          note: '管理时段初始化账目',
+        };
+      }),
+    });
+
+    const periods = await this.listPeriods();
+    const created = periods.find((item) => item.periodKey === periodKey);
+    if (created) {
+      return created;
+    }
 
     return {
-      periodMonth,
-      calculationRule: this.getCalculationRule(),
-      ...this.buildSummary(records),
+      periodKey: period.periodKey,
+      periodMonth: period.periodMonth,
+      chargeStartDate: period.chargeStartDate.toISOString(),
+      chargeEndDate: period.chargeEndDate.toISOString(),
+      dueDate: period.dueDate.toISOString(),
+      pricingMode: period.pricingMode,
+      unitPrice: period.unitPrice,
+      baseAmount: period.baseAmount,
+      defaultArea: period.defaultArea,
+      houseCount: houses.length,
+      paidHouseholds: 0,
+      unpaidHouseholds: houses.length,
+    };
+  }
+
+  async getAdminSummary(query: ManagementFeePeriodQueryDto) {
+    const period = await this.resolvePeriod(query);
+    const records = await this.loadHouseRecords(period);
+
+    return {
+      periodKey: period.periodKey,
+      periodMonth: period.periodMonth,
+      calculationRule: this.getCalculationRule(period),
+      ...this.buildSummary(records, period),
       updatedAt: new Date().toISOString(),
     };
   }
 
   async listAdminHouses(query: AdminManagementFeeHouseQueryDto) {
-    const periodMonth = await this.resolvePeriodMonth(query.periodMonth);
+    const period = await this.resolvePeriod(query);
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
     const skip = (page - 1) * pageSize;
     const keyword = query.keyword?.trim().toLowerCase();
     const paymentStatus = query.paymentStatus?.trim().toUpperCase() as PaymentStatus | undefined;
 
-    let records = await this.loadHouseRecords(periodMonth);
+    let records = await this.loadHouseRecords(period);
 
     if (query.buildingId?.trim()) {
       records = records.filter((item) => item.buildingId === query.buildingId?.trim());
@@ -91,13 +272,14 @@ export class ManagementFeeService {
       total: records.length,
       page,
       pageSize,
-      periodMonth,
+      periodKey: period.periodKey,
+      periodMonth: period.periodMonth,
     };
   }
 
   async getAdminBuildingStats(query: ManagementFeePeriodQueryDto) {
-    const periodMonth = await this.resolvePeriodMonth(query.periodMonth);
-    const records = await this.loadHouseRecords(periodMonth);
+    const period = await this.resolvePeriod(query);
+    const records = await this.loadHouseRecords(period);
     const buildingMap = new Map<
       string,
       {
@@ -136,10 +318,11 @@ export class ManagementFeeService {
     }
 
     return {
-      periodMonth,
-      chargeStartDate: records[0]?.chargeStartDate ?? null,
-      chargeEndDate: records[0]?.chargeEndDate ?? null,
-      dueDate: records[0]?.dueDate ?? null,
+      periodKey: period.periodKey,
+      periodMonth: period.periodMonth,
+      chargeStartDate: period.chargeStartDate ? period.chargeStartDate.toISOString() : null,
+      chargeEndDate: period.chargeEndDate ? period.chargeEndDate.toISOString() : null,
+      dueDate: period.dueDate ? period.dueDate.toISOString() : null,
       items: Array.from(buildingMap.values())
         .map((item) => ({
           ...item,
@@ -159,76 +342,104 @@ export class ManagementFeeService {
   }
 
   async getDisclosure(query: ManagementFeePeriodQueryDto) {
-    const periodMonth = await this.resolvePeriodMonth(query.periodMonth);
-    const records = await this.loadHouseRecords(periodMonth);
-    const summary = this.buildSummary(records);
-    const buildings = await this.getAdminBuildingStats({ periodMonth });
+    const period = await this.resolvePeriod(query);
+    const records = await this.loadHouseRecords(period);
+    const summary = this.buildSummary(records, period);
+    const buildings = await this.getAdminBuildingStats({ periodKey: period.periodKey });
 
     return {
-      periodMonth,
-      title: `${periodMonth} 管理费缴纳公开`,
+      periodKey: period.periodKey,
+      periodMonth: period.periodMonth,
+      title: `${this.getRangeLabel(period.chargeStartDate, period.chargeEndDate, period.periodMonth)} 管理费缴纳公开`,
       publisher: '物业财务与信息公开组',
-      calculationRule: this.getCalculationRule(),
+      calculationRule: this.getCalculationRule(period),
       summary,
       buildingStats: buildings.items,
       publishedAt: new Date().toISOString(),
-      note: '当前公开数据来自人工核对导入的楼栋缴费公示，仅用于信息统计与公开展示。',
+      note: '当前公开数据来自管理时段配置和房屋账目快照，用于公开展示与缴费统计。',
     };
   }
 
-  async listBuildingOptions() {
-    const periodMonth = await this.resolvePeriodMonth(undefined);
-    const records = await this.prisma.managementFeeRecord.findMany({
-      where: { periodMonth },
-      select: {
-        house: {
-          select: {
-            building: {
-              select: {
-                id: true,
-                buildingName: true,
-                buildingCode: true,
-                sortNo: true,
-                status: true,
-              },
+  async listBuildingOptions(query?: ManagementFeePeriodQueryDto) {
+    const period = await this.resolvePeriod(query);
+
+    return this.prisma.building.findMany({
+      where: {
+        houses: {
+          some: {
+            managementFeeRecords: {
+              some: this.getPeriodRecordWhere(period),
             },
           },
         },
       },
-      orderBy: {
+      orderBy: [{ sortNo: 'asc' }, { buildingName: 'asc' }],
+      select: {
+        id: true,
+        buildingName: true,
+        buildingCode: true,
+        sortNo: true,
+        status: true,
+      },
+    });
+  }
+
+  async updateHousePaymentStatus(id: string, paymentStatus: PaymentStatus) {
+    const existed = await this.prisma.managementFeeRecord.findUnique({
+      where: { id },
+      include: {
+        period: true,
         house: {
-          building: {
-            sortNo: 'asc',
+          include: {
+            building: true,
           },
         },
       },
     });
 
-    const seen = new Set<string>();
-    const items: Array<{
-      id: string;
-      buildingName: string;
-      buildingCode: string;
-      sortNo: number | null;
-      status: string;
-    }> = [];
-
-    for (const item of records) {
-      const building = item.house.building;
-      if (seen.has(building.id)) {
-        continue;
-      }
-      seen.add(building.id);
-      items.push(building);
+    if (!existed) {
+      throw new NotFoundException('管理费记录不存在');
     }
 
-    return items;
+    const currentRecord = this.mapRecord(existed);
+    const paidAt =
+      paymentStatus === 'PAID' || paymentStatus === 'PARTIAL' ? existed.paidAt ?? new Date() : null;
+    const paidAmount =
+      paymentStatus === 'PAID'
+        ? currentRecord.receivableAmount
+        : paymentStatus === 'PARTIAL'
+          ? this.round(currentRecord.receivableAmount / 2)
+          : 0;
+
+    const updated = await this.prisma.managementFeeRecord.update({
+      where: { id },
+      data: {
+        paymentStatus,
+        paidAt,
+        paidAmount,
+      },
+      include: {
+        period: true,
+        house: {
+          include: {
+            building: true,
+          },
+        },
+      },
+    });
+
+    const record = this.mapRecord(updated);
+    return {
+      ...record,
+      paymentStatusLabel: PAYMENT_STATUS_LABEL_MAP[record.paymentStatus],
+    };
   }
 
-  private async loadHouseRecords(periodMonth: string): Promise<ManagementFeeHouseRecord[]> {
+  private async loadHouseRecords(period: ResolvedPeriod): Promise<ManagementFeeHouseRecord[]> {
     const records = await this.prisma.managementFeeRecord.findMany({
-      where: { periodMonth },
+      where: this.getPeriodRecordWhere(period),
       include: {
+        period: true,
         house: {
           include: {
             building: true,
@@ -238,42 +449,74 @@ export class ManagementFeeService {
       orderBy: [{ house: { building: { sortNo: 'asc' } } }, { house: { displayName: 'asc' } }],
     });
 
-    return records.map((record) => this.mapRecord(record, periodMonth));
+    return records.map((record) => this.mapRecord(record, period));
   }
 
-  private mapRecord(record: any, periodMonth: string): ManagementFeeHouseRecord {
-    const grossArea = this.round(record.house.grossArea ?? DEFAULT_AREA);
-    const unitPrice = this.getUnitPrice(grossArea);
-    const receivableAmount = this.round(grossArea * unitPrice + BASE_AMOUNT);
+  private mapRecord(record: any, fallbackPeriod?: ResolvedPeriod): ManagementFeeHouseRecord {
+    const period = this.normalizePeriod(record.period, {
+      periodKey: record.periodKey,
+      periodMonth: record.periodMonth,
+      chargeStartDate: record.chargeStartDate,
+      chargeEndDate: record.chargeEndDate,
+      dueDate: record.dueDate,
+    }, fallbackPeriod);
+    const snapshots = this.buildSnapshots(
+      {
+        grossArea: record.house?.grossArea,
+        pricingMode: period.pricingMode,
+        unitPrice: period.unitPrice,
+        baseAmount: period.baseAmount,
+        defaultArea: period.defaultArea,
+        pricingRuleJson: period.pricingRuleJson,
+      },
+      {
+        grossArea: record.grossAreaSnapshot,
+        unitPrice: record.unitPriceSnapshot,
+        baseAmount: record.baseAmountSnapshot,
+        receivableAmount: record.receivableAmount,
+      },
+    );
     const paymentStatus = (record.paymentStatus as PaymentStatus) ?? 'PENDING';
-    const paidAmount = paymentStatus === 'PAID' ? receivableAmount : 0;
-    const outstandingAmount = this.round(Math.max(receivableAmount - paidAmount, 0));
-    const paymentRate = receivableAmount > 0 ? this.round((paidAmount / receivableAmount) * 100) : 0;
+    const paidAmount =
+      record.paidAmount === null || record.paidAmount === undefined
+        ? paymentStatus === 'PAID'
+          ? snapshots.receivableAmount
+          : paymentStatus === 'PARTIAL'
+            ? this.round(snapshots.receivableAmount / 2)
+            : 0
+        : this.round(Number(record.paidAmount));
+    const outstandingAmount = this.round(Math.max(snapshots.receivableAmount - paidAmount, 0));
+    const paymentRate =
+      snapshots.receivableAmount > 0
+        ? this.round((paidAmount / snapshots.receivableAmount) * 100)
+        : 0;
 
     return {
       id: record.id,
+      periodKey: period.periodKey,
+      periodMonth: period.periodMonth ?? record.periodMonth ?? '',
       houseId: record.houseId,
       buildingId: record.house.buildingId,
       buildingName: record.house.building.buildingName,
       displayName: record.house.displayName,
       unitNo: record.house.unitNo,
       roomNo: record.house.roomNo,
-      grossArea,
-      unitPrice,
-      baseAmount: BASE_AMOUNT,
-      receivableAmount,
+      grossArea: snapshots.grossArea,
+      unitPrice: snapshots.unitPrice,
+      baseAmount: snapshots.baseAmount,
+      receivableAmount: snapshots.receivableAmount,
       paidAmount,
       outstandingAmount,
       paymentRate,
       paymentStatus,
-      chargeStartDate: record.chargeStartDate ? new Date(record.chargeStartDate).toISOString() : null,
-      chargeEndDate: record.chargeEndDate ? new Date(record.chargeEndDate).toISOString() : null,
-      dueDate: record.dueDate ? new Date(record.dueDate).toISOString() : null,
+      chargeStartDate: period.chargeStartDate ? period.chargeStartDate.toISOString() : null,
+      chargeEndDate: period.chargeEndDate ? period.chargeEndDate.toISOString() : null,
+      dueDate: period.dueDate ? period.dueDate.toISOString() : null,
       lastPaidAt: record.paidAt ? new Date(record.paidAt).toISOString() : null,
     };
   }
 
-  private buildSummary(records: ManagementFeeHouseRecord[]) {
+  private buildSummary(records: ManagementFeeHouseRecord[], period: ResolvedPeriod) {
     const receivableAmount = records.reduce((sum, item) => sum + item.receivableAmount, 0);
     const paidAmount = records.reduce((sum, item) => sum + item.paidAmount, 0);
     const outstandingAmount = records.reduce((sum, item) => sum + item.outstandingAmount, 0);
@@ -282,9 +525,9 @@ export class ManagementFeeService {
     const overdueHouseholds = records.filter((item) => item.paymentStatus === 'OVERDUE').length;
 
     return {
-      chargeStartDate: records[0]?.chargeStartDate ?? null,
-      chargeEndDate: records[0]?.chargeEndDate ?? null,
-      dueDate: records[0]?.dueDate ?? null,
+      chargeStartDate: period.chargeStartDate ? period.chargeStartDate.toISOString() : null,
+      chargeEndDate: period.chargeEndDate ? period.chargeEndDate.toISOString() : null,
+      dueDate: period.dueDate ? period.dueDate.toISOString() : null,
       houseCount: records.length,
       receivableAmount: this.round(receivableAmount),
       paidAmount: this.round(paidAmount),
@@ -296,49 +539,344 @@ export class ManagementFeeService {
     };
   }
 
-  private getCalculationRule() {
+  private getCalculationRule(period?: ResolvedPeriod) {
+    const normalized = this.normalizePeriod(period, {});
+    const tiers = this.getPricingTiers(normalized);
+
     return {
-      version: 'manual-import-v1',
-      baseAmount: BASE_AMOUNT,
-      defaultArea: DEFAULT_AREA,
-      description: '缴费状态来自楼栋公示人工导入，金额仍按面积分档单价加固定基础服务费计算。',
-      tiers: [
-        { minArea: 0, maxArea: 79.99, unitPrice: 2.38 },
-        { minArea: 80, maxArea: 99.99, unitPrice: 2.68 },
-        { minArea: 100, maxArea: 139.99, unitPrice: 2.96 },
-        { minArea: 140, maxArea: null, unitPrice: 3.18 },
-      ],
+      version: normalized.pricingMode === UNIFORM_PRICING_MODE ? 'period-rule-uniform-v1' : 'period-rule-tiered-v1',
+      pricingMode: normalized.pricingMode,
+      unitPrice: normalized.unitPrice,
+      baseAmount: normalized.baseAmount,
+      defaultArea: normalized.defaultArea,
+      description:
+        normalized.pricingMode === UNIFORM_PRICING_MODE
+          ? `当前账期按统一单价每平方米 ${normalized.unitPrice?.toFixed(2) ?? '0.00'} 元计算，固定费用 ${normalized.baseAmount.toFixed(2)} 元。`
+          : '当前账期按统一单价加固定费用计算。',
+      tiers,
     };
   }
 
-  private getUnitPrice(grossArea: number) {
-    if (grossArea < 80) return 2.38;
-    if (grossArea < 100) return 2.68;
-    if (grossArea < 140) return 2.96;
-    return 3.18;
-  }
-
-  private async resolvePeriodMonth(input?: string) {
-    const value = input?.trim();
-    if (value && /^\d{4}-\d{2}$/.test(value)) {
-      return value;
+  private getPricingTiers(period: ResolvedPeriod) {
+    if (period.pricingMode === UNIFORM_PRICING_MODE) {
+      return [
+        {
+          minArea: 0,
+          maxArea: null,
+          unitPrice: this.round(period.unitPrice ?? 0),
+        },
+      ];
     }
 
-    const latest = await this.prisma.managementFeeRecord.findFirst({
-      orderBy: [{ periodMonth: 'desc' }, { createdAt: 'desc' }],
-      select: {
-        periodMonth: true,
-      },
+    const tiers = Array.isArray(period.pricingRuleJson?.tiers) ? period.pricingRuleJson?.tiers : LEGACY_TIERS;
+
+    return tiers.map((item) => ({
+      minArea: this.round(item.minArea),
+      maxArea: item.maxArea === null ? null : this.round(item.maxArea),
+      unitPrice: this.round(item.unitPrice),
+    }));
+  }
+
+  private buildSnapshots(
+    period: Pick<ResolvedPeriod, 'pricingMode' | 'unitPrice' | 'baseAmount' | 'defaultArea' | 'pricingRuleJson'> & {
+      grossArea?: number | null;
+    },
+    existing?: {
+      grossArea?: number | null;
+      unitPrice?: number | null;
+      baseAmount?: number | null;
+      receivableAmount?: number | null;
+    },
+  ) {
+    const grossArea = this.round(existing?.grossArea ?? period.grossArea ?? period.defaultArea ?? DEFAULT_AREA);
+    const unitPrice = this.round(
+      existing?.unitPrice ??
+        this.resolveUnitPrice(grossArea, {
+          pricingMode: period.pricingMode,
+          unitPrice: period.unitPrice,
+          pricingRuleJson: period.pricingRuleJson,
+        }),
+    );
+    const baseAmount = this.round(existing?.baseAmount ?? period.baseAmount ?? 0);
+    const receivableAmount = this.round(
+      existing?.receivableAmount ?? grossArea * unitPrice + baseAmount,
+    );
+
+    return {
+      grossArea,
+      unitPrice,
+      baseAmount,
+      receivableAmount,
+    };
+  }
+
+  private resolveUnitPrice(
+    grossArea: number,
+    period: Pick<ResolvedPeriod, 'pricingMode' | 'unitPrice' | 'pricingRuleJson'>,
+  ) {
+    if (period.pricingMode === UNIFORM_PRICING_MODE) {
+      return period.unitPrice ?? 0;
+    }
+
+    const tiers = Array.isArray(period.pricingRuleJson?.tiers)
+      ? period.pricingRuleJson?.tiers
+      : LEGACY_TIERS;
+    const matched = tiers.find(
+      (item) => grossArea >= item.minArea && (item.maxArea === null || grossArea <= item.maxArea),
+    );
+
+    return matched?.unitPrice ?? period.unitPrice ?? LEGACY_UNIT_PRICE;
+  }
+
+  private normalizePeriod(
+    rawPeriod?:
+      | {
+          id?: string | null;
+          periodKey?: string | null;
+          periodMonth?: string | null;
+          chargeStartDate?: Date | string | null;
+          chargeEndDate?: Date | string | null;
+          dueDate?: Date | string | null;
+          pricingMode?: string | PricingMode | null;
+          unitPrice?: number | null;
+          baseAmount?: number | null;
+          defaultArea?: number | null;
+          pricingRuleJson?: unknown;
+          note?: string | null;
+        }
+      | null,
+    legacy?: {
+      periodKey?: string | null;
+      periodMonth?: string | null;
+      chargeStartDate?: Date | string | null;
+      chargeEndDate?: Date | string | null;
+      dueDate?: Date | string | null;
+    },
+    fallback?: ResolvedPeriod,
+  ): ResolvedPeriod {
+    if (rawPeriod?.periodKey) {
+      return {
+        id: rawPeriod.id ?? null,
+        periodKey: rawPeriod.periodKey,
+        periodMonth: rawPeriod.periodMonth ?? legacy?.periodMonth ?? fallback?.periodMonth ?? null,
+        chargeStartDate: this.toDate(rawPeriod.chargeStartDate) ?? this.toDate(legacy?.chargeStartDate) ?? fallback?.chargeStartDate ?? null,
+        chargeEndDate: this.toDate(rawPeriod.chargeEndDate) ?? this.toDate(legacy?.chargeEndDate) ?? fallback?.chargeEndDate ?? null,
+        dueDate: this.toDate(rawPeriod.dueDate) ?? this.toDate(legacy?.dueDate) ?? fallback?.dueDate ?? null,
+        pricingMode: (rawPeriod.pricingMode as PricingMode) ?? LEGACY_PRICING_MODE,
+        unitPrice:
+          rawPeriod.unitPrice === null || rawPeriod.unitPrice === undefined
+            ? null
+            : this.round(Number(rawPeriod.unitPrice)),
+        baseAmount:
+          rawPeriod.baseAmount === null || rawPeriod.baseAmount === undefined
+            ? LEGACY_BASE_AMOUNT
+            : this.round(Number(rawPeriod.baseAmount)),
+        defaultArea:
+          rawPeriod.defaultArea === null || rawPeriod.defaultArea === undefined
+            ? DEFAULT_AREA
+            : this.round(Number(rawPeriod.defaultArea)),
+        pricingRuleJson: (rawPeriod.pricingRuleJson as { tiers?: PricingTier[] } | null) ?? null,
+        note: rawPeriod.note ?? null,
+      };
+    }
+
+    if (fallback) {
+      return fallback;
+    }
+
+    return {
+      id: null,
+      periodKey: legacy?.periodKey ?? '',
+      periodMonth: legacy?.periodMonth ?? null,
+      chargeStartDate: this.toDate(legacy?.chargeStartDate),
+      chargeEndDate: this.toDate(legacy?.chargeEndDate),
+      dueDate: this.toDate(legacy?.dueDate),
+      pricingMode: LEGACY_PRICING_MODE,
+      unitPrice: null,
+      baseAmount: LEGACY_BASE_AMOUNT,
+      defaultArea: DEFAULT_AREA,
+      pricingRuleJson: { tiers: LEGACY_TIERS },
+      note: null,
+    };
+  }
+
+  private async resolvePeriod(query?: ManagementFeePeriodQueryDto | AdminManagementFeeHouseQueryDto) {
+    const periodKey = query?.periodKey?.trim();
+    if (periodKey && /^\d{4}-\d{2}-\d{2}_\d{4}-\d{2}-\d{2}$/.test(periodKey)) {
+      const matched = await this.prisma.managementFeePeriod.findUnique({
+        where: { periodKey },
+      });
+      if (matched) {
+        return this.normalizePeriod(matched);
+      }
+
+      const legacyMatched = await this.findLegacyPeriod({ periodKey });
+      if (legacyMatched) {
+        return legacyMatched;
+      }
+    }
+
+    const periodMonth = query?.periodMonth?.trim();
+    if (periodMonth && /^\d{4}-\d{2}$/.test(periodMonth)) {
+      const matched = await this.prisma.managementFeePeriod.findFirst({
+        where: { periodMonth },
+        orderBy: [{ chargeStartDate: 'desc' }, { chargeEndDate: 'desc' }, { createdAt: 'desc' }],
+      });
+
+      if (matched) {
+        return this.normalizePeriod(matched);
+      }
+
+      const legacyMatched = await this.findLegacyPeriod({ periodMonth });
+      if (legacyMatched) {
+        return legacyMatched;
+      }
+    }
+
+    const latest = await this.prisma.managementFeePeriod.findFirst({
+      orderBy: [{ chargeStartDate: 'desc' }, { chargeEndDate: 'desc' }, { createdAt: 'desc' }],
     });
 
-    if (latest?.periodMonth) {
-      return latest.periodMonth;
+    if (latest) {
+      return this.normalizePeriod(latest);
+    }
+
+    const legacyLatest = await this.findLegacyPeriod({});
+    if (legacyLatest) {
+      return legacyLatest;
     }
 
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
-    return `${year}-${month}`;
+    const day = '01';
+    return this.normalizePeriod(undefined, {
+      periodKey: `${year}-${month}-${day}_${year}-${month}-${day}`,
+      periodMonth: `${year}-${month}`,
+      chargeStartDate: now,
+      chargeEndDate: now,
+      dueDate: now,
+    });
+  }
+
+  private async findLegacyPeriod(query: { periodKey?: string; periodMonth?: string }) {
+    const matched = await this.prisma.managementFeeRecord.findFirst({
+      where: query.periodKey
+        ? { periodKey: query.periodKey }
+        : query.periodMonth
+          ? { periodMonth: query.periodMonth }
+          : undefined,
+      orderBy: [{ chargeStartDate: 'desc' }, { chargeEndDate: 'desc' }, { createdAt: 'desc' }],
+      select: {
+        periodKey: true,
+        periodMonth: true,
+        chargeStartDate: true,
+        chargeEndDate: true,
+        dueDate: true,
+      },
+    });
+
+    if (!matched?.periodKey) {
+      return null;
+    }
+
+    return this.normalizePeriod(undefined, matched);
+  }
+
+  private async listLegacyPeriods() {
+    const records = await this.prisma.managementFeeRecord.findMany({
+      select: {
+        periodKey: true,
+        periodMonth: true,
+        chargeStartDate: true,
+        chargeEndDate: true,
+        dueDate: true,
+        paymentStatus: true,
+      },
+      orderBy: [{ chargeStartDate: 'desc' }, { chargeEndDate: 'desc' }, { createdAt: 'desc' }],
+    });
+
+    const periodMap = new Map<
+      string,
+      {
+        periodKey: string;
+        periodMonth: string;
+        chargeStartDate: string | null;
+        chargeEndDate: string | null;
+        dueDate: string | null;
+        houseCount: number;
+        paidHouseholds: number;
+      }
+    >();
+
+    for (const item of records) {
+      const current =
+        periodMap.get(item.periodKey) ??
+        {
+          periodKey: item.periodKey,
+          periodMonth: item.periodMonth,
+          chargeStartDate: item.chargeStartDate ? new Date(item.chargeStartDate).toISOString() : null,
+          chargeEndDate: item.chargeEndDate ? new Date(item.chargeEndDate).toISOString() : null,
+          dueDate: item.dueDate ? new Date(item.dueDate).toISOString() : null,
+          houseCount: 0,
+          paidHouseholds: 0,
+        };
+
+      current.houseCount += 1;
+      if (item.paymentStatus === 'PAID') {
+        current.paidHouseholds += 1;
+      }
+
+      periodMap.set(item.periodKey, current);
+    }
+
+    return Array.from(periodMap.values()).map((item) => ({
+      ...item,
+      pricingMode: LEGACY_PRICING_MODE,
+      unitPrice: null,
+      baseAmount: LEGACY_BASE_AMOUNT,
+      defaultArea: DEFAULT_AREA,
+      unpaidHouseholds: Math.max(item.houseCount - item.paidHouseholds, 0),
+    }));
+  }
+
+  private getPeriodRecordWhere(period: ResolvedPeriod) {
+    if (period.id) {
+      return {
+        OR: [{ periodId: period.id }, { periodKey: period.periodKey }],
+      };
+    }
+
+    return {
+      periodKey: period.periodKey,
+    };
+  }
+
+  private getRangeLabel(start?: Date | null, end?: Date | null, fallbackMonth?: string | null) {
+    if (start && end) {
+      return `${start.toISOString().slice(0, 10)} 至 ${end.toISOString().slice(0, 10)}`;
+    }
+    return fallbackMonth ?? '当前账期';
+  }
+
+  private createDateTime(dateText: string, mode: 'start' | 'end') {
+    const suffix = mode === 'start' ? 'T00:00:00+08:00' : 'T23:59:59+08:00';
+    const parsed = new Date(`${dateText}${suffix}`);
+
+    if (Number.isNaN(parsed.getTime())) {
+      throw new BadRequestException('管理时段日期无效');
+    }
+
+    return parsed;
+  }
+
+  private toDate(value?: Date | string | null) {
+    if (!value) {
+      return null;
+    }
+
+    const parsed = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
   private round(value: number) {

@@ -7,6 +7,11 @@ import {
   HouseholdGroupStatus,
   HouseholdGroupType,
 } from '@prisma/client';
+import {
+  buildManagementFeeSnapshots,
+  getLegacyManagementFeePeriodSeedData,
+  upsertManagementFeePeriod,
+} from './management-fee-period-helpers';
 
 interface RawBuildingItem {
   total_households: number;
@@ -79,6 +84,21 @@ function ensureValidPeriodMonth(periodMonth: string): string {
 
 function createDateAtUtc8(value: string) {
   return new Date(`${value}+08:00`);
+}
+
+function formatDateAtUtc8(date: Date) {
+  return new Intl.DateTimeFormat('sv-SE', {
+    timeZone: 'Asia/Hong_Kong',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+}
+
+function buildPeriodKey(chargeStartDate: Date, chargeEndDate: Date) {
+  const start = formatDateAtUtc8(chargeStartDate);
+  const end = formatDateAtUtc8(chargeEndDate);
+  return `${start}_${end}`;
 }
 
 function getPeriodDates(periodMonth: string) {
@@ -291,6 +311,7 @@ async function main(): Promise<void> {
   const periodMonth = ensureValidPeriodMonth(getDefaultPeriodMonth());
   const buildingPrefix = getBuildingPrefix();
   const { chargeStartDate, chargeEndDate, dueDate } = getPeriodDates(periodMonth);
+  const periodKey = buildPeriodKey(chargeStartDate, chargeEndDate);
   const payload = JSON.parse(readFileSync(jsonPath, 'utf8')) as RawPayload;
   const buildingItems = parseBuildingItems(payload);
   const sourceFileName = basename(jsonPath);
@@ -308,6 +329,18 @@ async function main(): Promise<void> {
   };
 
   try {
+    const period = await upsertManagementFeePeriod(
+      prisma,
+      getLegacyManagementFeePeriodSeedData({
+        periodKey,
+        periodMonth,
+        chargeStartDate,
+        chargeEndDate,
+        dueDate,
+        note: `按真实 JSON 导入初始化账期：${sourceFileName}`,
+      }),
+    );
+
     for (const item of buildingItems) {
       const buildingCode = `${buildingPrefix}${item.buildingNo}`;
       const paidSet = new Set(item.paidRooms);
@@ -415,29 +448,54 @@ async function main(): Promise<void> {
         }
 
         const isPaid = paidSet.has(roomNo);
+        const snapshots = buildManagementFeeSnapshots(
+          {
+            pricingMode: period.pricingMode as 'AREA_TIERED',
+            unitPrice: period.unitPrice,
+            baseAmount: period.baseAmount,
+            defaultArea: period.defaultArea,
+            pricingRuleJson: (period.pricingRuleJson as Record<string, unknown> | null) ?? null,
+          },
+          guessGrossArea(roomNo),
+        );
 
         await prisma.managementFeeRecord.upsert({
           where: {
-            periodMonth_houseId: {
-              periodMonth,
+            periodKey_houseId: {
+              periodKey,
               houseId: house.id,
             },
           },
           update: {
+            periodId: period.id,
+            periodKey,
+            periodMonth,
             chargeStartDate,
             chargeEndDate,
             dueDate,
+            grossAreaSnapshot: snapshots.grossAreaSnapshot,
+            unitPriceSnapshot: snapshots.unitPriceSnapshot,
+            baseAmountSnapshot: snapshots.baseAmountSnapshot,
+            receivableAmount: snapshots.receivableAmount,
+            paidAmount: isPaid ? snapshots.receivableAmount : 0,
             paymentStatus: isPaid ? 'PAID' : 'PENDING',
             source: 'json_import',
             paidAt: isPaid ? buildPaidDate(periodMonth, paidIndex) : null,
             note: `按真实 JSON 导入：${sourceFileName}; building=${item.buildingName};${metaNote}`,
           },
           create: {
+            periodId: period.id,
+            periodKey,
             periodMonth,
             houseId: house.id,
             chargeStartDate,
             chargeEndDate,
             dueDate,
+            grossAreaSnapshot: snapshots.grossAreaSnapshot,
+            unitPriceSnapshot: snapshots.unitPriceSnapshot,
+            baseAmountSnapshot: snapshots.baseAmountSnapshot,
+            receivableAmount: snapshots.receivableAmount,
+            paidAmount: isPaid ? snapshots.receivableAmount : 0,
             paymentStatus: isPaid ? 'PAID' : 'PENDING',
             source: 'json_import',
             paidAt: isPaid ? buildPaidDate(periodMonth, paidIndex) : null,
@@ -454,7 +512,7 @@ async function main(): Promise<void> {
 
       await prisma.managementFeeRecord.deleteMany({
         where: {
-          periodMonth,
+          periodKey,
           house: {
             buildingId: building.id,
           },

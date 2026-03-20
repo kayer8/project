@@ -1,10 +1,13 @@
 <template>
   <PageContainer title="公告列表">
     <template #actions>
-      <t-button variant="outline" @click="filterVisible = !filterVisible">
-        {{ filterVisible ? '收起筛选' : '筛选' }}
-      </t-button>
-      <t-button theme="primary">新建公告</t-button>
+      <div class="page-header__search-actions">
+        <t-input v-model="quickKeyword" class="page-header__search-input" clearable placeholder="快速搜索公告标题 / 发布单位" />
+        <t-button variant="outline" @click="filterVisible = !filterVisible">
+          {{ filterVisible ? '收起筛选' : '筛选' }}
+        </t-button>
+        <t-button theme="primary">新建公告</t-button>
+      </div>
     </template>
 
     <section class="admin-panel">
@@ -19,11 +22,10 @@
             <div class="inline-filter-panel__title">筛选查询</div>
           </div>
           <div class="filter-grid">
-            <t-input v-model="filters.keyword" clearable placeholder="搜索公告标题 / 发布单位" />
             <t-select v-model="filters.category" :options="categoryOptions" />
             <t-select v-model="filters.status" :options="statusOptions" />
             <div class="toolbar-actions">
-              <t-button theme="primary">查询</t-button>
+              <t-button theme="primary" @click="handleSearch">查询</t-button>
               <t-button variant="outline" @click="resetFilters">重置</t-button>
             </div>
           </div>
@@ -60,6 +62,7 @@
 import { computed, reactive, ref } from 'vue';
 import { MessagePlugin } from 'tdesign-vue-next';
 import PageContainer from '@/components/PageContainer/index.vue';
+import { useQuickKeywordSearch } from '@/composables/useQuickKeywordSearch';
 import { announcementRecords } from '@/mock/governance';
 
 const filters = reactive({
@@ -68,6 +71,11 @@ const filters = reactive({
   status: 'ALL',
 });
 const filterVisible = ref(false);
+const { quickKeyword, setQuickKeyword, commitQuickKeyword, clearQuickKeywordTimer } = useQuickKeywordSearch(
+  (keyword) => {
+    filters.keyword = keyword;
+  },
+);
 
 const categoryOptions = [
   { label: '全部分类', value: 'ALL' },
@@ -110,9 +118,15 @@ const filteredRows = computed(() =>
 );
 
 function resetFilters() {
+  clearQuickKeywordTimer();
+  setQuickKeyword('');
   filters.keyword = '';
   filters.category = 'ALL';
   filters.status = 'ALL';
+}
+
+function handleSearch() {
+  commitQuickKeyword();
 }
 
 function notifyAction(action: string, title: string) {

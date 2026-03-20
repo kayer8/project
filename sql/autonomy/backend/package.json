@@ -17,7 +17,9 @@
     "seed:mock-residents": "ts-node scripts/seed-mock-residents.ts",
     "cleanup:non-hjy-housing": "ts-node scripts/cleanup-non-hjy-housing.ts",
     "import:hjy-management-fees": "ts-node scripts/import-hjy-management-fees.ts",
-    "import:management-fees:json": "ts-node scripts/import-management-fees-from-json.ts"
+    "import:management-fees:json": "ts-node scripts/import-management-fees-from-json.ts",
+    "migrate:management-fees:periods": "ts-node scripts/migrate-management-fee-periods.ts",
+    "normalize:management-fees:uniform": "ts-node scripts/normalize-management-fee-uniform-pricing.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",

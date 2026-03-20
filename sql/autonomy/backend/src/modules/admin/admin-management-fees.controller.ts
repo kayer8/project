@@ -1,10 +1,12 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AdminJwtAuthGuard } from '../../common/guards/admin-jwt-auth.guard';
 import { ManagementFeeService } from '../management-fee/management-fee.service';
 import {
   AdminManagementFeeHouseQueryDto,
+  CreateManagementFeePeriodDto,
   ManagementFeePeriodQueryDto,
+  UpdateManagementFeeStatusDto,
 } from '../management-fee/dto/management-fee.dto';
 
 @ApiTags('admin-management-fees')
@@ -13,6 +15,16 @@ import {
 @UseGuards(AdminJwtAuthGuard)
 export class AdminManagementFeesController {
   constructor(private readonly managementFeeService: ManagementFeeService) {}
+
+  @Get('periods')
+  periods() {
+    return this.managementFeeService.listPeriods();
+  }
+
+  @Post('periods')
+  createPeriod(@Body() dto: CreateManagementFeePeriodDto) {
+    return this.managementFeeService.createPeriod(dto);
+  }
 
   @Get('summary')
   summary(@Query() query: ManagementFeePeriodQueryDto) {
@@ -35,7 +47,12 @@ export class AdminManagementFeesController {
   }
 
   @Get('options/buildings')
-  buildingOptions() {
-    return this.managementFeeService.listBuildingOptions();
+  buildingOptions(@Query() query: ManagementFeePeriodQueryDto) {
+    return this.managementFeeService.listBuildingOptions(query);
+  }
+
+  @Patch('houses/:id/status')
+  updateHouseStatus(@Param('id') id: string, @Body() dto: UpdateManagementFeeStatusDto) {
+    return this.managementFeeService.updateHousePaymentStatus(id, dto.paymentStatus);
   }
 }

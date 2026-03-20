@@ -1,10 +1,13 @@
 <template>
   <PageContainer title="成员关系">
     <template #actions>
-      <t-button variant="outline" @click="filterVisible = !filterVisible">
-        {{ filterVisible ? '收起筛选' : '筛选' }}
-      </t-button>
-      <t-button theme="primary" @click="openCreate">新建关系</t-button>
+      <div class="page-header__search-actions">
+        <t-input v-model="quickKeyword" class="page-header__search-input" clearable placeholder="快速搜索姓名、昵称、手机号或房屋" />
+        <t-button variant="outline" @click="filterVisible = !filterVisible">
+          {{ filterVisible ? '收起筛选' : '筛选' }}
+        </t-button>
+        <t-button theme="primary" @click="openCreate">新建关系</t-button>
+      </div>
     </template>
 
     <section class="admin-panel">
@@ -19,7 +22,6 @@
             <div class="inline-filter-panel__title">筛选查询</div>
           </div>
           <div class="filter-grid">
-            <t-input v-model="filters.keyword" clearable placeholder="搜索姓名、昵称、手机号或房屋" />
             <t-select v-model="filters.relationType" :options="relationTypeOptions" />
             <t-select v-model="filters.status" :options="memberStatusOptions" />
             <div class="toolbar-actions">
@@ -137,6 +139,7 @@
 import { onMounted, reactive, ref } from 'vue';
 import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import PageContainer from '@/components/PageContainer/index.vue';
+import { useQuickKeywordSearch } from '@/composables/useQuickKeywordSearch';
 import { fetchMemberDetail, fetchMemberList, removeMember } from '@/modules/member/api';
 import type { MemberDetail, MemberListItem } from '@/modules/member/types';
 import {
@@ -181,6 +184,14 @@ const columns = [
   { colKey: 'actions', title: '操作', width: 180, fixed: 'right' },
 ];
 
+const { quickKeyword, setQuickKeyword, commitQuickKeyword, clearQuickKeywordTimer } = useQuickKeywordSearch(
+  (keyword) => {
+    filters.keyword = keyword;
+    pagination.page = 1;
+    void loadList();
+  },
+);
+
 function getStatusTheme(status: MemberListItem['status']) {
   if (status === 'ACTIVE') return 'success';
   if (status === 'PENDING') return 'warning';
@@ -203,11 +214,12 @@ async function loadList() {
 }
 
 function handleSearch() {
-  pagination.page = 1;
-  void loadList();
+  commitQuickKeyword();
 }
 
 function resetFilters() {
+  clearQuickKeywordTimer();
+  setQuickKeyword('');
   filters.keyword = '';
   filters.status = 'ALL';
   filters.relationType = 'ALL';

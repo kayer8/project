@@ -1,10 +1,13 @@
 <template>
   <PageContainer title="投票列表">
     <template #actions>
-      <t-button variant="outline" @click="filterVisible = !filterVisible">
-        {{ filterVisible ? '收起筛选' : '筛选' }}
-      </t-button>
-      <t-button theme="primary">新建投票</t-button>
+      <div class="page-header__search-actions">
+        <t-input v-model="quickKeyword" class="page-header__search-input" clearable placeholder="快速搜索投票标题 / 发起方" />
+        <t-button variant="outline" @click="filterVisible = !filterVisible">
+          {{ filterVisible ? '收起筛选' : '筛选' }}
+        </t-button>
+        <t-button theme="primary">新建投票</t-button>
+      </div>
     </template>
 
     <section class="admin-panel">
@@ -19,11 +22,10 @@
             <div class="inline-filter-panel__title">筛选查询</div>
           </div>
           <div class="filter-grid">
-            <t-input v-model="filters.keyword" clearable placeholder="搜索投票标题 / 发起方" />
             <t-select v-model="filters.type" :options="typeOptions" />
             <t-select v-model="filters.status" :options="statusOptions" />
             <div class="toolbar-actions">
-              <t-button theme="primary">查询</t-button>
+              <t-button theme="primary" @click="handleSearch">查询</t-button>
               <t-button variant="outline" @click="resetFilters">重置</t-button>
             </div>
           </div>
@@ -90,6 +92,7 @@
 import { computed, reactive, ref } from 'vue';
 import { MessagePlugin } from 'tdesign-vue-next';
 import PageContainer from '@/components/PageContainer/index.vue';
+import { useQuickKeywordSearch } from '@/composables/useQuickKeywordSearch';
 import { voteRecords } from '@/mock/governance';
 
 const filters = reactive({
@@ -99,6 +102,11 @@ const filters = reactive({
 });
 const selectedRowKeys = ref<Array<string | number>>([]);
 const filterVisible = ref(false);
+const { quickKeyword, setQuickKeyword, commitQuickKeyword, clearQuickKeywordTimer } = useQuickKeywordSearch(
+  (keyword) => {
+    filters.keyword = keyword;
+  },
+);
 
 const typeOptions = [
   { label: '全部类型', value: 'ALL' },
@@ -146,9 +154,15 @@ function handleSelectChange(keys: Array<string | number>) {
 }
 
 function resetFilters() {
+  clearQuickKeywordTimer();
+  setQuickKeyword('');
   filters.keyword = '';
   filters.type = 'ALL';
   filters.status = 'ALL';
+}
+
+function handleSearch() {
+  commitQuickKeyword();
 }
 
 function notifyAction(action: string, title: string) {
