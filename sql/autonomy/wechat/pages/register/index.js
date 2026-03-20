@@ -16,6 +16,18 @@ function maskMobile(mobile) {
     }
     return `${mobile.slice(0, 3)}****${mobile.slice(-4)}`;
 }
+function confirmSubmit(buildingName, houseName) {
+    return new Promise((resolve) => {
+        wx.showModal({
+            title: '确认提交',
+            content: `楼栋：${buildingName}\n房屋：${houseName || '暂未选择'}\n\n提交后将进入人工审核。`,
+            confirmText: '确认提交',
+            cancelText: '再看看',
+            success: (res) => resolve(res.confirm),
+            fail: () => resolve(false),
+        });
+    });
+}
 Page({
     data: {
         phase: 'phone',
@@ -29,7 +41,9 @@ Page({
         buildingIndex: 0,
         houseIndex: 0,
         selectedBuildingId: '',
+        selectedBuildingName: '',
         selectedHouseId: '',
+        selectedHouseName: '',
     },
     async handleGetPhoneNumber(event) {
         const detail = event.detail;
@@ -82,17 +96,21 @@ Page({
         this.setData({ loadingOptions: true });
         try {
             const buildingOptions = await (0, auth_1.listRegisterBuildings)();
-            const selectedBuildingId = buildingOptions[0]?.id || '';
             this.setData({
                 buildingOptions,
                 buildingIndex: 0,
-                selectedBuildingId,
+                selectedBuildingId: '',
+                selectedBuildingName: '',
                 selectedHouseId: '',
+                selectedHouseName: '',
                 houseOptions: [],
                 houseIndex: 0,
             });
-            if (selectedBuildingId) {
-                await this.loadHouseOptions(selectedBuildingId);
+            if (!buildingOptions.length) {
+                wx.showToast({
+                    title: '暂无可选楼栋，请联系管理员',
+                    icon: 'none',
+                });
             }
         }
         finally {
@@ -104,7 +122,8 @@ Page({
         this.setData({
             houseOptions,
             houseIndex: 0,
-            selectedHouseId: houseOptions[0]?.id || '',
+            selectedHouseId: '',
+            selectedHouseName: '',
         });
     },
     async handleBuildingChange(event) {
@@ -113,12 +132,22 @@ Page({
         this.setData({
             buildingIndex: index,
             selectedBuildingId: building?.id || '',
+            selectedBuildingName: building?.buildingName || '',
             selectedHouseId: '',
+            selectedHouseName: '',
             houseOptions: [],
             houseIndex: 0,
         });
         if (building?.id) {
-            await this.loadHouseOptions(building.id);
+            try {
+                await this.loadHouseOptions(building.id);
+            }
+            catch (error) {
+                wx.showToast({
+                    title: resolveErrorMessage(error),
+                    icon: 'none',
+                });
+            }
         }
     },
     handleHouseChange(event) {
@@ -127,6 +156,7 @@ Page({
         this.setData({
             houseIndex: index,
             selectedHouseId: house?.id || '',
+            selectedHouseName: house?.displayName || '',
         });
     },
     async handleSubmitRequest() {
@@ -135,6 +165,10 @@ Page({
                 title: '请先选择楼栋',
                 icon: 'none',
             });
+            return;
+        }
+        const confirmed = await confirmSubmit(this.data.selectedBuildingName || '未选择楼栋', this.data.selectedHouseName);
+        if (!confirmed) {
             return;
         }
         this.setData({ submitting: true });

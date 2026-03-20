@@ -1,0 +1,72 @@
+<view class="page-shell">
+  <app-navbar title="财务公开" />
+
+  <view class="page-body">
+    <view class="metric-grid">
+      <view class="metric-card">
+        <view class="metric-label">本季收入</view>
+        <view class="metric-value">125.0w</view>
+        <view class="metric-note">物业费 + 公共收益</view>
+      </view>
+      <view class="metric-card">
+        <view class="metric-label">本季支出</view>
+        <view class="metric-value">98.0w</view>
+        <view class="metric-note">人工 + 维保 + 能耗</view>
+      </view>
+      <view class="metric-card">
+        <view class="metric-label">本季结余</view>
+        <view class="metric-value">27.0w</view>
+        <view class="metric-note">留作后续预算</view>
+      </view>
+    </view>
+
+    <view class="section card info-card">
+      <t-tabs value="{{activeTab}}" theme="card" bind:change="handleTabChange">
+        <t-tab-panel value="reports" label="财务报告">
+          <view wx:for="{{reports}}" wx:key="id" class="record-card financial-card">
+            <view class="record-row">
+              <view>
+                <view class="record-title">{{item.title}}</view>
+                <view class="record-note">{{item.period}} · {{item.date}}</view>
+              </view>
+              <t-tag theme="{{item.status === '公示中' ? 'primary' : 'success'}}" variant="light">{{item.status}}</t-tag>
+            </view>
+            <view class="list-desc">收入 {{item.totalIncome}} 元，支出 {{item.totalExpense}} 元</view>
+          </view>
+        </t-tab-panel>
+        <t-tab-panel value="transactions" label="收支流水">
+          <view class="status-row financial-filter">
+            <button class="secondary-button financial-filter__btn {{transactionFilter === 'all' ? 'financial-filter__btn--active' : ''}}" data-filter="all" bindtap="handleFilterChange">全部</button>
+            <button class="secondary-button financial-filter__btn {{transactionFilter === 'income' ? 'financial-filter__btn--active' : ''}}" data-filter="income" bindtap="handleFilterChange">收入</button>
+            <button class="secondary-button financial-filter__btn {{transactionFilter === 'expense' ? 'financial-filter__btn--active' : ''}}" data-filter="expense" bindtap="handleFilterChange">支出</button>
+          </view>
+          <view wx:for="{{transactions}}" wx:key="id" wx:if="{{transactionFilter === 'all' || transactionFilter === item.type}}" class="record-card financial-card">
+            <view class="record-row">
+              <view>
+                <view class="record-title">{{item.title}}</view>
+                <view class="record-note">{{item.date}} · {{item.category}}</view>
+              </view>
+              <view class="record-title {{item.type === 'income' ? 'text-income' : 'text-expense'}}">
+                {{item.type === 'income' ? '+' : ''}}{{item.amount}}
+              </view>
+            </view>
+          </view>
+        </t-tab-panel>
+        <t-tab-panel value="budget" label="年度预算">
+          <view wx:for="{{budgets}}" wx:key="label" class="record-card financial-card">
+            <view class="record-row">
+              <view>
+                <view class="record-title">{{item.label}}</view>
+                <view class="record-note">已执行 {{item.spent}} / {{item.budget}}</view>
+              </view>
+              <t-tag theme="warning" variant="light">预算中</t-tag>
+            </view>
+            <view class="result-bar">
+              <view class="result-bar__inner" style="width: {{item.spent / item.budget * 100}}%;"></view>
+            </view>
+          </view>
+        </t-tab-panel>
+      </t-tabs>
+    </view>
+  </view>
+</view>

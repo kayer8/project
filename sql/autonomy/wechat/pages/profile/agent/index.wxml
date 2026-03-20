@@ -1,0 +1,26 @@
+<view class="page-shell">
+  <app-navbar title="代办授权" />
+
+  <view class="page-body">
+    <view class="page-note">
+      代办授权适合给家属、共有人或代理人开放有限的办理权限，例如缴费、访客预约、查看账单等。
+    </view>
+
+    <view class="section">
+      <view wx:for="{{records}}" wx:key="title" class="record-card">
+        <view class="record-row">
+          <view>
+            <view class="record-title">{{item.title}}</view>
+            <view class="record-note">{{item.note}}</view>
+          </view>
+          <t-tag theme="{{item.status === '已授权' ? 'success' : 'warning'}}" variant="light">{{item.status}}</t-tag>
+        </view>
+      </view>
+    </view>
+
+    <view class="section action-row">
+      <button class="primary-button">新增授权</button>
+      <button class="secondary-button">查看历史</button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,38 @@
+<view class="page-shell">
+  <app-navbar title="设置" />
+
+  <view class="page-body">
+    <view class="record-card">
+      <view class="record-row">
+        <view>
+          <view class="record-title">账单提醒</view>
+          <view class="record-note">物业费、停车费和待缴账单提醒</view>
+        </view>
+        <t-switch value="{{notifyBill}}" data-field="notifyBill" bind:change="handleSwitchChange" />
+      </view>
+    </view>
+    <view class="record-card setting-card">
+      <view class="record-row">
+        <view>
+          <view class="record-title">公告提醒</view>
+          <view class="record-note">社区公告、停水停电等重要通知</view>
+        </view>
+        <t-switch value="{{notifyAnnouncement}}" data-field="notifyAnnouncement" bind:change="handleSwitchChange" />
+      </view>
+    </view>
+    <view class="record-card setting-card">
+      <view class="record-row">
+        <view>
+          <view class="record-title">投票提醒</view>
+          <view class="record-note">新投票发起、截止前提醒和结果通知</view>
+        </view>
+        <t-switch value="{{notifyVote}}" data-field="notifyVote" bind:change="handleSwitchChange" />
+      </view>
+    </view>
+    <view class="section">
+      <t-cell-group>
+        <t-cell title="隐私政策" note="查看" arrow="{{true}}" url="/pages/legal/privacy/index" jump-type="navigateTo" />
+      </t-cell-group>
+    </view>
+  </view>
+</view>

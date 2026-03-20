@@ -1,0 +1,10 @@
+.profile-house + .profile-house {
+  margin-top: 16rpx;
+}
+
+.nav-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}

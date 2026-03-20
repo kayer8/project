@@ -1,0 +1,68 @@
+<view class="page-shell">
+  <app-navbar title="我的" left-arrow="{{false}}" />
+
+  <view class="page-body page-body--with-tabbar">
+    <view class="summary-banner">
+      <view class="summary-title">{{user.name}}</view>
+      <view class="summary-desc">ID {{user.id}} · {{user.community}}</view>
+    </view>
+
+    <view class="section card info-card">
+      <view class="section-head">
+        <view>
+          <view class="section-title">我的房屋</view>
+          <view class="section-subtitle">房屋、成员和认证拆成独立页处理</view>
+        </view>
+      </view>
+      <view wx:for="{{houses}}" wx:key="id" class="record-card profile-house">
+        <view class="record-row">
+          <view>
+            <view class="record-title">{{item.name}}</view>
+            <view class="record-note">{{item.memberCount}} 位成员</view>
+          </view>
+          <t-tag theme="primary" variant="light">{{item.role}}</t-tag>
+        </view>
+      </view>
+      <view class="action-row section">
+        <navigator class="secondary-button nav-button" url="/pages/profile/bind/index">绑定新房</navigator>
+        <navigator class="primary-button nav-button" url="/pages/profile/members/index">成员管理</navigator>
+      </view>
+    </view>
+
+    <view class="section card info-card">
+      <view class="section-title">账户中心</view>
+      <t-cell-group>
+        <t-cell
+          title="身份认证"
+          description="查看实名审核与提交材料"
+          note="{{verification.status === 'verified' ? '已认证' : '待处理'}}"
+          arrow="{{true}}"
+          url="/pages/profile/verification/index"
+          jump-type="navigateTo"
+        />
+        <t-cell
+          title="代办授权"
+          description="委托家属或代理人代办业务"
+          note="授权协作"
+          arrow="{{true}}"
+          url="/pages/profile/agent/index"
+          jump-type="navigateTo"
+        />
+        <t-cell
+          title="设置"
+          description="通知、隐私与账号偏好"
+          note="个人设置"
+          arrow="{{true}}"
+          url="/pages/profile/settings/index"
+          jump-type="navigateTo"
+        />
+      </t-cell-group>
+    </view>
+
+    <view class="section page-note page-note--warning">
+      管理端和小程序的能力边界已经拆开了：住户侧只做查看、申请、授权、投票和服务办理，不承担后台维护型操作。
+    </view>
+  </view>
+
+  <app-tabbar value="profile" />
+</view>

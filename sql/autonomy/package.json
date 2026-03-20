@@ -1,0 +1,16 @@
+{
+  "name": "autonomy",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "dev": "concurrently -k -n backend,frontend -c blue,green \"pnpm --dir backend run start:dev\" \"pnpm --dir admin-web run dev\"",
+    "start": "pnpm run dev",
+    "dev:backend": "pnpm --dir backend run start:dev",
+    "dev:frontend": "pnpm --dir admin-web run dev",
+    "install:all": "pnpm --dir backend install && pnpm --dir admin-web install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

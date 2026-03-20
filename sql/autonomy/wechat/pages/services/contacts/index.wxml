@@ -1,0 +1,15 @@
+<view class="page-shell">
+  <app-navbar title="常用电话" />
+
+  <view class="page-body">
+    <view wx:for="{{contacts}}" wx:key="title" class="record-card">
+      <view class="record-row">
+        <view>
+          <view class="record-title">{{item.title}}</view>
+          <view class="record-note">{{item.note}}</view>
+        </view>
+        <view class="record-title">{{item.phone}}</view>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,32 @@
+<view class="page-shell">
+  <app-navbar title="成员管理" />
+
+  <view class="page-body">
+    <view class="card info-card">
+      <view class="record-title">3号楼 1202</view>
+      <view class="record-note">当前共有 {{members.length}} 位成员</view>
+      <view class="action-row section">
+        <button class="primary-button" bindtap="openInvite">邀请成员</button>
+        <button class="secondary-button" bindtap="openPermissions">权限设置</button>
+      </view>
+    </view>
+
+    <view class="section">
+      <view wx:for="{{members}}" wx:key="id" class="record-card member-card">
+        <view class="record-row">
+          <view>
+            <view class="record-title">{{item.name}}</view>
+            <view class="record-note">{{item.phone}} · 加入于 {{item.joinDate}}</view>
+          </view>
+          <view class="badge-row">
+            <t-tag theme="{{item.role === '业主' ? 'primary' : item.role === '家属' ? 'success' : 'warning'}}" variant="light">{{item.role}}</t-tag>
+            <t-tag theme="{{item.status === 'active' ? 'success' : 'warning'}}" variant="light">
+              {{item.status === 'active' ? '已加入' : '待确认'}}
+            </t-tag>
+          </view>
+        </view>
+        <button wx:if="{{item.role !== '业主'}}" class="ghost-button member-card__remove" data-id="{{item.id}}" bindtap="handleRemove">移除成员</button>
+      </view>
+    </view>
+  </view>
+</view>

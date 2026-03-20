@@ -65,7 +65,7 @@
 
         <template #actions="{ row }">
           <div class="action-group">
-            <t-button variant="text" theme="primary" @click="goDetail(row.id)">详情</t-button>
+            <t-button variant="text" theme="primary" @click="openDetail(row.id)">详情</t-button>
             <t-button variant="text" @click="openEdit(row.id)">编辑</t-button>
             <t-button variant="text" theme="danger" @click="handleDelete(row.id)">删除</t-button>
           </div>
@@ -85,9 +85,15 @@
     </t-card>
 
     <MemberFormDialog
-      v-model:visible="dialogVisible"
+      v-model:visible="formDialogVisible"
       :mode="dialogMode"
       :initial-value="editingMember"
+      @success="handleDialogSuccess"
+    />
+
+    <MemberDetailDialog
+      v-model:visible="detailDialogVisible"
+      :detail-id="detailMemberId"
       @success="handleDialogSuccess"
     />
   </PageContainer>
@@ -95,7 +101,6 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
 import PageContainer from '@/components/PageContainer/index.vue';
 import { fetchMemberDetail, fetchMemberList, removeMember } from '@/modules/member/api';
 import type { MemberDetail, MemberListItem } from '@/modules/member/types';
@@ -106,13 +111,15 @@ import {
   memberStatusOptions,
 } from '@/modules/member/types';
 import { formatDateTime, formatText } from '@/utils/format';
+import MemberDetailDialog from './components/MemberDetailDialog.vue';
 import MemberFormDialog from './components/MemberFormDialog.vue';
 
-const router = useRouter();
 const members = ref<MemberListItem[]>([]);
 const editingMember = ref<MemberDetail | null>(null);
-const dialogVisible = ref(false);
+const formDialogVisible = ref(false);
 const dialogMode = ref<'create' | 'edit'>('create');
+const detailDialogVisible = ref(false);
+const detailMemberId = ref('');
 const relationTypeOptions = [{ label: '全部关系', value: 'ALL' }, ...memberRelationOptions];
 const filters = reactive({
   keyword: '',
@@ -194,20 +201,21 @@ function handlePageChange(pageInfo: { current: number; pageSize: number }) {
   void loadList();
 }
 
-function goDetail(id: string) {
-  void router.push(`/members/${id}`);
+function openDetail(id: string) {
+  detailMemberId.value = id;
+  detailDialogVisible.value = true;
 }
 
 function openCreate() {
   dialogMode.value = 'create';
   editingMember.value = null;
-  dialogVisible.value = true;
+  formDialogVisible.value = true;
 }
 
 async function openEdit(id: string) {
   dialogMode.value = 'edit';
   editingMember.value = await fetchMemberDetail(id);
-  dialogVisible.value = true;
+  formDialogVisible.value = true;
 }
 
 async function handleDelete(id: string) {

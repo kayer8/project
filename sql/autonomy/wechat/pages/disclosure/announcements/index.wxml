@@ -1,0 +1,30 @@
+<view class="page-shell">
+  <app-navbar title="公告通知" />
+
+  <view class="page-body">
+    <view class="toolbar">
+      <input class="toolbar-input" placeholder="搜索公告、通知、分类" value="{{keyword}}" bindinput="handleKeywordInput" />
+    </view>
+
+    <view class="section">
+      <view wx:for="{{filteredAnnouncements}}" wx:key="id" class="record-card" data-id="{{item.id}}" bindtap="openDetail">
+        <view class="record-row">
+          <view>
+            <view class="record-title">{{item.title}}</view>
+            <view class="record-note">{{item.category}} · {{item.date}} · {{item.views}} 次阅读</view>
+          </view>
+          <view class="badge-row">
+            <t-tag theme="{{item.important ? 'danger' : 'primary'}}" variant="light">
+              {{item.important ? '重要' : '通知'}}
+            </t-tag>
+          </view>
+        </view>
+        <view class="list-desc">{{item.content}}</view>
+      </view>
+    </view>
+
+    <view wx:if="{{!filteredAnnouncements.length}}" class="section">
+      <t-empty description="没有找到相关公告" />
+    </view>
+  </view>
+</view>

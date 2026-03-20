@@ -1,0 +1,43 @@
+<view class="page-shell">
+  <app-navbar title="发起投票" />
+
+  <view class="page-body">
+    <view class="card form-card">
+      <view class="field-block">
+        <text class="field-label">投票标题</text>
+        <input class="text-input" placeholder="请输入投票主题" value="{{title}}" bindinput="handleTitleInput" />
+      </view>
+
+      <view class="field-block">
+        <text class="field-label">投票类型</text>
+        <picker mode="selector" range="{{voteTypes}}" value="{{voteTypeIndex}}" bindchange="handleTypeChange">
+          <view class="picker-field">{{voteTypes[voteTypeIndex]}}</view>
+        </picker>
+        <view class="field-hint">正式决策建议使用一户一票，意见征集建议使用一人一票。</view>
+      </view>
+
+      <view class="field-block">
+        <text class="field-label">截止日期</text>
+        <picker mode="date" value="{{endDate}}" bindchange="handleDateChange">
+          <view class="picker-field">{{endDate || '请选择截止日期'}}</view>
+        </picker>
+      </view>
+
+      <view class="field-block">
+        <text class="field-label">投票选项</text>
+        <input
+          wx:for="{{options}}"
+          wx:key="index"
+          class="text-input vote-create__option"
+          data-index="{{index}}"
+          placeholder="请输入选项内容"
+          value="{{item}}"
+          bindinput="handleOptionInput"
+        />
+        <button class="secondary-button vote-create__add" bindtap="addOption">新增一个选项</button>
+      </view>
+
+      <button class="primary-button" bindtap="handleSubmit" disabled="{{!title || !endDate}}">提交草稿</button>
+    </view>
+  </view>
+</view>

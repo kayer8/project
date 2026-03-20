@@ -1,0 +1,3 @@
+.permission-card + .permission-card {
+  margin-top: 20rpx;
+}

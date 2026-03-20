@@ -333,6 +333,8 @@ export class UserService {
       ? 'SYNCED'
       : latestRegistrationRequest?.status === 'PENDING'
         ? 'UNVERIFIED'
+        : latestRegistrationRequest?.status === 'REJECTED'
+          ? 'REJECTED'
         : 'REGISTERED';
 
     return {

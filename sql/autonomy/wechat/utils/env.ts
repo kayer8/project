@@ -1,1 +1,1 @@
-export const apiBaseUrl = 'https://1567bfc4.r18.vip.cpolar.cn/v1';
+export const apiBaseUrl = 'http://127.0.0.1:3000/v1';

@@ -25,16 +25,19 @@ import { menuItems } from '@/config/menu';
 
 <style scoped>
 .default-layout {
-  min-height: 100vh;
+  height: 100vh;
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 220px minmax(0, 1fr);
   background: #f4f6f8;
+  overflow: hidden;
 }
 
 .sidebar {
+  height: 100%;
   padding: 24px 16px;
   background: #0f172a;
   color: #fff;
+  overflow-y: auto;
 }
 
 .brand {
@@ -64,6 +67,10 @@ import { menuItems } from '@/config/menu';
 }
 
 .content {
+  min-width: 0;
+  height: 100%;
   padding: 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 </style>

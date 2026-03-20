@@ -1,0 +1,42 @@
+<view class="page-shell">
+  <app-navbar title="投票详情" />
+
+  <view class="page-body">
+    <view wx:if="{{vote}}" class="card info-card">
+      <view class="badge-row">
+        <t-tag theme="{{vote.status === '进行中' ? 'primary' : 'default'}}" variant="light">{{vote.status}}</t-tag>
+        <t-tag theme="warning" variant="light">{{vote.type}}</t-tag>
+      </view>
+      <view class="section-title">{{vote.title}}</view>
+      <view class="section-subtitle">截止 {{vote.endTime}} · {{vote.participants}} / {{vote.total}} 已参与</view>
+      <view class="list-desc">{{vote.description}}</view>
+    </view>
+
+    <view wx:if="{{vote && vote.status === '进行中' && !submitted}}" class="section card info-card">
+      <view class="section-title">请选择投票选项</view>
+      <view wx:for="{{vote.options}}" wx:key="*this" class="vote-option {{selectedOption === index ? 'vote-option--active' : ''}}" data-index="{{index}}" bindtap="handleSelectOption">
+        <view>{{item}}</view>
+      </view>
+      <view class="section">
+        <button class="primary-button" bindtap="handleSubmitVote" disabled="{{selectedOption < 0}}">提交投票</button>
+      </view>
+    </view>
+
+    <view wx:if="{{vote && (vote.status !== '进行中' || submitted)}}" class="section card info-card">
+      <view class="section-title">{{submitted ? '你的投票已记录' : '投票结果'}}</view>
+      <view wx:for="{{vote.result}}" wx:key="label" class="result-block">
+        <view class="record-row">
+          <view class="record-note">{{item.label}}</view>
+          <view class="record-note">{{item.percent}}%</view>
+        </view>
+        <view class="result-bar">
+          <view class="result-bar__inner" style="width: {{item.percent}}%;"></view>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{!vote}}" class="section">
+      <t-empty description="未找到对应投票" />
+    </view>
+  </view>
+</view>

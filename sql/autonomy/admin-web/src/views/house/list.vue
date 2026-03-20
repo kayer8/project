@@ -56,7 +56,7 @@
 
         <template #actions="{ row }">
           <div class="action-group">
-            <t-button variant="text" theme="primary" @click="goDetail(row.id)">详情</t-button>
+            <t-button variant="text" theme="primary" @click="openDetail(row.id)">详情</t-button>
             <t-button variant="text" @click="openEdit(row.id)">编辑</t-button>
             <t-button variant="text" theme="danger" @click="handleDelete(row.id)">删除</t-button>
           </div>
@@ -76,9 +76,15 @@
     </t-card>
 
     <HouseFormDialog
-      v-model:visible="dialogVisible"
+      v-model:visible="formDialogVisible"
       :mode="dialogMode"
       :initial-value="editingHouse"
+      @success="handleDialogSuccess"
+    />
+
+    <HouseDetailDialog
+      v-model:visible="detailDialogVisible"
+      :detail-id="detailHouseId"
       @success="handleDialogSuccess"
     />
   </PageContainer>
@@ -86,19 +92,20 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
 import PageContainer from '@/components/PageContainer/index.vue';
 import { fetchBuildingOptions, fetchHouseDetail, fetchHouseList, removeHouse } from '@/modules/house/api';
 import type { HouseDetail, HouseListItem } from '@/modules/house/types';
 import { houseStatusLabelMap, houseStatusOptions } from '@/modules/house/types';
 import { formatDateTime, formatText } from '@/utils/format';
+import HouseDetailDialog from './components/HouseDetailDialog.vue';
 import HouseFormDialog from './components/HouseFormDialog.vue';
 
-const router = useRouter();
 const houses = ref<HouseListItem[]>([]);
 const editingHouse = ref<HouseDetail | null>(null);
-const dialogVisible = ref(false);
+const formDialogVisible = ref(false);
 const dialogMode = ref<'create' | 'edit'>('create');
+const detailDialogVisible = ref(false);
+const detailHouseId = ref('');
 const buildingOptions = ref([{ label: '全部楼栋', value: 'ALL' }]);
 const filters = reactive({
   keyword: '',
@@ -191,20 +198,21 @@ function handlePageChange(pageInfo: { current: number; pageSize: number }) {
   void loadList();
 }
 
-function goDetail(id: string) {
-  void router.push(`/houses/${id}`);
+function openDetail(id: string) {
+  detailHouseId.value = id;
+  detailDialogVisible.value = true;
 }
 
 function openCreate() {
   dialogMode.value = 'create';
   editingHouse.value = null;
-  dialogVisible.value = true;
+  formDialogVisible.value = true;
 }
 
 async function openEdit(id: string) {
   dialogMode.value = 'edit';
   editingHouse.value = await fetchHouseDetail(id);
-  dialogVisible.value = true;
+  formDialogVisible.value = true;
 }
 
 async function handleDelete(id: string) {

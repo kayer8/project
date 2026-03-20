@@ -1,0 +1,21 @@
+<view class="page-shell">
+  <app-navbar title="访客通行" />
+
+  <view class="page-body">
+    <view class="summary-banner">
+      <view class="summary-title">访客通行码</view>
+      <view class="summary-desc">向访客出示此二维码即可通行，后续可接门禁和门岗核验能力。</view>
+    </view>
+
+    <view class="section card info-card visitor-code">
+      <view class="visitor-code__box">QR CODE</view>
+      <view class="record-note">实时刷新中 · 有效期至 15:00</view>
+    </view>
+
+    <view class="section">
+      <t-cell-group>
+        <t-cell wx:for="{{visits}}" wx:key="title" title="{{item.title}}" description="{{item.note}}" arrow="{{true}}" />
+      </t-cell-group>
+    </view>
+  </view>
+</view>

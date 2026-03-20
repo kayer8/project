@@ -1,0 +1,50 @@
+<view class="page-shell">
+  <app-navbar title="缴费情况" />
+
+  <view class="page-body">
+    <view class="metric-grid">
+      <view class="metric-card">
+        <view class="metric-label">整体缴费率</view>
+        <view class="metric-value">{{paymentStats.overallRate}}%</view>
+        <view class="metric-note">全区 3 月</view>
+      </view>
+      <view class="metric-card">
+        <view class="metric-label">应收总额</view>
+        <view class="metric-value">150.0w</view>
+        <view class="metric-note">本季度应收</view>
+      </view>
+      <view class="metric-card">
+        <view class="metric-label">欠缴总额</view>
+        <view class="metric-value">11.2w</view>
+        <view class="metric-note">待催缴</view>
+      </view>
+    </view>
+
+    <view class="section card info-card">
+      <view class="section-title">我的账单</view>
+      <view wx:for="{{paymentStats.myBills}}" wx:key="title" class="record-card payment-card">
+        <view class="record-row">
+          <view>
+            <view class="record-title">{{item.title}}</view>
+            <view class="record-note">{{item.date}}</view>
+          </view>
+          <view class="badge-row">
+            <t-tag theme="{{item.status === '待缴费' ? 'warning' : 'success'}}" variant="light">{{item.status}}</t-tag>
+          </view>
+        </view>
+        <view class="list-desc">账单金额 {{item.amount}} 元</view>
+      </view>
+      <view class="section">
+        <button class="primary-button">一键缴纳待缴费用</button>
+      </view>
+    </view>
+
+    <view class="section card info-card">
+      <view class="section-title">月度趋势</view>
+      <view wx:for="{{paymentStats.monthlyTrend}}" wx:key="month" class="record-row payment-trend">
+        <view class="record-title">{{item.month}}</view>
+        <view class="record-note">{{item.rate}}%</view>
+      </view>
+    </view>
+  </view>
+</view>

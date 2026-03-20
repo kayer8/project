@@ -1,0 +1,16 @@
+<view class="page-shell">
+  <app-navbar title="邻里互动" />
+
+  <view class="page-body">
+    <view class="section">
+      <view wx:for="{{posts}}" wx:key="title" class="record-card">
+        <view class="record-title">{{item.title}}</view>
+        <view class="record-note">{{item.note}}</view>
+      </view>
+    </view>
+    <view class="section action-row">
+      <button class="primary-button">发布话题</button>
+      <button class="secondary-button">查看活动</button>
+    </view>
+  </view>
+</view>

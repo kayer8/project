@@ -1,67 +1,74 @@
 <view class="page-shell">
-  <view class="hero-panel">
-    <view class="hero-title">首次注册</view>
-    <view class="hero-subtitle">
-      先通过微信手机号和物业留存数据比对。匹配成功会自动同步；未匹配再补充楼栋和房屋信息。
-    </view>
-  </view>
+  <app-navbar title="注册" left-arrow="{{true}}" />
 
-  <view wx:if="{{phase === 'phone'}}" class="section card form-card">
-    <button
-      class="primary-button"
-      open-type="getPhoneNumber"
-      bindgetphonenumber="handleGetPhoneNumber"
-      loading="{{submitting}}"
-    >
-      微信授权手机号
-    </button>
-    <view class="field-hint">点击后会先读取手机号，再与后台物业留存数据自动比对。</view>
-    <view class="register-link-row">
-      <text class="muted-text">继续即表示你已阅读并同意</text>
-      <text class="section-link" bindtap="openPrivacy">《隐私政策》</text>
-    </view>
-  </view>
-
-  <view wx:if="{{phase === 'form'}}" class="section card form-card">
-    <view class="field-block">
-      <text class="field-label">手机号</text>
-      <view class="text-input static-field">{{mobileMasked}}</view>
-      <view class="field-hint">{{syncMessage}}</view>
+  <view class="page-body">
+    <view class="hero-panel">
+      <view class="hero-title">首次注册</view>
+      <view class="hero-subtitle">
+        先通过微信手机号和物业留存数据比对。匹配成功会自动同步；未匹配再补充楼栋和房屋信息。
+      </view>
     </view>
 
-    <view class="field-block">
-      <text class="field-label">楼栋</text>
-      <picker
-        mode="selector"
-        range="{{buildingOptions}}"
-        range-key="buildingName"
-        value="{{buildingIndex}}"
-        bindchange="handleBuildingChange"
+    <view wx:if="{{phase === 'phone'}}" class="section card form-card">
+      <button
+        class="primary-button"
+        open-type="getPhoneNumber"
+        bindgetphonenumber="handleGetPhoneNumber"
+        loading="{{submitting}}"
       >
-        <view class="picker-field">
-          {{buildingOptions.length ? buildingOptions[buildingIndex].buildingName : '请选择楼栋'}}
-        </view>
-      </picker>
+        微信授权手机号
+      </button>
+      <view class="field-hint">点击后会先读取手机号，再与后台物业留存数据自动比对。</view>
+      <view class="field-hint">若暂时无法授权手机号，当前版本将无法完成注册，请联系物业管理员处理。</view>
+      <view class="register-link-row">
+        <text class="muted-text">继续即表示你已阅读并同意</text>
+        <text class="section-link" bindtap="openPrivacy">《隐私政策》</text>
+      </view>
     </view>
 
-    <view class="field-block">
-      <text class="field-label">房屋</text>
-      <picker
-        mode="selector"
-        range="{{houseOptions}}"
-        range-key="displayName"
-        value="{{houseIndex}}"
-        bindchange="handleHouseChange"
-      >
-        <view class="picker-field">
-          {{houseOptions.length ? houseOptions[houseIndex].displayName : '请选择房屋'}}
-        </view>
-      </picker>
-      <view class="field-hint">提交后账号会以未认证状态进入首页，等待后台核验。</view>
-    </view>
+    <view wx:if="{{phase === 'form'}}" class="section card form-card">
+      <view class="field-block">
+        <text class="field-label">手机号</text>
+        <view class="text-input static-field">{{mobileMasked}}</view>
+        <view class="field-hint">{{syncMessage}}</view>
+      </view>
 
-    <button class="primary-button" bindtap="handleSubmitRequest" loading="{{submitting}}">
-      提交楼栋信息
-    </button>
+      <view class="field-block">
+        <text class="field-label">楼栋</text>
+        <picker
+          mode="selector"
+          range="{{buildingOptions}}"
+          range-key="buildingName"
+          value="{{buildingIndex}}"
+          bindchange="handleBuildingChange"
+        >
+          <view class="picker-field">
+            {{selectedBuildingName || '请选择楼栋'}}
+          </view>
+        </picker>
+        <view class="field-hint">请手动选择楼栋后再提交，避免误提交到默认楼栋。</view>
+      </view>
+
+      <view class="field-block">
+        <text class="field-label">房屋</text>
+        <picker
+          mode="selector"
+          range="{{houseOptions}}"
+          range-key="displayName"
+          value="{{houseIndex}}"
+          bindchange="handleHouseChange"
+        >
+          <view class="picker-field">
+            {{selectedHouseName || '请选择房屋'}}
+          </view>
+        </picker>
+        <view class="field-hint">房屋为可选项；未找到房屋时可先只提交楼栋，后续由后台核验。</view>
+        <view class="field-hint">提交后账户会进入待审核状态，确认信息无误后再提交。</view>
+      </view>
+
+      <button class="primary-button" bindtap="handleSubmitRequest" loading="{{submitting}}">
+        提交楼栋信息
+      </button>
+    </view>
   </view>
 </view>

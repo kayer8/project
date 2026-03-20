@@ -1,0 +1,39 @@
+<view class="page-shell">
+  <app-navbar title="报修投诉" />
+
+  <view class="page-body">
+    <view class="card form-card">
+      <view class="field-block">
+        <text class="field-label">问题类型</text>
+        <view class="status-row">
+          <button
+            wx:for="{{categories}}"
+            wx:key="*this"
+            class="secondary-button category-btn {{selectedCategory === item ? 'category-btn--active' : ''}}"
+            data-category="{{item}}"
+            bindtap="handleCategorySelect"
+          >
+            {{item}}
+          </button>
+        </view>
+      </view>
+
+      <view class="field-block">
+        <text class="field-label">问题描述</text>
+        <textarea class="text-area" placeholder="请详细描述您遇到的问题" value="{{description}}" bindinput="handleDescriptionInput" />
+      </view>
+
+      <view class="field-block">
+        <text class="field-label">现场照片</text>
+        <button class="secondary-button" bindtap="chooseImages">{{images.length ? '重新选择照片' : '上传照片'}}</button>
+        <view class="status-row section">
+          <t-tag theme="{{images.length ? 'success' : 'default'}}" variant="light">
+            {{images.length ? '已选择 ' + images.length + ' 张照片' : '暂未上传'}}
+          </t-tag>
+        </view>
+      </view>
+
+      <button class="primary-button" bindtap="handleSubmit" disabled="{{!description}}">提交申请</button>
+    </view>
+  </view>
+</view>

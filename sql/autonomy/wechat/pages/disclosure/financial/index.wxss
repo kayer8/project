@@ -1,0 +1,24 @@
+.financial-card + .financial-card {
+  margin-top: 16rpx;
+}
+
+.financial-filter {
+  margin-bottom: 16rpx;
+}
+
+.financial-filter__btn {
+  min-width: 120rpx;
+}
+
+.financial-filter__btn--active {
+  background: #0f4c5c;
+  color: #ffffff;
+}
+
+.text-income {
+  color: #166534;
+}
+
+.text-expense {
+  color: #b42318;
+}

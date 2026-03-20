@@ -1,0 +1,8 @@
+.category-btn {
+  min-width: 180rpx;
+}
+
+.category-btn--active {
+  background: #0f4c5c;
+  color: #ffffff;
+}

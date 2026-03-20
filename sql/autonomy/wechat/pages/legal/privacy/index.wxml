@@ -1,23 +1,27 @@
 <view class="page-shell">
-  <view class="hero-panel">
-    <view class="hero-title">隐私政策</view>
-    <view class="hero-subtitle">
-      本页用于说明注册阶段收集的数据范围和用途，当前仅覆盖账号创建，不涉及房屋认证材料。
-    </view>
-  </view>
+  <app-navbar title="隐私政策" left-arrow="{{true}}" />
 
-  <view class="section card info-card">
-    <view class="list-desc">
-      1. 注册阶段会收集你提交的昵称、头像和手机号，用于创建小程序账号。
+  <view class="page-body">
+    <view class="hero-panel">
+      <view class="hero-title">隐私政策</view>
+      <view class="hero-subtitle">
+        本页用于说明注册阶段收集的数据范围和用途，当前仅覆盖账户创建，不涉及房屋认证材料。
+      </view>
     </view>
-    <view class="list-desc">
-      2. 手机号仅用于账号识别、通知联系和后续身份认证，不会直接在社区公开页面展示。
-    </view>
-    <view class="list-desc">
-      3. 当前阶段不会要求你提交身份证、房产证明、租赁合同或家庭成员资料。
-    </view>
-    <view class="list-desc">
-      4. 当后续开放身份认证时，我们会单独展示认证规则、材料范围和审核说明。
+
+    <view class="section card info-card">
+      <view class="list-desc">
+        1. 登录/注册阶段会使用微信登录凭证识别账户，并在你授权后读取手机号，用于账户创建、账户绑定和身份匹配。
+      </view>
+      <view class="list-desc">
+        2. 若自动匹配失败，你补充的楼栋和房屋信息仅用于人工核验，不会直接在社区公开页面展示。
+      </view>
+      <view class="list-desc">
+        3. 当前阶段不会要求你提交身份证、房产证明、租赁合同或家庭成员资料。
+      </view>
+      <view class="list-desc">
+        4. 当后续开放更完整的身份认证时，我们会单独展示认证规则、材料范围和审核说明。
+      </view>
     </view>
   </view>
 </view>

@@ -1,0 +1,64 @@
+<view class="page-shell">
+  <app-navbar title="绑定新房" />
+
+  <view class="page-body">
+    <view class="status-row">
+      <t-tag theme="{{step >= 1 ? 'primary' : 'default'}}" variant="light">1 选择小区</t-tag>
+      <t-tag theme="{{step >= 2 ? 'primary' : 'default'}}" variant="light">2 填写房屋</t-tag>
+      <t-tag theme="{{step >= 3 ? 'primary' : 'default'}}" variant="light">3 提交材料</t-tag>
+    </view>
+
+    <view wx:if="{{step === 1}}" class="section card form-card">
+      <view class="field-block">
+        <text class="field-label">搜索小区</text>
+        <input class="text-input" placeholder="请输入小区名称" value="{{keyword}}" bindinput="handleKeywordInput" />
+      </view>
+      <view wx:for="{{filteredCommunities}}" wx:key="*this" class="record-card bind-record" data-community="{{item}}" bindtap="handleSelectCommunity">
+        <view class="record-title">{{item}}</view>
+        <view class="record-note">点击选择并进入下一步</view>
+      </view>
+    </view>
+
+    <view wx:if="{{step === 2}}" class="section card form-card">
+      <view class="field-block">
+        <text class="field-label">已选小区</text>
+        <view class="picker-field">{{bindData.community}}</view>
+      </view>
+      <view class="field-block">
+        <text class="field-label">楼栋</text>
+        <picker mode="selector" range="{{buildingOptions}}" value="{{buildingIndex}}" bindchange="handleBuildingChange">
+          <view class="picker-field">{{bindData.building || '请选择楼栋'}}</view>
+        </picker>
+      </view>
+      <view class="field-block">
+        <text class="field-label">单元</text>
+        <picker mode="selector" range="{{unitOptions}}" value="{{unitIndex}}" bindchange="handleUnitChange">
+          <view class="picker-field">{{bindData.unit || '请选择单元'}}</view>
+        </picker>
+      </view>
+      <view class="field-block">
+        <text class="field-label">房号</text>
+        <input class="text-input" placeholder="例如 1202" value="{{bindData.room}}" bindinput="handleRoomInput" />
+      </view>
+      <button class="primary-button" bindtap="nextStep" disabled="{{!bindData.building || !bindData.room}}">下一步</button>
+    </view>
+
+    <view wx:if="{{step === 3}}" class="section card form-card">
+      <view class="field-block">
+        <text class="field-label">你的身份</text>
+        <view class="status-row">
+          <button class="secondary-button role-btn {{bindData.role === '业主' ? 'role-btn--active' : ''}}" data-role="业主" bindtap="handleRoleSelect">业主</button>
+          <button class="secondary-button role-btn {{bindData.role === '家属' ? 'role-btn--active' : ''}}" data-role="家属" bindtap="handleRoleSelect">家属</button>
+          <button class="secondary-button role-btn {{bindData.role === '租客' ? 'role-btn--active' : ''}}" data-role="租客" bindtap="handleRoleSelect">租客</button>
+        </view>
+      </view>
+      <view class="field-block">
+        <text class="field-label">证明材料</text>
+        <view class="page-note">可上传房产证、购房合同、租赁协议或物业要求的其他材料。</view>
+        <button class="secondary-button section" bindtap="chooseProof">{{proofImage ? '重新选择图片' : '上传证明图片'}}</button>
+        <image wx:if="{{proofImage}}" class="proof-image" src="{{proofImage}}" mode="aspectFill" />
+      </view>
+      <button class="primary-button" bindtap="handleSubmit" disabled="{{!proofImage}}">提交申请</button>
+    </view>
+  </view>
+</view>

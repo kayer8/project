@@ -1,0 +1,41 @@
+<view class="page-shell">
+  <app-navbar title="信息公开" left-arrow="{{false}}" />
+
+  <view class="page-body page-body--with-tabbar">
+    <view class="summary-banner">
+      <view class="summary-title">公开模块单独成区</view>
+      <view class="summary-desc">公告、财务、缴费和管理记录分别拆成独立页面，后面接真实接口时不会互相缠在一起。</view>
+    </view>
+
+    <view class="section card info-card">
+      <view class="section-title">公开分类</view>
+      <t-cell-group>
+        <t-cell
+          wx:for="{{sections}}"
+          wx:key="title"
+          title="{{item.title}}"
+          description="{{item.desc}}"
+          note="{{item.note}}"
+          arrow="{{true}}"
+          url="{{item.url}}"
+          jump-type="navigateTo"
+        />
+      </t-cell-group>
+    </view>
+
+    <view class="section card info-card">
+      <view class="section-head">
+        <view>
+          <view class="section-title">最新公示</view>
+          <view class="section-subtitle">从总览页进入详情，避免列表和详情混排</view>
+        </view>
+      </view>
+      <view wx:for="{{latestAnnouncements}}" wx:key="id" class="record-card disclosure-record" data-id="{{item.id}}" bindtap="openDetail">
+        <view class="record-title">{{item.title}}</view>
+        <view class="record-note">{{item.category}} · {{item.date}}</view>
+      </view>
+    </view>
+  </view>
+
+  <app-tabbar value="disclosure" />
+</view>

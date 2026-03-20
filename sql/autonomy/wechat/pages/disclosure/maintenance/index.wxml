@@ -1,0 +1,16 @@
+<view class="page-shell">
+  <app-navbar title="维保记录" />
+
+  <view class="page-body">
+    <view wx:for="{{records}}" wx:key="id" class="record-card">
+      <view class="record-row">
+        <view>
+          <view class="record-title">{{item.title}}</view>
+          <view class="record-note">{{item.date}} · {{item.vendor}}</view>
+        </view>
+        <t-tag theme="{{item.status === '已完成' ? 'success' : 'primary'}}" variant="light">{{item.status}}</t-tag>
+      </view>
+      <view class="list-desc">检测结果：{{item.result}}</view>
+    </view>
+  </view>
+</view>

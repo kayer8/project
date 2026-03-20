@@ -1,0 +1,29 @@
+<view class="page-shell">
+  <app-navbar title="停车缴费" />
+
+  <view class="page-body">
+    <view class="metric-grid">
+      <view class="metric-card">
+        <view class="metric-label">车位状态</view>
+        <view class="metric-value">1</view>
+        <view class="metric-note">已绑定车位</view>
+      </view>
+      <view class="metric-card">
+        <view class="metric-label">月卡费用</view>
+        <view class="metric-value">260</view>
+        <view class="metric-note">本月待缴</view>
+      </view>
+      <view class="metric-card">
+        <view class="metric-label">临停记录</view>
+        <view class="metric-value">3</view>
+        <view class="metric-note">本周进出</view>
+      </view>
+    </view>
+    <view class="section">
+      <view wx:for="{{bills}}" wx:key="title" class="record-card">
+        <view class="record-title">{{item.title}}</view>
+        <view class="record-note">{{item.note}}</view>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,32 @@
+.vote-option {
+  margin-top: 16rpx;
+  padding: 24rpx;
+  border-radius: 20rpx;
+  background: #f7fafc;
+  border: 1px solid #dce6ec;
+  font-size: 28rpx;
+  color: #17212b;
+}
+
+.vote-option--active {
+  border-color: #0f4c5c;
+  background: #e8f5f8;
+}
+
+.result-block + .result-block {
+  margin-top: 20rpx;
+}
+
+.result-bar {
+  margin-top: 8rpx;
+  height: 12rpx;
+  border-radius: 999rpx;
+  background: #e5eef2;
+  overflow: hidden;
+}
+
+.result-bar__inner {
+  height: 100%;
+  background: linear-gradient(90deg, #0f4c5c, #2d728f);
+  border-radius: 999rpx;
+}

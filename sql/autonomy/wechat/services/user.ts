@@ -8,7 +8,7 @@ export interface CurrentUserDetail {
   mobile: string | null;
   status: string;
   registerSource: string;
-  residentStatus: 'SYNCED' | 'UNVERIFIED' | 'REGISTERED';
+  residentStatus: 'SYNCED' | 'UNVERIFIED' | 'REJECTED' | 'REGISTERED';
   latestRegistrationRequest: {
     id: string;
     mobile: string;

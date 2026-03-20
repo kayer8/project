@@ -1,0 +1,19 @@
+<view class="page-shell">
+  <app-navbar title="公告详情" />
+
+  <view class="page-body">
+    <view wx:if="{{item}}" class="card info-card">
+      <view class="badge-row">
+        <t-tag theme="primary" variant="light">{{item.category}}</t-tag>
+        <t-tag wx:if="{{item.important}}" theme="danger" variant="light">重要</t-tag>
+      </view>
+      <view class="section-title">{{item.title}}</view>
+      <view class="section-subtitle">{{item.date}} · {{item.views}} 次阅读</view>
+      <view class="list-desc">{{item.content}}</view>
+    </view>
+
+    <view wx:if="{{!item}}" class="section">
+      <t-empty description="未找到对应公告" />
+    </view>
+  </view>
+</view>

@@ -1,0 +1,7 @@
+.member-card + .member-card {
+  margin-top: 20rpx;
+}
+
+.member-card__remove {
+  margin-top: 16rpx;
+}

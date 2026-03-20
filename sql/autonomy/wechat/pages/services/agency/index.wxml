@@ -1,0 +1,14 @@
+<view class="page-shell">
+  <app-navbar title="代办申请" />
+
+  <view class="page-body">
+    <view class="page-note">
+      代办申请适合给不会使用智能手机的家庭成员或授权代理人开入口，真正执行前仍建议绑定到具体房屋和成员关系。
+    </view>
+    <view class="section">
+      <t-cell-group>
+        <t-cell wx:for="{{items}}" wx:key="title" title="{{item.title}}" description="{{item.note}}" arrow="{{true}}" />
+      </t-cell-group>
+    </view>
+  </view>
+</view>

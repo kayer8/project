@@ -1,60 +1,39 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const routes_1 = require("../../constants/routes");
-const house_1 = require("../../services/house");
-const user_1 = require("../../services/user");
-const app_1 = require("../../store/app");
+const community_1 = require("../../mock/community");
 const nav_1 = require("../../utils/nav");
-function resolveStatusText(user) {
-    if (user.residentStatus === 'SYNCED') {
-        return '已同步';
-    }
-    if (user.residentStatus === 'UNVERIFIED') {
-        return '未认证';
-    }
-    return '已注册';
-}
 Page({
     data: {
-        loading: true,
-        user: null,
-        houses: [],
-        statusText: '',
-        errorMessage: '',
+        houses: community_1.houseOptions,
+        currentHouseIndex: 0,
+        currentHouse: community_1.houseOptions[0],
+        showHousePopup: false,
+        stats: community_1.workbenchStats,
+        pinnedTools: community_1.workbenchPinnedTools,
+        toolSections: community_1.workbenchSections,
     },
-    onShow() {
-        this.loadPage();
+    openHousePopup() {
+        this.setData({ showHousePopup: true });
     },
-    async loadPage() {
-        if (!app_1.appStore.hasAccessToken()) {
-            (0, nav_1.reLaunch)(routes_1.ROUTES.login);
+    handleHousePopupChange(event) {
+        this.setData({ showHousePopup: !!event.detail?.visible });
+    },
+    handleSelectHouse(event) {
+        const index = Number(event.currentTarget.dataset.index);
+        if (Number.isNaN(index) || !community_1.houseOptions[index]) {
             return;
         }
         this.setData({
-            loading: true,
-            errorMessage: '',
+            currentHouseIndex: index,
+            currentHouse: community_1.houseOptions[index],
+            showHousePopup: false,
         });
-        try {
-            const user = await (0, user_1.fetchCurrentUser)();
-            const houses = user.residentStatus === 'SYNCED' ? await (0, house_1.fetchMyHouses)() : [];
-            this.setData({
-                user,
-                houses,
-                statusText: resolveStatusText(user),
-            });
-        }
-        catch (error) {
-            app_1.appStore.clearSession();
-            this.setData({
-                errorMessage: error instanceof Error ? error.message : '加载失败，请重新登录',
-            });
-        }
-        finally {
-            this.setData({ loading: false });
-        }
     },
-    handleRelogin() {
-        app_1.appStore.clearSession();
-        (0, nav_1.reLaunch)(routes_1.ROUTES.login);
+    handleNavigate(event) {
+        const { url } = event.currentTarget.dataset;
+        if (!url) {
+            return;
+        }
+        (0, nav_1.navigateTo)(url);
     },
 });

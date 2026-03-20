@@ -13,6 +13,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "seed:hjy-housing": "ts-node scripts/seed-hjy-housing.ts",
+    "seed:mock-residents": "ts-node scripts/seed-mock-residents.ts",
     "cleanup:non-hjy-housing": "ts-node scripts/cleanup-non-hjy-housing.ts"
   },
   "dependencies": {

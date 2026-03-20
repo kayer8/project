@@ -56,7 +56,7 @@
 
         <template #actions="{ row }">
           <div class="action-group">
-            <t-button variant="text" theme="primary" @click="goDetail(row.id)">详情</t-button>
+            <t-button variant="text" theme="primary" @click="openDetail(row.id)">详情</t-button>
             <t-button variant="text" @click="openEdit(row.id)">编辑</t-button>
             <t-button variant="text" theme="danger" @click="handleDelete(row.id)">删除</t-button>
           </div>
@@ -76,9 +76,15 @@
     </t-card>
 
     <UserFormDialog
-      v-model:visible="dialogVisible"
+      v-model:visible="formDialogVisible"
       :mode="dialogMode"
       :initial-value="editingUser"
+      @success="handleDialogSuccess"
+    />
+
+    <UserDetailDialog
+      v-model:visible="detailDialogVisible"
+      :detail-id="detailUserId"
       @success="handleDialogSuccess"
     />
   </PageContainer>
@@ -86,7 +92,6 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
 import PageContainer from '@/components/PageContainer/index.vue';
 import { fetchCommunityOptions } from '@/modules/house/api';
 import { fetchUserDetail, fetchUserList, removeUser } from '@/modules/user/api';
@@ -96,13 +101,15 @@ import {
   userStatusOptions,
 } from '@/modules/user/types';
 import { formatDateTime } from '@/utils/format';
+import UserDetailDialog from './components/UserDetailDialog.vue';
 import UserFormDialog from './components/UserFormDialog.vue';
 
-const router = useRouter();
 const users = ref<UserListItem[]>([]);
 const editingUser = ref<UserDetail | null>(null);
-const dialogVisible = ref(false);
+const formDialogVisible = ref(false);
 const dialogMode = ref<'create' | 'edit'>('create');
+const detailDialogVisible = ref(false);
+const detailUserId = ref('');
 const communityOptions = ref([{ label: '全部社区', value: 'ALL' }]);
 const filters = reactive({
   keyword: '',
@@ -189,20 +196,21 @@ function handlePageChange(pageInfo: { current: number; pageSize: number }) {
   void loadList();
 }
 
-function goDetail(id: string) {
-  void router.push(`/users/${id}`);
+function openDetail(id: string) {
+  detailUserId.value = id;
+  detailDialogVisible.value = true;
 }
 
 function openCreate() {
   dialogMode.value = 'create';
   editingUser.value = null;
-  dialogVisible.value = true;
+  formDialogVisible.value = true;
 }
 
 async function openEdit(id: string) {
   dialogMode.value = 'edit';
   editingUser.value = await fetchUserDetail(id);
-  dialogVisible.value = true;
+  formDialogVisible.value = true;
 }
 
 async function handleDelete(id: string) {

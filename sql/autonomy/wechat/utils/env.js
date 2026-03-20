@@ -1,4 +1,4 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.apiBaseUrl = void 0;
-exports.apiBaseUrl = 'https://1567bfc4.r18.vip.cpolar.cn/v1';
+exports.apiBaseUrl = 'http://127.0.0.1:3000/v1';

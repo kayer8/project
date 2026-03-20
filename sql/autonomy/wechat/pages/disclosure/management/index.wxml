@@ -1,0 +1,37 @@
+<view class="page-shell">
+  <app-navbar title="管理公开" />
+
+  <view class="page-body">
+    <view class="metric-grid">
+      <view class="metric-card">
+        <view class="metric-label">维保记录</view>
+        <view class="metric-value">12</view>
+        <view class="metric-note">本月已完成</view>
+      </view>
+      <view class="metric-card">
+        <view class="metric-label">合同公示</view>
+        <view class="metric-value">5</view>
+        <view class="metric-note">生效中</view>
+      </view>
+      <view class="metric-card">
+        <view class="metric-label">整改事项</view>
+        <view class="metric-value">2</view>
+        <view class="metric-note">跟进中</view>
+      </view>
+    </view>
+
+    <view class="section action-row">
+      <button class="primary-button" bindtap="openMaintenance">查看维保记录</button>
+      <button class="secondary-button">查看合同公示</button>
+    </view>
+
+    <view class="section card info-card">
+      <view class="section-title">管理动态</view>
+      <view wx:for="{{updates}}" wx:key="id" class="record-card" data-id="{{item.id}}" bindtap="openDetail">
+        <view class="record-title">{{item.title}}</view>
+        <view class="record-note">{{item.date}} · {{item.category}}</view>
+        <view class="list-desc">{{item.content}}</view>
+      </view>
+    </view>
+  </view>
+</view>

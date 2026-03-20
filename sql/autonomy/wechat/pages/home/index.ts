@@ -1,66 +1,46 @@
-import { ROUTES } from '../../constants/routes';
-import { fetchMyHouses, type MyHouseSummary } from '../../services/house';
-import { fetchCurrentUser, type CurrentUserDetail } from '../../services/user';
-import { appStore } from '../../store/app';
-import { reLaunch } from '../../utils/nav';
-
-function resolveStatusText(user: CurrentUserDetail) {
-  if (user.residentStatus === 'SYNCED') {
-    return '已同步';
-  }
-
-  if (user.residentStatus === 'UNVERIFIED') {
-    return '未认证';
-  }
-
-  return '已注册';
-}
+import { houseOptions, workbenchPinnedTools, workbenchSections, workbenchStats } from '../../mock/community';
+import { navigateTo } from '../../utils/nav';
 
 Page({
   data: {
-    loading: true,
-    user: null as CurrentUserDetail | null,
-    houses: [] as MyHouseSummary[],
-    statusText: '',
-    errorMessage: '',
+    houses: houseOptions,
+    currentHouseIndex: 0,
+    currentHouse: houseOptions[0],
+    showHousePopup: false,
+    stats: workbenchStats,
+    pinnedTools: workbenchPinnedTools,
+    toolSections: workbenchSections,
   },
 
-  onShow() {
-    this.loadPage();
+  openHousePopup() {
+    this.setData({ showHousePopup: true });
   },
 
-  async loadPage() {
-    if (!appStore.hasAccessToken()) {
-      reLaunch(ROUTES.login);
+  handleHousePopupChange(event: WechatMiniprogram.CustomEvent<{ visible?: boolean }>) {
+    this.setData({ showHousePopup: !!event.detail?.visible });
+  },
+
+  handleSelectHouse(event: WechatMiniprogram.BaseEvent) {
+    const index = Number(event.currentTarget.dataset.index);
+
+    if (Number.isNaN(index) || !houseOptions[index]) {
       return;
     }
 
     this.setData({
-      loading: true,
-      errorMessage: '',
+      currentHouseIndex: index,
+      currentHouse: houseOptions[index],
+      showHousePopup: false,
     });
-
-    try {
-      const user = await fetchCurrentUser();
-      const houses = user.residentStatus === 'SYNCED' ? await fetchMyHouses() : [];
-
-      this.setData({
-        user,
-        houses,
-        statusText: resolveStatusText(user),
-      });
-    } catch (error) {
-      appStore.clearSession();
-      this.setData({
-        errorMessage: error instanceof Error ? error.message : '加载失败，请重新登录',
-      });
-    } finally {
-      this.setData({ loading: false });
-    }
   },
 
-  handleRelogin() {
-    appStore.clearSession();
-    reLaunch(ROUTES.login);
+  handleNavigate(event: WechatMiniprogram.BaseEvent) {
+    const { url } = event.currentTarget.dataset as { url?: string };
+
+    if (!url) {
+      return;
+    }
+
+    navigateTo(url);
   },
 });

@@ -1,0 +1,27 @@
+<view class="page-shell">
+  <app-navbar title="AI 助手" left-arrow="{{false}}" />
+
+  <view class="page-body page-body--with-tabbar">
+    <view class="summary-banner">
+      <view class="summary-title">社区 AI 助手</view>
+      <view class="summary-desc">后续可以接公告解读、财务问答、流程引导和投票建议，这里先把页面壳和推荐问题搭起来。</view>
+    </view>
+
+    <view class="section card info-card">
+      <view class="section-title">你可以这样问</view>
+      <t-cell-group>
+        <t-cell wx:for="{{suggestions}}" wx:key="*this" title="{{item}}" note="待接入" />
+      </t-cell-group>
+    </view>
+
+    <view class="section page-note">
+      当前仅保留页面结构和入口，等你后面确认接 OpenAI 或内部模型后，这里可以直接扩成对话页面。
+    </view>
+
+    <view class="section">
+      <button class="primary-button">开始对话</button>
+    </view>
+  </view>
+
+  <app-tabbar value="assistant" />
+</view>

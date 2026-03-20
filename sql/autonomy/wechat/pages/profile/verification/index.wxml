@@ -1,0 +1,45 @@
+<view class="page-shell">
+  <app-navbar title="身份认证" />
+
+  <view class="page-body">
+    <view class="card info-card">
+      <view class="badge-row">
+        <t-tag theme="success" variant="light">已认证</t-tag>
+      </view>
+      <view class="section-title">{{verification.name}}</view>
+      <view class="record-note">证件号 {{verification.idNo}}</view>
+      <view class="record-note">认证时间 {{verification.verifiedAt}}</view>
+    </view>
+
+    <view class="section page-note">
+      当前账号已通过实名审核。如需变更身份信息，可以重新提交新的认证材料。
+    </view>
+
+    <view wx:if="{{!editing}}" class="section">
+      <button class="secondary-button" bindtap="openEdit">重新提交认证材料</button>
+    </view>
+
+    <view wx:if="{{editing}}" class="section card form-card">
+      <view class="field-block">
+        <text class="field-label">真实姓名</text>
+        <input class="text-input" placeholder="请输入真实姓名" value="{{realName}}" bindinput="handleNameInput" />
+      </view>
+      <view class="field-block">
+        <text class="field-label">身份证号</text>
+        <input class="text-input" maxlength="18" placeholder="请输入 18 位证件号" value="{{idNo}}" bindinput="handleIdInput" />
+      </view>
+      <view class="field-block">
+        <text class="field-label">证件照片</text>
+        <view class="action-row">
+          <button class="secondary-button" data-field="frontImage" bindtap="chooseImage">上传人像面</button>
+          <button class="secondary-button" data-field="backImage" bindtap="chooseImage">上传国徽面</button>
+        </view>
+        <view class="status-row section">
+          <t-tag theme="{{frontImage ? 'success' : 'default'}}" variant="light">{{frontImage ? '人像面已上传' : '人像面未上传'}}</t-tag>
+          <t-tag theme="{{backImage ? 'success' : 'default'}}" variant="light">{{backImage ? '国徽面已上传' : '国徽面未上传'}}</t-tag>
+        </view>
+      </view>
+      <button class="primary-button" bindtap="handleSubmit" disabled="{{!realName || idNo.length < 18 || !frontImage || !backImage}}">提交认证</button>
+    </view>
+  </view>
+</view>

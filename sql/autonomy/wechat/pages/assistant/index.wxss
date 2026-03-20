@@ -1,0 +1,3 @@
+.info-card .section-title {
+  margin-bottom: 20rpx;
+}
