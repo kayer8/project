@@ -1,8 +1,5 @@
 <template>
-  <PageContainer
-    title="用户详情"
-    description="查看账号基础信息、社区角色、房屋关系和认证申请记录。"
-  >
+  <PageContainer title="用户详情">
     <div class="page-actions">
       <t-button variant="outline" @click="router.push('/users/list')">返回列表</t-button>
       <t-button v-if="user" variant="outline" theme="primary" @click="openEdit">编辑用户</t-button>

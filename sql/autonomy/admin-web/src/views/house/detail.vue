@@ -1,8 +1,5 @@
 <template>
-  <PageContainer
-    title="房屋详情"
-    description="查看房屋基础档案、住户组、成员关系和当前生效的投票代表。"
-  >
+  <PageContainer title="房屋详情">
     <div class="page-actions">
       <t-button variant="outline" @click="router.push('/houses/list')">返回列表</t-button>
       <t-button v-if="house" variant="outline" theme="primary" @click="openEdit">编辑房屋</t-button>

@@ -1,8 +1,5 @@
 <template>
-  <PageContainer
-    title="成员详情"
-    description="查看单条成员关系的用户、房屋、权限和生效状态，并支持编辑或删除。"
-  >
+  <PageContainer title="成员详情">
     <div class="page-actions">
       <t-button variant="outline" @click="router.push('/members/list')">返回列表</t-button>
       <t-button v-if="member" variant="outline" theme="primary" @click="openEdit">编辑关系</t-button>

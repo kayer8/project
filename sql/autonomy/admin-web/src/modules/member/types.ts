@@ -82,14 +82,14 @@ export const memberRelationLabelMap: Record<MemberRelationType, string> = {
   MAIN_OWNER: '主业主',
   FAMILY_MEMBER: '家庭成员',
   MAIN_TENANT: '主租户',
-  CO_RESIDENT: '同住成员',
+  CO_RESIDENT: '共同居住人',
   AGENT: '代办人',
 };
 
 export const memberRelationStatusLabelMap: Record<MemberRelationStatus, string> = {
   PENDING: '待审核',
   ACTIVE: '有效',
-  REJECTED: '已驳回',
+  REJECTED: '已拒绝',
   INACTIVE: '无效',
   EXPIRED: '已过期',
   REMOVED: '已移除',

@@ -1,88 +1,133 @@
 <template>
-  <PageContainer
-    title="成员关系管理"
-    description="支持住户成员关系的筛选、分页、新建、编辑和删除，并关联到真实用户与房屋。"
-  >
-    <t-row :gutter="[16, 16]">
-      <t-col :span="3" v-for="item in summaryCards" :key="item.title">
-        <t-card :title="item.title">
-          <div class="summary-value">{{ item.value }}</div>
-          <div class="summary-desc">{{ item.description }}</div>
-        </t-card>
-      </t-col>
-    </t-row>
+  <PageContainer title="成员关系">
+    <template #actions>
+      <t-button theme="primary" @click="openCreate">新建关系</t-button>
+    </template>
 
-    <t-card title="筛选条件">
-      <div class="toolbar">
-        <t-input v-model="filters.keyword" clearable placeholder="搜索姓名、昵称、手机号或房屋" />
-        <t-select v-model="filters.relationType" :options="relationTypeOptions" />
-        <t-select v-model="filters.status" :options="memberStatusOptions" />
-        <div class="toolbar-actions">
-          <t-button theme="primary" @click="handleSearch">查询</t-button>
-          <t-button variant="outline" @click="resetFilters">重置</t-button>
-          <t-button variant="outline" theme="primary" @click="openCreate">新建关系</t-button>
+    <section class="stats-strip">
+      <article v-for="item in summaryCards" :key="item.title" class="stat-card">
+        <div class="stat-card__label">{{ item.title }}</div>
+        <div class="stat-card__value">{{ item.value }}</div>
+        <div class="stat-card__meta">{{ item.description }}</div>
+      </article>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-panel__header">
+        <div>
+          <div class="admin-panel__title">筛选查询</div>
+          <div class="admin-panel__desc">支持按成员身份、关系类型和状态快速排查异常关系。</div>
         </div>
       </div>
-    </t-card>
-
-    <t-card title="成员列表">
-      <t-table :data="members" :columns="columns" row-key="id" size="small" table-layout="fixed">
-        <template #user="{ row }">
-          <div class="primary-cell">
-            <div class="primary-name">{{ row.userName }}</div>
-            <div class="muted-text">{{ formatText(row.nickname, '无昵称') }}</div>
-            <div class="muted-text">{{ formatText(row.mobile, '未绑定手机号') }}</div>
+      <div class="admin-panel__body">
+        <div class="filter-grid">
+          <t-input v-model="filters.keyword" clearable placeholder="搜索姓名、昵称、手机号或房屋" />
+          <t-select v-model="filters.relationType" :options="relationTypeOptions" />
+          <t-select v-model="filters.status" :options="memberStatusOptions" />
+          <div class="toolbar-actions">
+            <t-button theme="primary" @click="handleSearch">查询</t-button>
+            <t-button variant="outline" @click="resetFilters">重置</t-button>
           </div>
-        </template>
-
-        <template #location="{ row }">
-          <div class="primary-cell">
-            <div class="primary-name">{{ row.buildingName }}</div>
-            <div class="muted-text">{{ row.houseDisplayName }}</div>
-          </div>
-        </template>
-
-        <template #relation="{ row }">
-          <div class="tag-group">
-            <t-tag v-if="row.isPrimaryRole" theme="primary" variant="light">主角色</t-tag>
-            <span>{{ memberRelationLabelMap[row.relationType] }}</span>
-          </div>
-        </template>
-
-        <template #status="{ row }">
-          <t-tag :theme="getStatusTheme(row.status)" variant="light">
-            {{ memberRelationStatusLabelMap[row.status] }}
-          </t-tag>
-        </template>
-
-        <template #effectiveAt="{ row }">
-          {{ formatDateTime(row.effectiveAt) }}
-        </template>
-
-        <template #expiredAt="{ row }">
-          {{ formatDateTime(row.expiredAt, '未失效') }}
-        </template>
-
-        <template #actions="{ row }">
-          <div class="action-group">
-            <t-button variant="text" theme="primary" @click="openDetail(row.id)">详情</t-button>
-            <t-button variant="text" @click="openEdit(row.id)">编辑</t-button>
-            <t-button variant="text" theme="danger" @click="handleDelete(row.id)">删除</t-button>
-          </div>
-        </template>
-      </t-table>
-
-      <div class="pagination-row">
-        <t-pagination
-          :current="pagination.page"
-          :page-size="pagination.pageSize"
-          :total="pagination.total"
-          show-jumper
-          show-page-size
-          @change="handlePageChange"
-        />
+        </div>
       </div>
-    </t-card>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-panel__header">
+        <div>
+          <div class="admin-panel__title">成员列表</div>
+          <div class="admin-panel__desc">操作入口统一收敛到右侧，便于集中审核、编辑和移除成员关系。</div>
+        </div>
+      </div>
+      <div class="admin-panel__body">
+        <div class="table-toolbar">
+          <div class="table-toolbar__meta">
+            <span>共 {{ pagination.total }} 条记录</span>
+            <span v-if="selectedRowKeys.length" class="table-selection-count">
+              已选 {{ selectedRowKeys.length }} 项
+            </span>
+          </div>
+          <div class="table-toolbar__actions">
+            <t-button
+              variant="outline"
+              theme="danger"
+              :disabled="selectedRowKeys.length === 0"
+              @click="handleBatchDelete"
+            >
+              批量删除
+            </t-button>
+          </div>
+        </div>
+
+        <t-table
+          :data="members"
+          :columns="columns"
+          :selected-row-keys="selectedRowKeys"
+          :row-selection-type="'multiple'"
+          row-key="id"
+          size="small"
+          table-layout="fixed"
+          bordered
+          hover
+          @select-change="handleSelectChange"
+        >
+          <template #user="{ row }">
+            <div class="table-primary-cell">
+              <div class="table-primary-cell__title">{{ row.userName }}</div>
+              <div class="table-subtext">{{ formatText(row.nickname, '无昵称') }}</div>
+              <div class="table-subtext">{{ formatText(row.mobile, '未绑定手机号') }}</div>
+            </div>
+          </template>
+
+          <template #location="{ row }">
+            <div class="table-primary-cell">
+              <div class="table-primary-cell__title">{{ row.buildingName }}</div>
+              <div class="table-subtext">{{ row.houseDisplayName }}</div>
+            </div>
+          </template>
+
+          <template #relation="{ row }">
+            <div class="table-tag-list">
+              <t-tag v-if="row.isPrimaryRole" theme="primary" variant="light-outline">主角色</t-tag>
+              <span>{{ memberRelationLabelMap[row.relationType] }}</span>
+            </div>
+          </template>
+
+          <template #status="{ row }">
+            <t-tag :theme="getStatusTheme(row.status)" variant="light-outline">
+              {{ memberRelationStatusLabelMap[row.status] }}
+            </t-tag>
+          </template>
+
+          <template #effectiveAt="{ row }">
+            {{ formatDateTime(row.effectiveAt) }}
+          </template>
+
+          <template #expiredAt="{ row }">
+            {{ formatDateTime(row.expiredAt, '未失效') }}
+          </template>
+
+          <template #actions="{ row }">
+            <div class="action-link-group">
+              <t-button variant="text" theme="primary" @click="openDetail(row.id)">详情</t-button>
+              <t-button variant="text" @click="openEdit(row.id)">编辑</t-button>
+              <t-button variant="text" theme="danger" @click="handleDelete(row.id)">删除</t-button>
+            </div>
+          </template>
+        </t-table>
+
+        <div class="table-pagination">
+          <t-pagination
+            :current="pagination.page"
+            :page-size="pagination.pageSize"
+            :total="pagination.total"
+            show-jumper
+            show-page-size
+            @change="handlePageChange"
+          />
+        </div>
+      </div>
+    </section>
 
     <MemberFormDialog
       v-model:visible="formDialogVisible"
@@ -101,6 +146,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
+import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import PageContainer from '@/components/PageContainer/index.vue';
 import { fetchMemberDetail, fetchMemberList, removeMember } from '@/modules/member/api';
 import type { MemberDetail, MemberListItem } from '@/modules/member/types';
@@ -115,6 +161,7 @@ import MemberDetailDialog from './components/MemberDetailDialog.vue';
 import MemberFormDialog from './components/MemberFormDialog.vue';
 
 const members = ref<MemberListItem[]>([]);
+const selectedRowKeys = ref<Array<string | number>>([]);
 const editingMember = ref<MemberDetail | null>(null);
 const formDialogVisible = ref(false);
 const dialogMode = ref<'create' | 'edit'>('create');
@@ -133,11 +180,12 @@ const pagination = reactive({
 });
 
 const columns = [
-  { colKey: 'user', title: '用户', minWidth: 200 },
-  { colKey: 'location', title: '楼栋 / 房屋', minWidth: 220 },
-  { colKey: 'householdType', title: '住户组', width: 140 },
-  { colKey: 'relation', title: '关系', width: 140 },
-  { colKey: 'status', title: '状态', width: 100 },
+  { colKey: 'row-select', type: 'multiple', width: 48, fixed: 'left' },
+  { colKey: 'user', title: '成员信息', minWidth: 220, ellipsis: true },
+  { colKey: 'location', title: '楼栋 / 房屋', minWidth: 220, ellipsis: true },
+  { colKey: 'householdType', title: '住户组', width: 130, ellipsis: true },
+  { colKey: 'relation', title: '关系', width: 150 },
+  { colKey: 'status', title: '状态', width: 110 },
   { colKey: 'effectiveAt', title: '生效时间', width: 160 },
   { colKey: 'expiredAt', title: '失效时间', width: 160 },
   { colKey: 'actions', title: '操作', width: 180, fixed: 'right' },
@@ -149,23 +197,17 @@ const summaryCards = computed(() => {
   const expiringCount = members.value.filter((item) => Boolean(item.expiredAt)).length;
 
   return [
-    { title: '关系总数', value: pagination.total, description: '按接口分页总量展示' },
-    { title: '当前页有效', value: activeCount, description: '当前页有效成员关系数量' },
-    { title: '当前页主角色', value: primaryCount, description: '当前页主角色关系数量' },
-    { title: '当前页有失效时', value: expiringCount, description: '当前页已设置失效时间的关系数量' },
+    { title: '关系总数', value: pagination.total, description: '按当前检索条件返回的成员关系总量' },
+    { title: '有效关系', value: activeCount, description: '当前分页内状态有效的成员关系数量' },
+    { title: '主角色关系', value: primaryCount, description: '当前分页内被标记为主角色的关系数量' },
+    { title: '设定失效时间', value: expiringCount, description: '当前分页内已设定失效时间的关系数量' },
   ];
 });
 
 function getStatusTheme(status: MemberListItem['status']) {
-  if (status === 'ACTIVE') {
-    return 'success';
-  }
-  if (status === 'PENDING') {
-    return 'warning';
-  }
-  if (status === 'REJECTED' || status === 'REMOVED') {
-    return 'danger';
-  }
+  if (status === 'ACTIVE') return 'success';
+  if (status === 'PENDING') return 'warning';
+  if (status === 'REJECTED' || status === 'REMOVED') return 'danger';
   return 'default';
 }
 
@@ -180,6 +222,7 @@ async function loadList() {
 
   members.value = result.items;
   pagination.total = result.total;
+  selectedRowKeys.value = [];
 }
 
 function handleSearch() {
@@ -201,6 +244,10 @@ function handlePageChange(pageInfo: { current: number; pageSize: number }) {
   void loadList();
 }
 
+function handleSelectChange(keys: Array<string | number>) {
+  selectedRowKeys.value = keys;
+}
+
 function openDetail(id: string) {
   detailMemberId.value = id;
   detailDialogVisible.value = true;
@@ -218,16 +265,31 @@ async function openEdit(id: string) {
   formDialogVisible.value = true;
 }
 
-async function handleDelete(id: string) {
-  if (!window.confirm('确认删除这个成员关系吗？')) {
-    return;
-  }
+function confirmDelete(ids: string[]) {
+  const dialog = DialogPlugin.confirm({
+    header: '确认删除成员关系',
+    body: `将删除 ${ids.length} 条成员关系记录，删除后需要重新建立授权。`,
+    confirmBtn: '确认删除',
+    cancelBtn: '取消',
+    onConfirm: async () => {
+      await Promise.all(ids.map((id) => removeMember(id)));
+      if (members.value.length === ids.length && pagination.page > 1) {
+        pagination.page -= 1;
+      }
+      await loadList();
+      MessagePlugin.success('删除成功');
+      dialog.destroy();
+    },
+    onClose: () => dialog.destroy(),
+  });
+}
 
-  await removeMember(id);
-  if (members.value.length === 1 && pagination.page > 1) {
-    pagination.page -= 1;
-  }
-  await loadList();
+function handleDelete(id: string) {
+  confirmDelete([id]);
+}
+
+function handleBatchDelete() {
+  confirmDelete(selectedRowKeys.value.map((item) => String(item)));
 }
 
 async function handleDialogSuccess() {
@@ -239,68 +301,3 @@ onMounted(async () => {
   await loadList();
 });
 </script>
-
-<style scoped>
-.toolbar {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr auto;
-  gap: 12px;
-}
-
-.toolbar-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.summary-value {
-  font-size: 30px;
-  font-weight: 700;
-}
-
-.summary-desc,
-.muted-text {
-  margin-top: 8px;
-  color: #64748b;
-}
-
-.primary-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.primary-name {
-  font-weight: 600;
-}
-
-.tag-group,
-.action-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.pagination-row {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-@media (max-width: 1200px) {
-  .toolbar {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .toolbar-actions {
-    grid-column: 1 / -1;
-    justify-content: flex-start;
-  }
-}
-
-@media (max-width: 768px) {
-  .toolbar {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

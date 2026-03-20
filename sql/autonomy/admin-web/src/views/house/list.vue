@@ -1,79 +1,124 @@
 <template>
-  <PageContainer
-    title="房屋数据管理"
-    description="支持房屋档案的筛选、分页、新建、编辑和删除，并直接查看当前成员与住户组。"
-  >
-    <t-row :gutter="[16, 16]">
-      <t-col :span="3" v-for="item in summaryCards" :key="item.title">
-        <t-card :title="item.title">
-          <div class="summary-value">{{ item.value }}</div>
-          <div class="summary-desc">{{ item.description }}</div>
-        </t-card>
-      </t-col>
-    </t-row>
+  <PageContainer title="房屋数据">
+    <template #actions>
+      <t-button theme="primary" @click="openCreate">新建房屋</t-button>
+    </template>
 
-    <t-card title="筛选条件">
-      <div class="toolbar">
-        <t-input v-model="filters.keyword" clearable placeholder="搜索房屋名称、楼栋或房号" />
-        <t-select v-model="filters.buildingId" :options="buildingOptions" />
-        <t-select v-model="filters.houseStatus" :options="houseStatusOptions" />
-        <div class="toolbar-actions">
-          <t-button theme="primary" @click="handleSearch">查询</t-button>
-          <t-button variant="outline" @click="resetFilters">重置</t-button>
-          <t-button variant="outline" theme="primary" @click="openCreate">新建房屋</t-button>
+    <section class="stats-strip">
+      <article v-for="item in summaryCards" :key="item.title" class="stat-card">
+        <div class="stat-card__label">{{ item.title }}</div>
+        <div class="stat-card__value">{{ item.value }}</div>
+        <div class="stat-card__meta">{{ item.description }}</div>
+      </article>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-panel__header">
+        <div>
+          <div class="admin-panel__title">筛选查询</div>
+          <div class="admin-panel__desc">按房屋名称、楼栋和占用状态快速筛选目标档案。</div>
         </div>
       </div>
-    </t-card>
-
-    <t-card title="房屋列表">
-      <t-table :data="houses" :columns="columns" row-key="id" size="small" table-layout="fixed">
-        <template #displayName="{ row }">
-          <div class="primary-cell">
-            <div class="primary-name">{{ row.displayName }}</div>
-            <div class="muted-text">
-              {{ row.buildingName }} / {{ row.unitNo || '无单元' }} / {{ row.roomNo }}
-            </div>
+      <div class="admin-panel__body">
+        <div class="filter-grid">
+          <t-input v-model="filters.keyword" clearable placeholder="搜索房屋名称、楼栋或房号" />
+          <t-select v-model="filters.buildingId" :options="buildingOptions" />
+          <t-select v-model="filters.houseStatus" :options="houseStatusOptions" />
+          <div class="toolbar-actions">
+            <t-button theme="primary" @click="handleSearch">查询</t-button>
+            <t-button variant="outline" @click="resetFilters">重置</t-button>
           </div>
-        </template>
-
-        <template #houseStatus="{ row }">
-          <t-tag :theme="getHouseStatusTheme(row.houseStatus)" variant="light">
-            {{ houseStatusLabelMap[row.houseStatus] }}
-          </t-tag>
-        </template>
-
-        <template #activeHouseholdType="{ row }">
-          {{ formatText(row.activeHouseholdType, '暂无') }}
-        </template>
-
-        <template #primaryRoleName="{ row }">
-          {{ formatText(row.primaryRoleName, '暂无') }}
-        </template>
-
-        <template #createdAt="{ row }">
-          {{ formatDateTime(row.createdAt) }}
-        </template>
-
-        <template #actions="{ row }">
-          <div class="action-group">
-            <t-button variant="text" theme="primary" @click="openDetail(row.id)">详情</t-button>
-            <t-button variant="text" @click="openEdit(row.id)">编辑</t-button>
-            <t-button variant="text" theme="danger" @click="handleDelete(row.id)">删除</t-button>
-          </div>
-        </template>
-      </t-table>
-
-      <div class="pagination-row">
-        <t-pagination
-          :current="pagination.page"
-          :page-size="pagination.pageSize"
-          :total="pagination.total"
-          show-jumper
-          show-page-size
-          @change="handlePageChange"
-        />
+        </div>
       </div>
-    </t-card>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-panel__header">
+        <div>
+          <div class="admin-panel__title">房屋列表</div>
+          <div class="admin-panel__desc">以表格形式集中展示房屋状态、成员数量与主角色信息。</div>
+        </div>
+      </div>
+      <div class="admin-panel__body">
+        <div class="table-toolbar">
+          <div class="table-toolbar__meta">
+            <span>共 {{ pagination.total }} 条记录</span>
+            <span v-if="selectedRowKeys.length" class="table-selection-count">
+              已选 {{ selectedRowKeys.length }} 项
+            </span>
+          </div>
+          <div class="table-toolbar__actions">
+            <t-button
+              variant="outline"
+              theme="danger"
+              :disabled="selectedRowKeys.length === 0"
+              @click="handleBatchDelete"
+            >
+              批量删除
+            </t-button>
+          </div>
+        </div>
+
+        <t-table
+          :data="houses"
+          :columns="columns"
+          :selected-row-keys="selectedRowKeys"
+          :row-selection-type="'multiple'"
+          row-key="id"
+          size="small"
+          table-layout="fixed"
+          bordered
+          hover
+          @select-change="handleSelectChange"
+        >
+          <template #displayName="{ row }">
+            <div class="table-primary-cell">
+              <div class="table-primary-cell__title">{{ row.displayName }}</div>
+              <div class="table-subtext">
+                {{ row.buildingName }} / {{ formatText(row.unitNo, '无单元') }} / {{ row.roomNo }}
+              </div>
+            </div>
+          </template>
+
+          <template #houseStatus="{ row }">
+            <t-tag :theme="getHouseStatusTheme(row.houseStatus)" variant="light-outline">
+              {{ houseStatusLabelMap[row.houseStatus] }}
+            </t-tag>
+          </template>
+
+          <template #activeHouseholdType="{ row }">
+            {{ formatText(row.activeHouseholdType, '暂无') }}
+          </template>
+
+          <template #primaryRoleName="{ row }">
+            {{ formatText(row.primaryRoleName, '暂无') }}
+          </template>
+
+          <template #createdAt="{ row }">
+            {{ formatDateTime(row.createdAt) }}
+          </template>
+
+          <template #actions="{ row }">
+            <div class="action-link-group">
+              <t-button variant="text" theme="primary" @click="openDetail(row.id)">详情</t-button>
+              <t-button variant="text" @click="openEdit(row.id)">编辑</t-button>
+              <t-button variant="text" theme="danger" @click="handleDelete(row.id)">删除</t-button>
+            </div>
+          </template>
+        </t-table>
+
+        <div class="table-pagination">
+          <t-pagination
+            :current="pagination.page"
+            :page-size="pagination.pageSize"
+            :total="pagination.total"
+            show-jumper
+            show-page-size
+            @change="handlePageChange"
+          />
+        </div>
+      </div>
+    </section>
 
     <HouseFormDialog
       v-model:visible="formDialogVisible"
@@ -92,6 +137,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
+import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import PageContainer from '@/components/PageContainer/index.vue';
 import { fetchBuildingOptions, fetchHouseDetail, fetchHouseList, removeHouse } from '@/modules/house/api';
 import type { HouseDetail, HouseListItem } from '@/modules/house/types';
@@ -101,6 +147,7 @@ import HouseDetailDialog from './components/HouseDetailDialog.vue';
 import HouseFormDialog from './components/HouseFormDialog.vue';
 
 const houses = ref<HouseListItem[]>([]);
+const selectedRowKeys = ref<Array<string | number>>([]);
 const editingHouse = ref<HouseDetail | null>(null);
 const formDialogVisible = ref(false);
 const dialogMode = ref<'create' | 'edit'>('create');
@@ -119,11 +166,12 @@ const pagination = reactive({
 });
 
 const columns = [
-  { colKey: 'displayName', title: '房屋', minWidth: 220 },
+  { colKey: 'row-select', type: 'multiple', width: 48, fixed: 'left' },
+  { colKey: 'displayName', title: '房屋信息', minWidth: 240, ellipsis: true },
   { colKey: 'houseStatus', title: '房屋状态', width: 120 },
-  { colKey: 'activeHouseholdType', title: '当前住户组', width: 140 },
+  { colKey: 'activeHouseholdType', title: '当前住户组', width: 140, ellipsis: true },
   { colKey: 'memberCount', title: '成员数', width: 90 },
-  { colKey: 'primaryRoleName', title: '主角色', width: 120 },
+  { colKey: 'primaryRoleName', title: '主角色', width: 120, ellipsis: true },
   { colKey: 'createdAt', title: '创建时间', width: 160 },
   { colKey: 'actions', title: '操作', width: 180, fixed: 'right' },
 ];
@@ -134,23 +182,17 @@ const summaryCards = computed(() => {
   const memberCount = houses.value.reduce((sum, item) => sum + item.memberCount, 0);
 
   return [
-    { title: '房屋总数', value: pagination.total, description: '按接口分页总量展示' },
-    { title: '当前页自住', value: selfOccupiedCount, description: '当前页自住房屋数量' },
-    { title: '当前页出租', value: rentedCount, description: '当前页出租房屋数量' },
-    { title: '当前页成员数', value: memberCount, description: '当前页聚合的成员关系数量' },
+    { title: '房屋总数', value: pagination.total, description: '按当前检索条件返回的房屋档案总量' },
+    { title: '自住房屋', value: selfOccupiedCount, description: '当前分页内标记为自住的房屋数量' },
+    { title: '出租房屋', value: rentedCount, description: '当前分页内标记为出租的房屋数量' },
+    { title: '成员关系数', value: memberCount, description: '当前分页房屋累计关联的成员数量' },
   ];
 });
 
 function getHouseStatusTheme(status: HouseListItem['houseStatus']) {
-  if (status === 'SELF_OCCUPIED') {
-    return 'success';
-  }
-  if (status === 'RENTED') {
-    return 'warning';
-  }
-  if (status === 'VACANT') {
-    return 'default';
-  }
+  if (status === 'SELF_OCCUPIED') return 'success';
+  if (status === 'RENTED') return 'warning';
+  if (status === 'VACANT') return 'default';
   return 'primary';
 }
 
@@ -176,6 +218,7 @@ async function loadList() {
 
   houses.value = result.items;
   pagination.total = result.total;
+  selectedRowKeys.value = [];
 }
 
 function handleSearch() {
@@ -188,7 +231,6 @@ function resetFilters() {
   filters.buildingId = 'ALL';
   filters.houseStatus = 'ALL';
   pagination.page = 1;
-  void loadBuildings();
   void loadList();
 }
 
@@ -196,6 +238,10 @@ function handlePageChange(pageInfo: { current: number; pageSize: number }) {
   pagination.page = pageInfo.current;
   pagination.pageSize = pageInfo.pageSize;
   void loadList();
+}
+
+function handleSelectChange(keys: Array<string | number>) {
+  selectedRowKeys.value = keys;
 }
 
 function openDetail(id: string) {
@@ -215,16 +261,31 @@ async function openEdit(id: string) {
   formDialogVisible.value = true;
 }
 
-async function handleDelete(id: string) {
-  if (!window.confirm('确认删除这套房屋吗？')) {
-    return;
-  }
+function confirmDelete(ids: string[]) {
+  const dialog = DialogPlugin.confirm({
+    header: '确认删除房屋',
+    body: `将删除 ${ids.length} 条房屋记录，删除后不可恢复。`,
+    confirmBtn: '确认删除',
+    cancelBtn: '取消',
+    onConfirm: async () => {
+      await Promise.all(ids.map((id) => removeHouse(id)));
+      if (houses.value.length === ids.length && pagination.page > 1) {
+        pagination.page -= 1;
+      }
+      await loadList();
+      MessagePlugin.success('删除成功');
+      dialog.destroy();
+    },
+    onClose: () => dialog.destroy(),
+  });
+}
 
-  await removeHouse(id);
-  if (houses.value.length === 1 && pagination.page > 1) {
-    pagination.page -= 1;
-  }
-  await loadList();
+function handleDelete(id: string) {
+  confirmDelete([id]);
+}
+
+function handleBatchDelete() {
+  confirmDelete(selectedRowKeys.value.map((item) => String(item)));
 }
 
 async function handleDialogSuccess() {
@@ -237,67 +298,3 @@ onMounted(async () => {
   await loadList();
 });
 </script>
-
-<style scoped>
-.toolbar {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr auto;
-  gap: 12px;
-}
-
-.toolbar-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.summary-value {
-  font-size: 30px;
-  font-weight: 700;
-}
-
-.summary-desc,
-.muted-text {
-  margin-top: 8px;
-  color: #64748b;
-}
-
-.primary-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.primary-name {
-  font-weight: 600;
-}
-
-.action-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.pagination-row {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-@media (max-width: 1200px) {
-  .toolbar {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .toolbar-actions {
-    grid-column: 1 / -1;
-    justify-content: flex-start;
-  }
-}
-
-@media (max-width: 768px) {
-  .toolbar {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

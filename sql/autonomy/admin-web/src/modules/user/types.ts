@@ -124,7 +124,7 @@ export const userStatusLabelMap: Record<UserAccountStatus, string> = {
 };
 
 export const communityRoleLabelMap: Record<CommunityRoleType, string> = {
-  COMMITTEE_MEMBER: '委员会成员',
+  COMMITTEE_MEMBER: '业委会成员',
   BUILDING_LEADER: '楼栋负责人',
   VOLUNTEER: '志愿者',
 };
@@ -139,14 +139,14 @@ export const memberRelationLabelMap: Record<MemberRelationType, string> = {
   MAIN_OWNER: '主业主',
   FAMILY_MEMBER: '家庭成员',
   MAIN_TENANT: '主租户',
-  CO_RESIDENT: '同住成员',
+  CO_RESIDENT: '共同居住人',
   AGENT: '代办人',
 };
 
 export const memberRelationStatusLabelMap: Record<MemberRelationStatus, string> = {
   PENDING: '待审核',
   ACTIVE: '有效',
-  REJECTED: '已驳回',
+  REJECTED: '已拒绝',
   INACTIVE: '无效',
   EXPIRED: '已过期',
   REMOVED: '已移除',
@@ -155,15 +155,15 @@ export const memberRelationStatusLabelMap: Record<MemberRelationStatus, string> 
 export const identityApplicationLabelMap: Record<IdentityApplicationType, string> = {
   OWNER_VERIFY: '业主认证',
   TENANT_VERIFY: '租户认证',
-  COMMITTEE_VERIFY: '委员会认证',
+  COMMITTEE_VERIFY: '业委会认证',
 };
 
 export const reviewStatusLabelMap: Record<ReviewStatus, string> = {
   PENDING: '待审核',
   APPROVED: '已通过',
-  REJECTED: '已驳回',
+  REJECTED: '已拒绝',
   WITHDRAWN: '已撤回',
-  SUPPLEMENT_REQUIRED: '待补充资料',
+  SUPPLEMENT_REQUIRED: '待补充材料',
 };
 
 export const userStatusOptions = [

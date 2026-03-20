@@ -1,71 +1,116 @@
 <template>
-  <PageContainer
-    title="楼栋管理"
-    description="管理楼栋档案，楼栋不再与社区绑定，房屋创建时可独立选择社区和楼栋。"
-  >
-    <t-row :gutter="[16, 16]">
-      <t-col :span="6" v-for="item in summaryCards" :key="item.title">
-        <t-card :title="item.title">
-          <div class="summary-value">{{ item.value }}</div>
-          <div class="summary-desc">{{ item.description }}</div>
-        </t-card>
-      </t-col>
-    </t-row>
+  <PageContainer title="楼栋管理">
+    <template #actions>
+      <t-button theme="primary" @click="openCreate">新建楼栋</t-button>
+    </template>
 
-    <t-card title="筛选条件">
-      <div class="toolbar">
-        <t-input v-model="filters.keyword" clearable placeholder="搜索楼栋名称或编码" />
-        <t-select v-model="filters.status" :options="buildingStatusOptions" />
-        <div class="toolbar-actions">
-          <t-button theme="primary" @click="handleSearch">查询</t-button>
-          <t-button variant="outline" @click="resetFilters">重置</t-button>
-          <t-button variant="outline" theme="primary" @click="openCreate">新建楼栋</t-button>
+    <section class="stats-strip">
+      <article v-for="item in summaryCards" :key="item.title" class="stat-card">
+        <div class="stat-card__label">{{ item.title }}</div>
+        <div class="stat-card__value">{{ item.value }}</div>
+        <div class="stat-card__meta">{{ item.description }}</div>
+      </article>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-panel__header">
+        <div>
+          <div class="admin-panel__title">筛选查询</div>
+          <div class="admin-panel__desc">支持按楼栋名称、编码和状态筛选基础档案。</div>
         </div>
       </div>
-    </t-card>
-
-    <t-card title="楼栋列表">
-      <t-table :data="buildings" :columns="columns" row-key="id" size="small" table-layout="fixed">
-        <template #buildingName="{ row }">
-          <div class="primary-cell">
-            <div class="primary-name">{{ row.buildingName }}</div>
-            <div class="muted-text">编码 {{ row.buildingCode }}</div>
+      <div class="admin-panel__body">
+        <div class="filter-grid" style="grid-template-columns: minmax(280px, 2fr) minmax(180px, 1fr) auto;">
+          <t-input v-model="filters.keyword" clearable placeholder="搜索楼栋名称或编码" />
+          <t-select v-model="filters.status" :options="buildingStatusOptions" />
+          <div class="toolbar-actions">
+            <t-button theme="primary" @click="handleSearch">查询</t-button>
+            <t-button variant="outline" @click="resetFilters">重置</t-button>
           </div>
-        </template>
-
-        <template #status="{ row }">
-          <t-tag :theme="row.status === 'ACTIVE' ? 'success' : 'warning'" variant="light">
-            {{ buildingStatusLabelMap[row.status] }}
-          </t-tag>
-        </template>
-
-        <template #sortNo="{ row }">
-          {{ formatText(row.sortNo, '未设置') }}
-        </template>
-
-        <template #updatedAt="{ row }">
-          {{ formatDateTime(row.updatedAt) }}
-        </template>
-
-        <template #actions="{ row }">
-          <div class="action-group">
-            <t-button variant="text" @click="openEdit(row.id)">编辑</t-button>
-            <t-button variant="text" theme="danger" @click="handleDelete(row.id)">删除</t-button>
-          </div>
-        </template>
-      </t-table>
-
-      <div class="pagination-row">
-        <t-pagination
-          :current="pagination.page"
-          :page-size="pagination.pageSize"
-          :total="pagination.total"
-          show-jumper
-          show-page-size
-          @change="handlePageChange"
-        />
+        </div>
       </div>
-    </t-card>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-panel__header">
+        <div>
+          <div class="admin-panel__title">楼栋列表</div>
+          <div class="admin-panel__desc">推荐低频维护，日常以初始化导入或补录纠错为主。</div>
+        </div>
+      </div>
+      <div class="admin-panel__body">
+        <div class="table-toolbar">
+          <div class="table-toolbar__meta">
+            <span>共 {{ pagination.total }} 条记录</span>
+            <span v-if="selectedRowKeys.length" class="table-selection-count">
+              已选 {{ selectedRowKeys.length }} 项
+            </span>
+          </div>
+          <div class="table-toolbar__actions">
+            <t-button
+              variant="outline"
+              theme="danger"
+              :disabled="selectedRowKeys.length === 0"
+              @click="handleBatchDelete"
+            >
+              批量删除
+            </t-button>
+          </div>
+        </div>
+
+        <t-table
+          :data="buildings"
+          :columns="columns"
+          :selected-row-keys="selectedRowKeys"
+          :row-selection-type="'multiple'"
+          row-key="id"
+          size="small"
+          table-layout="fixed"
+          bordered
+          hover
+          @select-change="handleSelectChange"
+        >
+          <template #buildingName="{ row }">
+            <div class="table-primary-cell">
+              <div class="table-primary-cell__title">{{ row.buildingName }}</div>
+              <div class="table-subtext">编码 {{ row.buildingCode }}</div>
+            </div>
+          </template>
+
+          <template #status="{ row }">
+            <t-tag :theme="row.status === 'ACTIVE' ? 'success' : 'warning'" variant="light-outline">
+              {{ buildingStatusLabelMap[row.status] }}
+            </t-tag>
+          </template>
+
+          <template #sortNo="{ row }">
+            {{ formatText(row.sortNo, '未设置') }}
+          </template>
+
+          <template #updatedAt="{ row }">
+            {{ formatDateTime(row.updatedAt) }}
+          </template>
+
+          <template #actions="{ row }">
+            <div class="action-link-group">
+              <t-button variant="text" @click="openEdit(row.id)">编辑</t-button>
+              <t-button variant="text" theme="danger" @click="handleDelete(row.id)">删除</t-button>
+            </div>
+          </template>
+        </t-table>
+
+        <div class="table-pagination">
+          <t-pagination
+            :current="pagination.page"
+            :page-size="pagination.pageSize"
+            :total="pagination.total"
+            show-jumper
+            show-page-size
+            @change="handlePageChange"
+          />
+        </div>
+      </div>
+    </section>
 
     <BuildingFormDialog
       v-model:visible="dialogVisible"
@@ -78,21 +123,16 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
+import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import PageContainer from '@/components/PageContainer/index.vue';
-import {
-  fetchBuildingDetail,
-  fetchBuildingList,
-  removeBuilding,
-} from '@/modules/building/api';
+import { fetchBuildingDetail, fetchBuildingList, removeBuilding } from '@/modules/building/api';
 import type { BuildingDetail, BuildingListItem } from '@/modules/building/types';
-import {
-  buildingStatusLabelMap,
-  buildingStatusOptions,
-} from '@/modules/building/types';
+import { buildingStatusLabelMap, buildingStatusOptions } from '@/modules/building/types';
 import { formatDateTime, formatText } from '@/utils/format';
 import BuildingFormDialog from './components/BuildingFormDialog.vue';
 
 const buildings = ref<BuildingListItem[]>([]);
+const selectedRowKeys = ref<Array<string | number>>([]);
 const editingBuilding = ref<BuildingDetail | null>(null);
 const dialogVisible = ref(false);
 const dialogMode = ref<'create' | 'edit'>('create');
@@ -107,12 +147,13 @@ const pagination = reactive({
 });
 
 const columns = [
-  { colKey: 'buildingName', title: '楼栋', minWidth: 220 },
-  { colKey: 'sortNo', title: '排序号', width: 120 },
+  { colKey: 'row-select', type: 'multiple', width: 48, fixed: 'left' },
+  { colKey: 'buildingName', title: '楼栋信息', minWidth: 220, ellipsis: true },
+  { colKey: 'sortNo', title: '排序号', width: 100 },
   { colKey: 'status', title: '状态', width: 120 },
-  { colKey: 'houseCount', title: '关联房屋数', width: 140 },
+  { colKey: 'houseCount', title: '关联房屋数', width: 120 },
   { colKey: 'updatedAt', title: '更新时间', width: 180 },
-  { colKey: 'actions', title: '操作', width: 160, fixed: 'right' },
+  { colKey: 'actions', title: '操作', width: 140, fixed: 'right' },
 ];
 
 const summaryCards = computed(() => {
@@ -121,10 +162,10 @@ const summaryCards = computed(() => {
   const houseCount = buildings.value.reduce((sum, item) => sum + item.houseCount, 0);
 
   return [
-    { title: '楼栋总数', value: pagination.total, description: '按接口分页总量展示' },
-    { title: '当前页启用', value: activeCount, description: '当前页启用中的楼栋数' },
-    { title: '当前页停用', value: disabledCount, description: '当前页停用中的楼栋数' },
-    { title: '当前页房屋数', value: houseCount, description: '当前页楼栋下的房屋总数' },
+    { title: '楼栋总数', value: pagination.total, description: '按当前检索条件返回的楼栋总量' },
+    { title: '启用楼栋', value: activeCount, description: '当前分页内可正常使用的楼栋档案' },
+    { title: '停用楼栋', value: disabledCount, description: '当前分页内已停用的楼栋档案' },
+    { title: '房屋总数', value: houseCount, description: '当前分页楼栋下已建档的房屋数量' },
   ];
 });
 
@@ -138,6 +179,7 @@ async function loadList() {
 
   buildings.value = result.items;
   pagination.total = result.total;
+  selectedRowKeys.value = [];
 }
 
 function handleSearch() {
@@ -158,6 +200,10 @@ function handlePageChange(pageInfo: { current: number; pageSize: number }) {
   void loadList();
 }
 
+function handleSelectChange(keys: Array<string | number>) {
+  selectedRowKeys.value = keys;
+}
+
 function openCreate() {
   dialogMode.value = 'create';
   editingBuilding.value = null;
@@ -170,16 +216,31 @@ async function openEdit(id: string) {
   dialogVisible.value = true;
 }
 
-async function handleDelete(id: string) {
-  if (!window.confirm('确认删除这栋楼吗？')) {
-    return;
-  }
+function confirmDelete(ids: string[]) {
+  const dialog = DialogPlugin.confirm({
+    header: '确认删除楼栋',
+    body: `将删除 ${ids.length} 条楼栋记录，请确认相关房屋关系已处理。`,
+    confirmBtn: '确认删除',
+    cancelBtn: '取消',
+    onConfirm: async () => {
+      await Promise.all(ids.map((id) => removeBuilding(id)));
+      if (buildings.value.length === ids.length && pagination.page > 1) {
+        pagination.page -= 1;
+      }
+      await loadList();
+      MessagePlugin.success('删除成功');
+      dialog.destroy();
+    },
+    onClose: () => dialog.destroy(),
+  });
+}
 
-  await removeBuilding(id);
-  if (buildings.value.length === 1 && pagination.page > 1) {
-    pagination.page -= 1;
-  }
-  await loadList();
+function handleDelete(id: string) {
+  confirmDelete([id]);
+}
+
+function handleBatchDelete() {
+  confirmDelete(selectedRowKeys.value.map((item) => String(item)));
 }
 
 async function handleDialogSuccess() {
@@ -191,67 +252,3 @@ onMounted(() => {
   void loadList();
 });
 </script>
-
-<style scoped>
-.toolbar {
-  display: grid;
-  grid-template-columns: 2fr 1fr auto;
-  gap: 12px;
-}
-
-.toolbar-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.summary-value {
-  font-size: 30px;
-  font-weight: 700;
-}
-
-.summary-desc,
-.muted-text {
-  margin-top: 8px;
-  color: #64748b;
-}
-
-.primary-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.primary-name {
-  font-weight: 600;
-}
-
-.action-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.pagination-row {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-@media (max-width: 1200px) {
-  .toolbar {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .toolbar-actions {
-    grid-column: 1 / -1;
-    justify-content: flex-start;
-  }
-}
-
-@media (max-width: 768px) {
-  .toolbar {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
