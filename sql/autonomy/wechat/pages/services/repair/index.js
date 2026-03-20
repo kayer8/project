@@ -4,20 +4,23 @@ const routes_1 = require("../../../constants/routes");
 const nav_1 = require("../../../utils/nav");
 Page({
     data: {
-        categories: ['水电维修', '电梯故障', '公共设施', '绿化环境', '卫生保洁', '其他'],
-        selectedCategory: '水电维修',
+        categoryOptions: [
+            { label: '水电维修', value: 'water-electric' },
+            { label: '电梯故障', value: 'elevator' },
+            { label: '公共设施', value: 'facility' },
+            { label: '绿化环境', value: 'green' },
+            { label: '卫生保洁', value: 'clean' },
+            { label: '其他', value: 'other' },
+        ],
+        selectedCategory: 'water-electric',
         description: '',
         images: [],
     },
-    handleCategorySelect(event) {
-        const { category } = event.currentTarget.dataset;
-        if (!category) {
-            return;
-        }
-        this.setData({ selectedCategory: category });
+    handleCategoryChange(event) {
+        this.setData({ selectedCategory: event.detail.value || 'water-electric' });
     },
     handleDescriptionInput(event) {
-        this.setData({ description: event.detail.value });
+        this.setData({ description: event.detail.value || '' });
     },
     chooseImages() {
         wx.chooseImage({
@@ -37,7 +40,7 @@ Page({
             icon: 'success',
         });
         setTimeout(() => {
-            (0, nav_1.redirectTo)(routes_1.ROUTES.home);
+            (0, nav_1.redirectTo)(routes_1.ROUTES.disclosure.index);
         }, 300);
     },
 });

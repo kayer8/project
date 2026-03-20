@@ -4,28 +4,55 @@ import { ROUTES } from '../../../constants/routes';
 Page({
   data: {
     title: '',
-    voteTypes: ['一户一票', '一人一票'],
-    voteTypeIndex: 0,
+    voteTypeOptions: [
+      {
+        label: '一户一票',
+        value: 'house',
+        content: '正式决策适用',
+      },
+      {
+        label: '一人一票',
+        value: 'person',
+        content: '意见征集适用',
+      },
+    ],
+    selectedVoteType: 'house',
     endDate: '',
+    datePickerVisible: false,
     options: ['', ''],
   },
 
-  handleTitleInput(event: WechatMiniprogram.Input) {
-    this.setData({ title: event.detail.value });
+  handleTitleInput(event: WechatMiniprogram.CustomEvent<{ value?: string }>) {
+    this.setData({ title: event.detail.value || '' });
   },
 
-  handleTypeChange(event: WechatMiniprogram.PickerChange) {
-    this.setData({ voteTypeIndex: Number(event.detail.value || 0) });
+  handleTypeChange(event: WechatMiniprogram.CustomEvent<{ value?: string }>) {
+    this.setData({ selectedVoteType: event.detail.value || 'house' });
   },
 
-  handleDateChange(event: WechatMiniprogram.PickerChange) {
-    this.setData({ endDate: String(event.detail.value || '') });
+  openDatePicker() {
+    this.setData({ datePickerVisible: true });
   },
 
-  handleOptionInput(event: WechatMiniprogram.Input) {
+  handleDatePickerVisibleChange(event: WechatMiniprogram.CustomEvent<{ visible?: boolean }>) {
+    this.setData({ datePickerVisible: !!event.detail.visible });
+  },
+
+  handleDateCancel() {
+    this.setData({ datePickerVisible: false });
+  },
+
+  handleDateConfirm(event: WechatMiniprogram.CustomEvent<{ value?: string }>) {
+    this.setData({
+      endDate: event.detail.value || '',
+      datePickerVisible: false,
+    });
+  },
+
+  handleOptionInput(event: WechatMiniprogram.CustomEvent<{ value?: string }>) {
     const index = Number(event.currentTarget.dataset.index);
     const nextOptions = [...this.data.options];
-    nextOptions[index] = event.detail.value;
+    nextOptions[index] = event.detail.value || '';
     this.setData({ options: nextOptions });
   },
 

@@ -35,33 +35,13 @@
 
       <view class="field-block">
         <text class="field-label">楼栋</text>
-        <picker
-          mode="selector"
-          range="{{buildingOptions}}"
-          range-key="buildingName"
-          value="{{buildingIndex}}"
-          bindchange="handleBuildingChange"
-        >
-          <view class="picker-field">
-            {{selectedBuildingName || '请选择楼栋'}}
-          </view>
-        </picker>
+        <view class="picker-field" bindtap="openBuildingPicker">{{selectedBuildingName || '请选择楼栋'}}</view>
         <view class="field-hint">请手动选择楼栋后再提交，避免误提交到默认楼栋。</view>
       </view>
 
       <view class="field-block">
         <text class="field-label">房屋</text>
-        <picker
-          mode="selector"
-          range="{{houseOptions}}"
-          range-key="displayName"
-          value="{{houseIndex}}"
-          bindchange="handleHouseChange"
-        >
-          <view class="picker-field">
-            {{selectedHouseName || '请选择房屋'}}
-          </view>
-        </picker>
+        <view class="picker-field" bindtap="openHousePicker">{{selectedHouseName || '请选择房屋'}}</view>
         <view class="field-hint">房屋为可选项；未找到房屋时可先只提交楼栋，后续由后台核验。</view>
         <view class="field-hint">提交后账户会进入待审核状态，确认信息无误后再提交。</view>
       </view>
@@ -71,4 +51,26 @@
       </button>
     </view>
   </view>
+
+  <t-picker
+    visible="{{buildingPickerVisible}}"
+    title="选择楼栋"
+    value="{{buildingPickerValue}}"
+    bind:confirm="handleBuildingConfirm"
+    bind:cancel="closeBuildingPicker"
+    bind:visible-change="handleBuildingPickerVisibleChange"
+  >
+    <t-picker-item options="{{buildingPickerOptions}}" />
+  </t-picker>
+
+  <t-picker
+    visible="{{housePickerVisible}}"
+    title="选择房屋"
+    value="{{housePickerValue}}"
+    bind:confirm="handleHouseConfirm"
+    bind:cancel="closeHousePicker"
+    bind:visible-change="handleHousePickerVisibleChange"
+  >
+    <t-picker-item options="{{housePickerOptions}}" />
+  </t-picker>
 </view>

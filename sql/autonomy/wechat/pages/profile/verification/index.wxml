@@ -12,7 +12,7 @@
     </view>
 
     <view class="section page-note">
-      当前账号已通过实名审核。如需变更身份信息，可以重新提交新的认证材料。
+      当前账号已通过实名认证审核。如需变更身份信息，可以重新提交新的认证材料。
     </view>
 
     <view wx:if="{{!editing}}" class="section">
@@ -22,11 +22,27 @@
     <view wx:if="{{editing}}" class="section card form-card">
       <view class="field-block">
         <text class="field-label">真实姓名</text>
-        <input class="text-input" placeholder="请输入真实姓名" value="{{realName}}" bindinput="handleNameInput" />
+        <t-input
+          t-class="td-input"
+          t-class-input="td-input__element"
+          borderless="{{true}}"
+          clearable="{{true}}"
+          placeholder="请输入真实姓名"
+          value="{{realName}}"
+          bind:change="handleNameInput"
+        />
       </view>
       <view class="field-block">
         <text class="field-label">身份证号</text>
-        <input class="text-input" maxlength="18" placeholder="请输入 18 位证件号" value="{{idNo}}" bindinput="handleIdInput" />
+        <t-input
+          t-class="td-input"
+          t-class-input="td-input__element"
+          borderless="{{true}}"
+          maxlength="{{18}}"
+          placeholder="请输入 18 位证件号"
+          value="{{idNo}}"
+          bind:change="handleIdInput"
+        />
       </view>
       <view class="field-block">
         <text class="field-label">证件照片</text>

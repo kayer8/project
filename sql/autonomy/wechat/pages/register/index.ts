@@ -11,6 +11,11 @@ import {
 import { appStore } from '../../store/app';
 import { navigateTo, reLaunch } from '../../utils/nav';
 
+type PickerOption = {
+  label: string;
+  value: string;
+};
+
 function resolveErrorMessage(error: unknown) {
   if (error instanceof Error && error.message) {
     return error.message;
@@ -40,6 +45,16 @@ function confirmSubmit(buildingName: string, houseName: string) {
   });
 }
 
+function getPickerResult(event: WechatMiniprogram.CustomEvent<{ value?: string[]; label?: string[] }>) {
+  const values = Array.isArray(event.detail.value) ? event.detail.value : [];
+  const labels = Array.isArray(event.detail.label) ? event.detail.label : [];
+
+  return {
+    value: values[0] || '',
+    label: labels[0] || '',
+  };
+}
+
 Page({
   data: {
     phase: 'phone' as 'phone' | 'form',
@@ -50,19 +65,20 @@ Page({
     syncMessage: '',
     buildingOptions: [] as RegisterBuildingOption[],
     houseOptions: [] as RegisterHouseOption[],
-    buildingIndex: 0,
-    houseIndex: 0,
+    buildingPickerOptions: [] as PickerOption[],
+    housePickerOptions: [] as PickerOption[],
+    buildingPickerVisible: false,
+    housePickerVisible: false,
+    buildingPickerValue: [] as string[],
+    housePickerValue: [] as string[],
     selectedBuildingId: '',
     selectedBuildingName: '',
     selectedHouseId: '',
     selectedHouseName: '',
   },
 
-  async handleGetPhoneNumber(event: WechatMiniprogram.CustomEvent) {
-    const detail = event.detail as {
-      code?: string;
-      errMsg?: string;
-    };
+  async handleGetPhoneNumber(event: WechatMiniprogram.CustomEvent<{ code?: string; errMsg?: string }>) {
+    const detail = event.detail;
 
     if (!detail.code || detail.errMsg !== 'getPhoneNumber:ok') {
       wx.showToast({
@@ -90,7 +106,7 @@ Page({
           content: result.message,
           showCancel: false,
           success: () => {
-            reLaunch(ROUTES.home);
+            reLaunch(ROUTES.profile.index);
           },
         });
         return;
@@ -119,16 +135,22 @@ Page({
 
     try {
       const buildingOptions = await listRegisterBuildings();
+      const buildingPickerOptions = buildingOptions.map((item) => ({
+        label: item.buildingName,
+        value: item.id,
+      }));
 
       this.setData({
         buildingOptions,
-        buildingIndex: 0,
+        buildingPickerOptions,
+        buildingPickerValue: [],
         selectedBuildingId: '',
         selectedBuildingName: '',
         selectedHouseId: '',
         selectedHouseName: '',
         houseOptions: [],
-        houseIndex: 0,
+        housePickerOptions: [],
+        housePickerValue: [],
       });
 
       if (!buildingOptions.length) {
@@ -144,49 +166,95 @@ Page({
 
   async loadHouseOptions(buildingId: string) {
     const houseOptions = await listRegisterHouses(buildingId);
+    const housePickerOptions = houseOptions.map((item) => ({
+      label: item.displayName,
+      value: item.id,
+    }));
 
     this.setData({
       houseOptions,
-      houseIndex: 0,
+      housePickerOptions,
+      housePickerValue: [],
       selectedHouseId: '',
       selectedHouseName: '',
     });
   },
 
-  async handleBuildingChange(event: WechatMiniprogram.PickerChange) {
-    const index = Number(event.detail.value || 0);
-    const building = this.data.buildingOptions[index];
+  openBuildingPicker() {
+    if (!this.data.buildingPickerOptions.length) {
+      return;
+    }
 
     this.setData({
-      buildingIndex: index,
-      selectedBuildingId: building?.id || '',
-      selectedBuildingName: building?.buildingName || '',
+      buildingPickerVisible: true,
+      buildingPickerValue: [this.data.selectedBuildingId || this.data.buildingPickerOptions[0].value],
+    });
+  },
+
+  handleBuildingPickerVisibleChange(event: WechatMiniprogram.CustomEvent<{ visible?: boolean }>) {
+    this.setData({ buildingPickerVisible: !!event.detail.visible });
+  },
+
+  closeBuildingPicker() {
+    this.setData({ buildingPickerVisible: false });
+  },
+
+  async handleBuildingConfirm(event: WechatMiniprogram.CustomEvent<{ value?: string[]; label?: string[] }>) {
+    const selected = getPickerResult(event);
+
+    this.setData({
+      buildingPickerVisible: false,
+      buildingPickerValue: selected.value ? [selected.value] : [],
+      selectedBuildingId: selected.value,
+      selectedBuildingName: selected.label,
       selectedHouseId: '',
       selectedHouseName: '',
       houseOptions: [],
-      houseIndex: 0,
+      housePickerOptions: [],
+      housePickerValue: [],
     });
 
-    if (building?.id) {
-      try {
-        await this.loadHouseOptions(building.id);
-      } catch (error) {
-        wx.showToast({
-          title: resolveErrorMessage(error),
-          icon: 'none',
-        });
-      }
+    if (!selected.value) {
+      return;
+    }
+
+    try {
+      await this.loadHouseOptions(selected.value);
+    } catch (error) {
+      wx.showToast({
+        title: resolveErrorMessage(error),
+        icon: 'none',
+      });
     }
   },
 
-  handleHouseChange(event: WechatMiniprogram.PickerChange) {
-    const index = Number(event.detail.value || 0);
-    const house = this.data.houseOptions[index];
+  openHousePicker() {
+    if (!this.data.housePickerOptions.length) {
+      return;
+    }
 
     this.setData({
-      houseIndex: index,
-      selectedHouseId: house?.id || '',
-      selectedHouseName: house?.displayName || '',
+      housePickerVisible: true,
+      housePickerValue: [this.data.selectedHouseId || this.data.housePickerOptions[0].value],
+    });
+  },
+
+  handleHousePickerVisibleChange(event: WechatMiniprogram.CustomEvent<{ visible?: boolean }>) {
+    this.setData({ housePickerVisible: !!event.detail.visible });
+  },
+
+  closeHousePicker() {
+    this.setData({ housePickerVisible: false });
+  },
+
+  handleHouseConfirm(event: WechatMiniprogram.CustomEvent<{ value?: string[]; label?: string[] }>) {
+    const selected = getPickerResult(event);
+
+    this.setData({
+      housePickerVisible: false,
+      housePickerValue: selected.value ? [selected.value] : [],
+      selectedHouseId: selected.value,
+      selectedHouseName: selected.label,
     });
   },
 
@@ -222,7 +290,7 @@ Page({
       });
 
       setTimeout(() => {
-        reLaunch(ROUTES.home);
+        reLaunch(ROUTES.profile.index);
       }, 300);
     } catch (error) {
       wx.showToast({

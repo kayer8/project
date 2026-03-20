@@ -33,7 +33,7 @@ Page({
             }
             app_1.appStore.setAccessToken(result.accessToken);
             app_1.appStore.setSessionUser(result.user);
-            (0, nav_1.reLaunch)(routes_1.ROUTES.home);
+            (0, nav_1.reLaunch)(routes_1.ROUTES.profile.index);
         }
         catch (error) {
             this.setData({

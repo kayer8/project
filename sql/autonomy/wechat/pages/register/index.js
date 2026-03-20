@@ -28,6 +28,14 @@ function confirmSubmit(buildingName, houseName) {
         });
     });
 }
+function getPickerResult(event) {
+    const values = Array.isArray(event.detail.value) ? event.detail.value : [];
+    const labels = Array.isArray(event.detail.label) ? event.detail.label : [];
+    return {
+        value: values[0] || '',
+        label: labels[0] || '',
+    };
+}
 Page({
     data: {
         phase: 'phone',
@@ -38,8 +46,12 @@ Page({
         syncMessage: '',
         buildingOptions: [],
         houseOptions: [],
-        buildingIndex: 0,
-        houseIndex: 0,
+        buildingPickerOptions: [],
+        housePickerOptions: [],
+        buildingPickerVisible: false,
+        housePickerVisible: false,
+        buildingPickerValue: [],
+        housePickerValue: [],
         selectedBuildingId: '',
         selectedBuildingName: '',
         selectedHouseId: '',
@@ -69,7 +81,7 @@ Page({
                     content: result.message,
                     showCancel: false,
                     success: () => {
-                        (0, nav_1.reLaunch)(routes_1.ROUTES.home);
+                        (0, nav_1.reLaunch)(routes_1.ROUTES.profile.index);
                     },
                 });
                 return;
@@ -96,15 +108,21 @@ Page({
         this.setData({ loadingOptions: true });
         try {
             const buildingOptions = await (0, auth_1.listRegisterBuildings)();
+            const buildingPickerOptions = buildingOptions.map((item) => ({
+                label: item.buildingName,
+                value: item.id,
+            }));
             this.setData({
                 buildingOptions,
-                buildingIndex: 0,
+                buildingPickerOptions,
+                buildingPickerValue: [],
                 selectedBuildingId: '',
                 selectedBuildingName: '',
                 selectedHouseId: '',
                 selectedHouseName: '',
                 houseOptions: [],
-                houseIndex: 0,
+                housePickerOptions: [],
+                housePickerValue: [],
             });
             if (!buildingOptions.length) {
                 wx.showToast({
@@ -119,44 +137,81 @@ Page({
     },
     async loadHouseOptions(buildingId) {
         const houseOptions = await (0, auth_1.listRegisterHouses)(buildingId);
+        const housePickerOptions = houseOptions.map((item) => ({
+            label: item.displayName,
+            value: item.id,
+        }));
         this.setData({
             houseOptions,
-            houseIndex: 0,
+            housePickerOptions,
+            housePickerValue: [],
             selectedHouseId: '',
             selectedHouseName: '',
         });
     },
-    async handleBuildingChange(event) {
-        const index = Number(event.detail.value || 0);
-        const building = this.data.buildingOptions[index];
+    openBuildingPicker() {
+        if (!this.data.buildingPickerOptions.length) {
+            return;
+        }
         this.setData({
-            buildingIndex: index,
-            selectedBuildingId: building?.id || '',
-            selectedBuildingName: building?.buildingName || '',
+            buildingPickerVisible: true,
+            buildingPickerValue: [this.data.selectedBuildingId || this.data.buildingPickerOptions[0].value],
+        });
+    },
+    handleBuildingPickerVisibleChange(event) {
+        this.setData({ buildingPickerVisible: !!event.detail.visible });
+    },
+    closeBuildingPicker() {
+        this.setData({ buildingPickerVisible: false });
+    },
+    async handleBuildingConfirm(event) {
+        const selected = getPickerResult(event);
+        this.setData({
+            buildingPickerVisible: false,
+            buildingPickerValue: selected.value ? [selected.value] : [],
+            selectedBuildingId: selected.value,
+            selectedBuildingName: selected.label,
             selectedHouseId: '',
             selectedHouseName: '',
             houseOptions: [],
-            houseIndex: 0,
+            housePickerOptions: [],
+            housePickerValue: [],
         });
-        if (building?.id) {
-            try {
-                await this.loadHouseOptions(building.id);
-            }
-            catch (error) {
-                wx.showToast({
-                    title: resolveErrorMessage(error),
-                    icon: 'none',
-                });
-            }
+        if (!selected.value) {
+            return;
+        }
+        try {
+            await this.loadHouseOptions(selected.value);
+        }
+        catch (error) {
+            wx.showToast({
+                title: resolveErrorMessage(error),
+                icon: 'none',
+            });
         }
     },
-    handleHouseChange(event) {
-        const index = Number(event.detail.value || 0);
-        const house = this.data.houseOptions[index];
+    openHousePicker() {
+        if (!this.data.housePickerOptions.length) {
+            return;
+        }
         this.setData({
-            houseIndex: index,
-            selectedHouseId: house?.id || '',
-            selectedHouseName: house?.displayName || '',
+            housePickerVisible: true,
+            housePickerValue: [this.data.selectedHouseId || this.data.housePickerOptions[0].value],
+        });
+    },
+    handleHousePickerVisibleChange(event) {
+        this.setData({ housePickerVisible: !!event.detail.visible });
+    },
+    closeHousePicker() {
+        this.setData({ housePickerVisible: false });
+    },
+    handleHouseConfirm(event) {
+        const selected = getPickerResult(event);
+        this.setData({
+            housePickerVisible: false,
+            housePickerValue: selected.value ? [selected.value] : [],
+            selectedHouseId: selected.value,
+            selectedHouseName: selected.label,
         });
     },
     async handleSubmitRequest() {
@@ -182,7 +237,7 @@ Page({
                 icon: 'success',
             });
             setTimeout(() => {
-                (0, nav_1.reLaunch)(routes_1.ROUTES.home);
+                (0, nav_1.reLaunch)(routes_1.ROUTES.profile.index);
             }, 300);
         }
         catch (error) {

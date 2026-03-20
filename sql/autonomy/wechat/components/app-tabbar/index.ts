@@ -1,10 +1,8 @@
 import { ROUTES } from '../../constants/routes';
 
 const tabs = [
-  { value: 'home', label: '工作台', url: ROUTES.home },
-  { value: 'voting', label: '投票', url: ROUTES.voting.index },
-  { value: 'assistant', label: 'AI', url: ROUTES.assistant },
   { value: 'disclosure', label: '公开', url: ROUTES.disclosure.index },
+  { value: 'voting', label: '投票', url: ROUTES.voting.index },
   { value: 'profile', label: '我的', url: ROUTES.profile.index },
 ] as const;
 
@@ -12,7 +10,7 @@ Component({
   properties: {
     value: {
       type: String,
-      value: 'home',
+      value: 'disclosure',
     },
   },
 

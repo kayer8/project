@@ -5,24 +5,48 @@ const routes_1 = require("../../../constants/routes");
 Page({
     data: {
         title: '',
-        voteTypes: ['一户一票', '一人一票'],
-        voteTypeIndex: 0,
+        voteTypeOptions: [
+            {
+                label: '一户一票',
+                value: 'house',
+                content: '正式决策适用',
+            },
+            {
+                label: '一人一票',
+                value: 'person',
+                content: '意见征集适用',
+            },
+        ],
+        selectedVoteType: 'house',
         endDate: '',
+        datePickerVisible: false,
         options: ['', ''],
     },
     handleTitleInput(event) {
-        this.setData({ title: event.detail.value });
+        this.setData({ title: event.detail.value || '' });
     },
     handleTypeChange(event) {
-        this.setData({ voteTypeIndex: Number(event.detail.value || 0) });
+        this.setData({ selectedVoteType: event.detail.value || 'house' });
     },
-    handleDateChange(event) {
-        this.setData({ endDate: String(event.detail.value || '') });
+    openDatePicker() {
+        this.setData({ datePickerVisible: true });
+    },
+    handleDatePickerVisibleChange(event) {
+        this.setData({ datePickerVisible: !!event.detail.visible });
+    },
+    handleDateCancel() {
+        this.setData({ datePickerVisible: false });
+    },
+    handleDateConfirm(event) {
+        this.setData({
+            endDate: event.detail.value || '',
+            datePickerVisible: false,
+        });
     },
     handleOptionInput(event) {
         const index = Number(event.currentTarget.dataset.index);
         const nextOptions = [...this.data.options];
-        nextOptions[index] = event.detail.value;
+        nextOptions[index] = event.detail.value || '';
         this.setData({ options: nextOptions });
     },
     addOption() {

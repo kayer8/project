@@ -1,7 +1,19 @@
 import { ROUTES } from '../../../constants/routes';
 import { redirectTo } from '../../../utils/nav';
 
-const communities = ['锦绣花园', '阳光水岸', '翡翠公馆', '金地名都', '万科城', '保利香槟'];
+const communities = ['锦绣花园', '阳光水岸', '翡翠公馆', '金地名都', '万科城', '保利香樾'];
+const buildingOptions = ['1栋', '2栋', '3栋', '8栋'].map((item) => ({ label: item, value: item }));
+const unitOptions = ['1单元', '2单元'].map((item) => ({ label: item, value: item }));
+
+function getPickerValue(event: WechatMiniprogram.CustomEvent<{ value?: string[]; label?: string[] }>) {
+  const values = Array.isArray(event.detail.value) ? event.detail.value : [];
+  const labels = Array.isArray(event.detail.label) ? event.detail.label : [];
+
+  return {
+    value: values[0] || '',
+    label: labels[0] || '',
+  };
+}
 
 Page({
   data: {
@@ -14,17 +26,24 @@ Page({
       building: '',
       unit: '',
       room: '',
-      role: '业主',
+      role: 'owner',
     },
-    buildingOptions: ['1号楼', '2号楼', '3号楼', '8号楼'],
-    unitOptions: ['1单元', '2单元'],
-    buildingIndex: 0,
-    unitIndex: 0,
+    buildingOptions,
+    unitOptions,
+    roleOptions: [
+      { label: '业主', value: 'owner' },
+      { label: '家属', value: 'family' },
+      { label: '租客', value: 'tenant' },
+    ],
+    buildingPickerVisible: false,
+    unitPickerVisible: false,
+    buildingPickerValue: [] as string[],
+    unitPickerValue: [] as string[],
     proofImage: '',
   },
 
-  handleKeywordInput(event: WechatMiniprogram.Input) {
-    const keyword = event.detail.value.trim();
+  handleKeywordInput(event: WechatMiniprogram.CustomEvent<{ value?: string }>) {
+    const keyword = (event.detail.value || '').trim();
 
     this.setData({
       keyword,
@@ -48,50 +67,76 @@ Page({
     });
   },
 
-  handleBuildingChange(event: WechatMiniprogram.PickerChange) {
-    const index = Number(event.detail.value || 0);
+  openBuildingPicker() {
+    this.setData({
+      buildingPickerVisible: true,
+      buildingPickerValue: [this.data.bindData.building || this.data.buildingOptions[0]?.value || ''],
+    });
+  },
+
+  handleBuildingPickerVisibleChange(event: WechatMiniprogram.CustomEvent<{ visible?: boolean }>) {
+    this.setData({ buildingPickerVisible: !!event.detail.visible });
+  },
+
+  closeBuildingPicker() {
+    this.setData({ buildingPickerVisible: false });
+  },
+
+  handleBuildingConfirm(event: WechatMiniprogram.CustomEvent<{ value?: string[]; label?: string[] }>) {
+    const selected = getPickerValue(event);
 
     this.setData({
-      buildingIndex: index,
+      buildingPickerVisible: false,
+      buildingPickerValue: selected.value ? [selected.value] : [],
       bindData: {
         ...this.data.bindData,
-        building: this.data.buildingOptions[index] || '',
+        building: selected.label || selected.value,
       },
     });
   },
 
-  handleUnitChange(event: WechatMiniprogram.PickerChange) {
-    const index = Number(event.detail.value || 0);
+  openUnitPicker() {
+    this.setData({
+      unitPickerVisible: true,
+      unitPickerValue: [this.data.bindData.unit || this.data.unitOptions[0]?.value || ''],
+    });
+  },
+
+  handleUnitPickerVisibleChange(event: WechatMiniprogram.CustomEvent<{ visible?: boolean }>) {
+    this.setData({ unitPickerVisible: !!event.detail.visible });
+  },
+
+  closeUnitPicker() {
+    this.setData({ unitPickerVisible: false });
+  },
+
+  handleUnitConfirm(event: WechatMiniprogram.CustomEvent<{ value?: string[]; label?: string[] }>) {
+    const selected = getPickerValue(event);
 
     this.setData({
-      unitIndex: index,
+      unitPickerVisible: false,
+      unitPickerValue: selected.value ? [selected.value] : [],
       bindData: {
         ...this.data.bindData,
-        unit: this.data.unitOptions[index] || '',
+        unit: selected.label || selected.value,
       },
     });
   },
 
-  handleRoomInput(event: WechatMiniprogram.Input) {
+  handleRoomInput(event: WechatMiniprogram.CustomEvent<{ value?: string }>) {
     this.setData({
       bindData: {
         ...this.data.bindData,
-        room: event.detail.value,
+        room: event.detail.value || '',
       },
     });
   },
 
-  handleRoleSelect(event: WechatMiniprogram.BaseEvent) {
-    const { role } = event.currentTarget.dataset as { role?: string };
-
-    if (!role) {
-      return;
-    }
-
+  handleRoleChange(event: WechatMiniprogram.CustomEvent<{ value?: string }>) {
     this.setData({
       bindData: {
         ...this.data.bindData,
-        role,
+        role: event.detail.value || 'owner',
       },
     });
   },

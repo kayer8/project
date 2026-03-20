@@ -3,24 +3,25 @@ import { redirectTo } from '../../../utils/nav';
 
 Page({
   data: {
-    categories: ['水电维修', '电梯故障', '公共设施', '绿化环境', '卫生保洁', '其他'],
-    selectedCategory: '水电维修',
+    categoryOptions: [
+      { label: '水电维修', value: 'water-electric' },
+      { label: '电梯故障', value: 'elevator' },
+      { label: '公共设施', value: 'facility' },
+      { label: '绿化环境', value: 'green' },
+      { label: '卫生保洁', value: 'clean' },
+      { label: '其他', value: 'other' },
+    ],
+    selectedCategory: 'water-electric',
     description: '',
     images: [] as string[],
   },
 
-  handleCategorySelect(event: WechatMiniprogram.BaseEvent) {
-    const { category } = event.currentTarget.dataset as { category?: string };
-
-    if (!category) {
-      return;
-    }
-
-    this.setData({ selectedCategory: category });
+  handleCategoryChange(event: WechatMiniprogram.CustomEvent<{ value?: string }>) {
+    this.setData({ selectedCategory: event.detail.value || 'water-electric' });
   },
 
-  handleDescriptionInput(event: WechatMiniprogram.Input) {
-    this.setData({ description: event.detail.value });
+  handleDescriptionInput(event: WechatMiniprogram.CustomEvent<{ value?: string }>) {
+    this.setData({ description: event.detail.value || '' });
   },
 
   chooseImages() {
@@ -44,7 +45,7 @@ Page({
     });
 
     setTimeout(() => {
-      redirectTo(ROUTES.home);
+      redirectTo(ROUTES.disclosure.index);
     }, 300);
   },
 });

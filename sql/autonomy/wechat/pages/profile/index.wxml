@@ -3,64 +3,55 @@
 
   <view class="page-body page-body--with-tabbar">
     <view class="summary-banner">
-      <view class="summary-title">{{user.name}}</view>
-      <view class="summary-desc">ID {{user.id}} · {{user.community}}</view>
+      <view class="summary-title">我的</view>
+      <view class="summary-desc">
+        当前版本先开放账号信息、绑定房屋和实名认证流程。
+      </view>
     </view>
 
-    <view class="section card info-card">
+    <view wx:if="{{checking}}" class="section card info-card">
+      <view class="empty-block">正在检查账号状态，请稍候…</view>
+    </view>
+
+    <view wx:elif="{{hasAccount}}" class="section card info-card">
       <view class="section-head">
         <view>
-          <view class="section-title">我的房屋</view>
-          <view class="section-subtitle">房屋、成员和认证拆成独立页处理</view>
+          <view class="section-title">{{sessionUser.realName || sessionUser.nickname || '住户用户'}}</view>
+          <view class="section-subtitle">{{sessionUser.mobile || '未绑定手机号'}}</view>
         </view>
+        <t-tag theme="success" variant="light">账号已匹配</t-tag>
       </view>
-      <view wx:for="{{houses}}" wx:key="id" class="record-card profile-house">
-        <view class="record-row">
-          <view>
-            <view class="record-title">{{item.name}}</view>
-            <view class="record-note">{{item.memberCount}} 位成员</view>
-          </view>
-          <t-tag theme="primary" variant="light">{{item.role}}</t-tag>
-        </view>
-      </view>
-      <view class="action-row section">
-        <navigator class="secondary-button nav-button" url="/pages/profile/bind/index">绑定新房</navigator>
-        <navigator class="primary-button nav-button" url="/pages/profile/members/index">成员管理</navigator>
-      </view>
-    </view>
 
-    <view class="section card info-card">
-      <view class="section-title">账户中心</view>
       <t-cell-group>
         <t-cell
-          title="身份认证"
-          description="查看实名审核与提交材料"
+          title="实名认证"
+          description="查看实名状态并提交认证材料"
           note="{{verification.status === 'verified' ? '已认证' : '待处理'}}"
           arrow="{{true}}"
           url="/pages/profile/verification/index"
           jump-type="navigateTo"
         />
         <t-cell
-          title="代办授权"
-          description="委托家属或代理人代办业务"
-          note="授权协作"
+          title="隐私政策"
+          description="查看登录、绑定房屋与认证相关说明"
+          note="协议说明"
           arrow="{{true}}"
-          url="/pages/profile/agent/index"
-          jump-type="navigateTo"
-        />
-        <t-cell
-          title="设置"
-          description="通知、隐私与账号偏好"
-          note="个人设置"
-          arrow="{{true}}"
-          url="/pages/profile/settings/index"
+          url="/pages/legal/privacy/index"
           jump-type="navigateTo"
         />
       </t-cell-group>
     </view>
 
-    <view class="section page-note page-note--warning">
-      管理端和小程序的能力边界已经拆开了：住户侧只做查看、申请、授权、投票和服务办理，不承担后台维护型操作。
+    <view wx:else class="section card info-card">
+      <view class="section-title">未绑定房屋</view>
+      <view class="section-subtitle">当前微信账号还没有对应住户资料，请先绑定房屋，再继续认证流程。</view>
+
+      <view wx:if="{{errorMessage}}" class="section page-note page-note--warning">
+        {{errorMessage}}
+      </view>
+
+      <button class="primary-button section" bindtap="goBindHouse">绑定房屋</button>
+      <button wx:if="{{errorMessage}}" class="secondary-button section" bindtap="handleRetry">重新检查</button>
     </view>
   </view>
 

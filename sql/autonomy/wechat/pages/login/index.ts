@@ -39,7 +39,7 @@ Page({
 
       appStore.setAccessToken(result.accessToken);
       appStore.setSessionUser(result.user);
-      reLaunch(ROUTES.home);
+      reLaunch(ROUTES.profile.index);
     } catch (error) {
       this.setData({
         checking: false,

@@ -3,7 +3,15 @@
 
   <view class="page-body">
     <view class="toolbar">
-      <input class="toolbar-input" placeholder="搜索公告、通知、分类" value="{{keyword}}" bindinput="handleKeywordInput" />
+      <t-input
+        t-class="toolbar-input"
+        t-class-input="toolbar-input__element"
+        borderless="{{true}}"
+        clearable="{{true}}"
+        placeholder="搜索公告、通知、分类"
+        value="{{keyword}}"
+        bind:change="handleKeywordInput"
+      />
     </view>
 
     <view class="section">

@@ -11,7 +11,15 @@
     <view wx:if="{{step === 1}}" class="section card form-card">
       <view class="field-block">
         <text class="field-label">搜索小区</text>
-        <input class="text-input" placeholder="请输入小区名称" value="{{keyword}}" bindinput="handleKeywordInput" />
+        <t-input
+          t-class="td-input"
+          t-class-input="td-input__element"
+          borderless="{{true}}"
+          clearable="{{true}}"
+          placeholder="请输入小区名称"
+          value="{{keyword}}"
+          bind:change="handleKeywordInput"
+        />
       </view>
       <view wx:for="{{filteredCommunities}}" wx:key="*this" class="record-card bind-record" data-community="{{item}}" bindtap="handleSelectCommunity">
         <view class="record-title">{{item}}</view>
@@ -26,19 +34,22 @@
       </view>
       <view class="field-block">
         <text class="field-label">楼栋</text>
-        <picker mode="selector" range="{{buildingOptions}}" value="{{buildingIndex}}" bindchange="handleBuildingChange">
-          <view class="picker-field">{{bindData.building || '请选择楼栋'}}</view>
-        </picker>
+        <view class="picker-field" bindtap="openBuildingPicker">{{bindData.building || '请选择楼栋'}}</view>
       </view>
       <view class="field-block">
         <text class="field-label">单元</text>
-        <picker mode="selector" range="{{unitOptions}}" value="{{unitIndex}}" bindchange="handleUnitChange">
-          <view class="picker-field">{{bindData.unit || '请选择单元'}}</view>
-        </picker>
+        <view class="picker-field" bindtap="openUnitPicker">{{bindData.unit || '请选择单元'}}</view>
       </view>
       <view class="field-block">
         <text class="field-label">房号</text>
-        <input class="text-input" placeholder="例如 1202" value="{{bindData.room}}" bindinput="handleRoomInput" />
+        <t-input
+          t-class="td-input"
+          t-class-input="td-input__element"
+          borderless="{{true}}"
+          placeholder="例如 1202"
+          value="{{bindData.room}}"
+          bind:change="handleRoomInput"
+        />
       </view>
       <button class="primary-button" bindtap="nextStep" disabled="{{!bindData.building || !bindData.room}}">下一步</button>
     </view>
@@ -46,11 +57,13 @@
     <view wx:if="{{step === 3}}" class="section card form-card">
       <view class="field-block">
         <text class="field-label">你的身份</text>
-        <view class="status-row">
-          <button class="secondary-button role-btn {{bindData.role === '业主' ? 'role-btn--active' : ''}}" data-role="业主" bindtap="handleRoleSelect">业主</button>
-          <button class="secondary-button role-btn {{bindData.role === '家属' ? 'role-btn--active' : ''}}" data-role="家属" bindtap="handleRoleSelect">家属</button>
-          <button class="secondary-button role-btn {{bindData.role === '租客' ? 'role-btn--active' : ''}}" data-role="租客" bindtap="handleRoleSelect">租客</button>
-        </view>
+        <t-radio-group
+          options="{{roleOptions}}"
+          value="{{bindData.role}}"
+          icon="line"
+          placement="right"
+          bind:change="handleRoleChange"
+        />
       </view>
       <view class="field-block">
         <text class="field-label">证明材料</text>
@@ -61,4 +74,26 @@
       <button class="primary-button" bindtap="handleSubmit" disabled="{{!proofImage}}">提交申请</button>
     </view>
   </view>
+
+  <t-picker
+    visible="{{buildingPickerVisible}}"
+    title="选择楼栋"
+    value="{{buildingPickerValue}}"
+    bind:confirm="handleBuildingConfirm"
+    bind:cancel="closeBuildingPicker"
+    bind:visible-change="handleBuildingPickerVisibleChange"
+  >
+    <t-picker-item options="{{buildingOptions}}" />
+  </t-picker>
+
+  <t-picker
+    visible="{{unitPickerVisible}}"
+    title="选择单元"
+    value="{{unitPickerValue}}"
+    bind:confirm="handleUnitConfirm"
+    bind:cancel="closeUnitPicker"
+    bind:visible-change="handleUnitPickerVisibleChange"
+  >
+    <t-picker-item options="{{unitOptions}}" />
+  </t-picker>
 </view>

@@ -4,6 +4,17 @@ page {
   font-family: 'PingFang SC', 'Segoe UI', sans-serif;
 }
 
+t-input,
+t-textarea,
+t-radio-group,
+t-picker,
+t-date-time-picker {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .page-shell {
   min-height: 100vh;
   background: #edf2f7;
@@ -294,10 +305,21 @@ page {
 
 .toolbar-input {
   flex: 1;
-  padding: 20rpx 24rpx;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0;
   border-radius: 999rpx;
   background: #ffffff;
   border: 1px solid #dce6ec;
+  overflow: hidden;
+}
+
+.toolbar-input__element {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 80rpx;
+  padding: 18rpx 24rpx;
   font-size: 24rpx;
 }
 
@@ -319,7 +341,6 @@ page {
 }
 
 .text-input,
-.text-area,
 .picker-field {
   width: 100%;
   padding: 22rpx 20rpx;
@@ -330,8 +351,44 @@ page {
   box-sizing: border-box;
 }
 
-.text-area {
+.td-input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  border-radius: 18rpx;
+  background: #f7fafc;
+  border: 1px solid #dce6ec;
+  overflow: hidden;
+}
+
+.td-input__element {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 88rpx;
+  padding: 20rpx;
+  font-size: 26rpx;
+  line-height: 1.4;
+}
+
+.td-textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  border-radius: 18rpx;
+  background: #f7fafc;
+  border: 1px solid #dce6ec;
+  overflow: hidden;
+}
+
+.td-textarea__element {
+  box-sizing: border-box;
+  width: 100%;
   min-height: 180rpx;
+  padding: 20rpx;
+  font-size: 26rpx;
+  line-height: 1.7;
 }
 
 .button-row {

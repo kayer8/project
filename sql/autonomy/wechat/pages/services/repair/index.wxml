@@ -5,22 +5,27 @@
     <view class="card form-card">
       <view class="field-block">
         <text class="field-label">问题类型</text>
-        <view class="status-row">
-          <button
-            wx:for="{{categories}}"
-            wx:key="*this"
-            class="secondary-button category-btn {{selectedCategory === item ? 'category-btn--active' : ''}}"
-            data-category="{{item}}"
-            bindtap="handleCategorySelect"
-          >
-            {{item}}
-          </button>
-        </view>
+        <t-radio-group
+          options="{{categoryOptions}}"
+          value="{{selectedCategory}}"
+          icon="line"
+          placement="right"
+          bind:change="handleCategoryChange"
+        />
       </view>
 
       <view class="field-block">
         <text class="field-label">问题描述</text>
-        <textarea class="text-area" placeholder="请详细描述您遇到的问题" value="{{description}}" bindinput="handleDescriptionInput" />
+        <t-textarea
+          t-class="td-textarea"
+          t-class-textarea="td-textarea__element"
+          bordered="{{false}}"
+          indicator="{{false}}"
+          maxlength="{{300}}"
+          placeholder="请详细描述您遇到的问题"
+          value="{{description}}"
+          bind:change="handleDescriptionInput"
+        />
       </view>
 
       <view class="field-block">
