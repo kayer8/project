@@ -2,23 +2,33 @@
   <app-navbar title="财务公开" />
 
   <view class="page-body">
+    <view class="summary-banner financial-header">
+      <view class="icon-title-row">
+        <t-icon name="home" size="48rpx" class="ui-icon ui-icon--primary" />
+        <view class="summary-title">财务公开</view>
+      </view>
+      <view class="summary-desc">按季度公开物业收入、支出、公共收益与预算执行情况，确保社区资金使用透明、可追溯。</view>
+    </view>
+
     <view class="metric-grid">
       <view class="metric-card">
         <view class="metric-label">本季收入</view>
         <view class="metric-value">125.0w</view>
-        <view class="metric-note">物业费 + 公共收益</view>
+        <view class="metric-note">物业费与公共收益合计</view>
       </view>
       <view class="metric-card">
         <view class="metric-label">本季支出</view>
         <view class="metric-value">98.0w</view>
-        <view class="metric-note">人工 + 维保 + 能耗</view>
+        <view class="metric-note">人工、维保与能耗支出</view>
       </view>
       <view class="metric-card">
         <view class="metric-label">本季结余</view>
         <view class="metric-value">27.0w</view>
-        <view class="metric-note">留作后续预算</view>
+        <view class="metric-note">用于后续预算安排</view>
       </view>
     </view>
+
+    <view class="section page-note">财务报告与流水按时间归档展示，状态为“公示中”的报告表示当前处于居民查看和反馈阶段。</view>
 
     <view class="section card info-card">
       <t-tabs value="{{activeTab}}" theme="card" bind:change="handleTabChange">
@@ -26,7 +36,10 @@
           <view wx:for="{{reports}}" wx:key="id" class="record-card financial-card">
             <view class="record-row">
               <view>
-                <view class="record-title">{{item.title}}</view>
+                <view class="icon-inline-row">
+                  <t-icon name="view-list" size="32rpx" class="ui-icon" />
+                  <view class="record-title">{{item.title}}</view>
+                </view>
                 <view class="record-note">{{item.period}} · {{item.date}}</view>
               </view>
               <t-tag theme="{{item.status === '公示中' ? 'primary' : 'success'}}" variant="light">{{item.status}}</t-tag>
@@ -43,7 +56,10 @@
           <view wx:for="{{transactions}}" wx:key="id" wx:if="{{transactionFilter === 'all' || transactionFilter === item.type}}" class="record-card financial-card">
             <view class="record-row">
               <view>
-                <view class="record-title">{{item.title}}</view>
+                <view class="icon-inline-row">
+                  <t-icon name="{{item.type === 'income' ? 'check-circle' : 'error-circle'}}" size="32rpx" class="ui-icon {{item.type === 'income' ? 'ui-icon--success' : 'ui-icon--warning'}}" />
+                  <view class="record-title">{{item.title}}</view>
+                </view>
                 <view class="record-note">{{item.date}} · {{item.category}}</view>
               </view>
               <view class="record-title {{item.type === 'income' ? 'text-income' : 'text-expense'}}">
@@ -56,7 +72,10 @@
           <view wx:for="{{budgets}}" wx:key="label" class="record-card financial-card">
             <view class="record-row">
               <view>
-                <view class="record-title">{{item.label}}</view>
+                <view class="icon-inline-row">
+                  <t-icon name="time" size="32rpx" class="ui-icon" />
+                  <view class="record-title">{{item.label}}</view>
+                </view>
                 <view class="record-note">已执行 {{item.spent}} / {{item.budget}}</view>
               </view>
               <t-tag theme="warning" variant="light">预算中</t-tag>

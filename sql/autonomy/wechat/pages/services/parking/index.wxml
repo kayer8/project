@@ -2,6 +2,14 @@
   <app-navbar title="停车缴费" />
 
   <view class="page-body">
+    <view class="summary-banner">
+      <view class="icon-title-row">
+        <t-icon name="time" size="48rpx" class="ui-icon ui-icon--primary" />
+        <view class="summary-title">停车缴费</view>
+      </view>
+      <view class="summary-desc">统一查看车位状态、月卡费用与临停记录，后续可接停车场账单能力。</view>
+    </view>
+
     <view class="metric-grid">
       <view class="metric-card">
         <view class="metric-label">车位状态</view>
@@ -21,7 +29,10 @@
     </view>
     <view class="section">
       <view wx:for="{{bills}}" wx:key="title" class="record-card">
-        <view class="record-title">{{item.title}}</view>
+        <view class="icon-inline-row">
+          <t-icon name="time" size="32rpx" class="ui-icon" />
+          <view class="record-title">{{item.title}}</view>
+        </view>
         <view class="record-note">{{item.note}}</view>
       </view>
     </view>

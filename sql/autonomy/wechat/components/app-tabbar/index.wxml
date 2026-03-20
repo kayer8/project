@@ -1,11 +1,14 @@
-<t-tab-bar
-  value="{{value}}"
-  fixed="{{true}}"
-  placeholder="{{true}}"
-  bordered="{{false}}"
-  bind:change="handleChange"
->
-  <t-tab-bar-item wx:for="{{tabs}}" wx:key="value" value="{{item.value}}">
-    {{item.label}}
-  </t-tab-bar-item>
-</t-tab-bar>
+<view class="app-tabbar-shell">
+  <t-tab-bar
+    class="app-tabbar"
+    value="{{value}}"
+    fixed="{{true}}"
+    placeholder="{{true}}"
+    bordered="{{false}}"
+    bind:change="handleChange"
+  >
+    <t-tab-bar-item wx:for="{{tabs}}" wx:key="value" value="{{item.value}}" icon="{{item.icon}}">
+      {{item.label}}
+    </t-tab-bar-item>
+  </t-tab-bar>
+</view>

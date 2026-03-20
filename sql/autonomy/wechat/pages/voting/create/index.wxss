@@ -5,3 +5,7 @@
 .vote-create__add {
   margin-top: 16rpx;
 }
+
+.vote-create__note {
+  margin-bottom: 20rpx;
+}

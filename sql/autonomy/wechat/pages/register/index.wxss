@@ -1,13 +1,62 @@
 .register-link-row {
   margin-top: 18rpx;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .section-link {
   margin-left: 8rpx;
 }
 
+.register-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12rpx;
+  margin-top: 20rpx;
+}
+
+.register-step {
+  padding: 18rpx 16rpx;
+  border-radius: 16rpx;
+  border: 1px solid #e1e8f2;
+  background: #f7f9fc;
+}
+
+.register-step--active {
+  border-color: #cfe0fa;
+  background: #f4f8ff;
+}
+
+.register-step__index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 20rpx;
+  background: #dfe9fb;
+  color: #1f5fbf;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.register-step__title {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #1f2329;
+}
+
+.register-step__desc {
+  margin-top: 8rpx;
+  font-size: 21rpx;
+  line-height: 1.6;
+  color: #5f6b7a;
+}
+
 .static-field {
   display: flex;
   align-items: center;
-  color: #17212b;
+  color: #1f2329;
 }

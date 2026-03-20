@@ -10,7 +10,10 @@
       <view wx:for="{{records}}" wx:key="title" class="record-card">
         <view class="record-row">
           <view>
-            <view class="record-title">{{item.title}}</view>
+            <view class="icon-inline-row">
+              <t-icon name="user" size="32rpx" class="ui-icon" />
+              <view class="record-title">{{item.title}}</view>
+            </view>
             <view class="record-note">{{item.note}}</view>
           </view>
           <t-tag theme="{{item.status === '已授权' ? 'success' : 'warning'}}" variant="light">{{item.status}}</t-tag>

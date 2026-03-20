@@ -1,9 +1,9 @@
 {
   "pages": [
+    "pages/home/index",
     "pages/disclosure/index",
     "pages/voting/index",
     "pages/profile/index",
-    "pages/home/index",
     "pages/assistant/index",
     "pages/voting/detail/index",
     "pages/voting/create/index",
@@ -34,15 +34,18 @@
   ],
   "window": {
     "navigationBarTitleText": "物业自治",
-    "navigationBarBackgroundColor": "#0f4c5c",
-    "navigationBarTextStyle": "white",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black",
     "navigationStyle": "custom",
     "backgroundTextStyle": "light",
-    "backgroundColor": "#edf2f7"
+    "backgroundColor": "#f3f5f7"
   },
   "usingComponents": {
     "app-navbar": "/components/app-navbar/index",
     "app-tabbar": "/components/app-tabbar/index",
+    "disclosure-panel": "/components/tab-panels/disclosure-panel/index",
+    "voting-panel": "/components/tab-panels/voting-panel/index",
+    "profile-panel": "/components/tab-panels/profile-panel/index",
     "t-button": "tdesign-miniprogram/button/button",
     "t-cell": "tdesign-miniprogram/cell/cell",
     "t-cell-group": "tdesign-miniprogram/cell-group/cell-group",

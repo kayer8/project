@@ -2,7 +2,15 @@
   <app-navbar title="公告通知" />
 
   <view class="page-body">
-    <view class="toolbar">
+    <view class="summary-banner">
+      <view class="icon-title-row">
+        <t-icon name="notification" size="48rpx" class="ui-icon ui-icon--primary" />
+        <view class="summary-title">公告通知</view>
+      </view>
+      <view class="summary-desc">公告统一按正式分类归档，支持按标题、分类与正文内容检索。</view>
+    </view>
+
+    <view class="section card info-card notice-search">
       <t-input
         t-class="toolbar-input"
         t-class-input="toolbar-input__element"
@@ -12,22 +20,29 @@
         value="{{keyword}}"
         bind:change="handleKeywordInput"
       />
+      <view class="field-hint">搜索结果仅用于检索定位，正式信息以公告详情页归档内容为准。</view>
     </view>
 
     <view class="section">
-      <view wx:for="{{filteredAnnouncements}}" wx:key="id" class="record-card" data-id="{{item.id}}" bindtap="openDetail">
+      <view wx:for="{{filteredAnnouncements}}" wx:key="id" class="record-card notice-card" data-id="{{item.id}}" bindtap="openDetail">
         <view class="record-row">
-          <view>
-            <view class="record-title">{{item.title}}</view>
+          <view class="notice-card__main">
+            <view class="icon-inline-row">
+              <view class="record-title">{{item.title}}</view>
+            </view>
             <view class="record-note">{{item.category}} · {{item.date}} · {{item.views}} 次阅读</view>
           </view>
-          <view class="badge-row">
-            <t-tag theme="{{item.important ? 'danger' : 'primary'}}" variant="light">
-              {{item.important ? '重要' : '通知'}}
-            </t-tag>
+          <view class="notice-card__status">
+            <view wx:if="{{item.important}}" class="notice-card__status-tag">
+              <t-tag theme="danger" variant="light">重点</t-tag>
+            </view>
           </view>
         </view>
-        <view class="list-desc">{{item.content}}</view>
+        <view class="notice-card__serial">发布单位：{{item.publisher}} · 公示编号：{{item.sourceNo}}</view>
+        <view class="notice-card__footer">
+          <view class="list-desc notice-card__body">{{item.content}}</view>
+          <view wx:if="{{!item.isRead}}" class="notice-card__dot" />
+        </view>
       </view>
     </view>
 

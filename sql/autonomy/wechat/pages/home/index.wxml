@@ -1,95 +1,13 @@
-<view class="page-shell">
-  <app-navbar title="工作台" left-arrow="{{false}}" />
-
-  <view class="page-body page-body--with-tabbar">
-    <view class="hero-panel house-summary">
-      <view class="house-summary__main">
-        <view class="house-summary__title">{{currentHouse.name}}</view>
-        <view class="house-summary__meta">
-          {{currentHouse.community}} · {{currentHouse.owner}} · {{currentHouse.role}}
-        </view>
-      </view>
-      <button class="secondary-button house-switch" bindtap="openHousePopup">切换房屋</button>
-    </view>
-
-    <view class="section metric-grid">
-      <view
-        wx:for="{{stats}}"
-        wx:key="label"
-        class="metric-card"
-        data-url="{{item.url}}"
-        bindtap="handleNavigate"
-      >
-        <view class="metric-label">{{item.label}}</view>
-        <view class="metric-value">{{item.value}}</view>
-        <view class="metric-note">{{item.note}}</view>
-      </view>
-    </view>
-
-    <view class="section card section-card">
-      <view class="section-head">
-        <view>
-          <view class="section-title">常用工具</view>
-          <view class="section-subtitle">把高频操作放在前面，不把流程挤在一个页面里</view>
-        </view>
-      </view>
-      <t-grid column="{{4}}" border="{{false}}" gutter="{{12}}">
-        <t-grid-item
-          wx:for="{{pinnedTools}}"
-          wx:key="text"
-          text="{{item.text}}"
-          description="{{item.description}}"
-          url="{{item.url}}"
-          jump-type="navigate-to"
-        />
-      </t-grid>
-    </view>
-
-    <view wx:for="{{toolSections}}" wx:key="title" class="section card section-card">
-      <view class="section-head">
-        <view>
-          <view class="section-title">{{item.title}}</view>
-          <view class="section-subtitle">按业务场景拆分，而不是全部堆在首页</view>
-        </view>
-      </view>
-      <t-cell-group>
-        <t-cell
-          wx:for="{{item.items}}"
-          wx:for-item="tool"
-          wx:key="title"
-          title="{{tool.title}}"
-          description="{{tool.desc}}"
-          note="{{tool.note}}"
-          arrow="{{true}}"
-          url="{{tool.url}}"
-          jump-type="navigateTo"
-        />
-      </t-cell-group>
-    </view>
-
-    <view class="section summary-banner">
-      <view class="summary-title">智慧社区，不止是信息展示</view>
-      <view class="summary-desc">
-        这里把公告、公开、成员、认证、报修、访客、停车等功能拆成独立页面，方便后面逐步接真实接口。
-      </view>
-    </view>
+<view class="page-shell home-shell">
+  <view hidden="{{activeTab !== 'disclosure'}}">
+    <disclosure-panel />
+  </view>
+  <view hidden="{{activeTab !== 'voting'}}">
+    <voting-panel />
+  </view>
+  <view hidden="{{activeTab !== 'profile'}}">
+    <profile-panel active="{{activeTab === 'profile'}}" />
   </view>
 
-  <app-tabbar value="home" />
-
-  <t-popup
-    visible="{{showHousePopup}}"
-    placement="bottom"
-    close-on-overlay-click="{{true}}"
-    using-custom-navbar="{{true}}"
-    bind:visible-change="handleHousePopupChange"
-  >
-    <view class="popup-panel">
-      <view class="popup-title">选择房屋</view>
-      <view wx:for="{{houses}}" wx:key="id" class="popup-item {{currentHouseIndex === index ? 'popup-item--active' : ''}}" data-index="{{index}}" bindtap="handleSelectHouse">
-        <view class="record-title">{{item.name}}</view>
-        <view class="record-note">{{item.community}} · {{item.role}}</view>
-      </view>
-    </view>
-  </t-popup>
+  <app-tabbar value="{{activeTab}}" mode="switch" bindtabchange="handleTabChange" />
 </view>

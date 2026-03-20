@@ -1,3 +1,66 @@
-.record-card + .record-card {
+.notice-search {
+  padding: 20rpx;
+}
+
+.notice-card + .notice-card {
   margin-top: 20rpx;
+}
+
+.notice-card .record-row {
+  align-items: flex-start;
+  gap: 16rpx;
+}
+
+.notice-card__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.notice-card .record-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notice-card__status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  min-width: 24rpx;
+  position: relative;
+}
+
+.notice-card__status-tag {
+  margin-right: 8rpx;
+  flex-shrink: 0;
+}
+
+.notice-card__dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  background: #e34d59;
+  position:absolute;
+  right: 0;
+}
+
+.notice-card__serial {
+  margin-top: 14rpx;
+  font-size: 22rpx;
+  color: #5f6b7a;
+}
+
+.notice-card__body {
+  margin-top: 12rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.notice-card__footer {
+  display: flex;
+  align-items: flex-end;
+  gap: 12rpx;
+  position: relative;
 }

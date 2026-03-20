@@ -1,3 +1,11 @@
-.page-shell {
-  background: #edf2f7;
+.detail-title {
+  margin-top: 14rpx;
+}
+
+.detail-meta-card + .detail-meta-card {
+  margin-top: 16rpx;
+}
+
+.detail-content {
+  margin-top: 16rpx;
 }

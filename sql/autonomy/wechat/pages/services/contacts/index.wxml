@@ -5,7 +5,10 @@
     <view wx:for="{{contacts}}" wx:key="title" class="record-card">
       <view class="record-row">
         <view>
-          <view class="record-title">{{item.title}}</view>
+          <view class="icon-inline-row">
+            <t-icon name="mail" size="32rpx" class="ui-icon" />
+            <view class="record-title">{{item.title}}</view>
+          </view>
           <view class="record-note">{{item.note}}</view>
         </view>
         <view class="record-title">{{item.phone}}</view>

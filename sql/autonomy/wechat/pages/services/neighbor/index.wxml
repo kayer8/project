@@ -4,7 +4,10 @@
   <view class="page-body">
     <view class="section">
       <view wx:for="{{posts}}" wx:key="title" class="record-card">
-        <view class="record-title">{{item.title}}</view>
+        <view class="icon-inline-row">
+          <t-icon name="notification" size="32rpx" class="ui-icon" />
+          <view class="record-title">{{item.title}}</view>
+        </view>
         <view class="record-note">{{item.note}}</view>
       </view>
     </view>

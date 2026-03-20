@@ -3,13 +3,13 @@ export const ROUTES = {
   register: '/pages/register/index',
   home: '/pages/home/index',
   voting: {
-    index: '/pages/voting/index',
+    index: '/pages/home/index?tab=voting',
     detail: '/pages/voting/detail/index',
     create: '/pages/voting/create/index',
   },
   assistant: '/pages/assistant/index',
   disclosure: {
-    index: '/pages/disclosure/index',
+    index: '/pages/home/index?tab=disclosure',
     announcements: '/pages/disclosure/announcements/index',
     detail: '/pages/disclosure/detail/index',
     financial: '/pages/disclosure/financial/index',
@@ -18,7 +18,7 @@ export const ROUTES = {
     maintenance: '/pages/disclosure/maintenance/index',
   },
   profile: {
-    index: '/pages/profile/index',
+    index: '/pages/home/index?tab=profile',
     bind: '/pages/profile/bind/index',
     members: '/pages/profile/members/index',
     invite: '/pages/profile/invite/index',

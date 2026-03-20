@@ -1,46 +1,29 @@
-import { houseOptions, workbenchPinnedTools, workbenchSections, workbenchStats } from '../../mock/community';
-import { navigateTo } from '../../utils/nav';
+const TABS = ['disclosure', 'voting', 'profile'] as const;
+
+type TabValue = (typeof TABS)[number];
+
+function isTabValue(value?: string): value is TabValue {
+  return !!value && TABS.includes(value as TabValue);
+}
 
 Page({
   data: {
-    houses: houseOptions,
-    currentHouseIndex: 0,
-    currentHouse: houseOptions[0],
-    showHousePopup: false,
-    stats: workbenchStats,
-    pinnedTools: workbenchPinnedTools,
-    toolSections: workbenchSections,
+    activeTab: 'disclosure' as TabValue,
   },
 
-  openHousePopup() {
-    this.setData({ showHousePopup: true });
+  onLoad(query: Record<string, string | undefined>) {
+    if (isTabValue(query.tab)) {
+      this.setData({ activeTab: query.tab });
+    }
   },
 
-  handleHousePopupChange(event: WechatMiniprogram.CustomEvent<{ visible?: boolean }>) {
-    this.setData({ showHousePopup: !!event.detail?.visible });
-  },
+  handleTabChange(event: WechatMiniprogram.CustomEvent<{ value?: string }>) {
+    const value = event.detail?.value;
 
-  handleSelectHouse(event: WechatMiniprogram.BaseEvent) {
-    const index = Number(event.currentTarget.dataset.index);
-
-    if (Number.isNaN(index) || !houseOptions[index]) {
+    if (!isTabValue(value) || value === this.data.activeTab) {
       return;
     }
 
-    this.setData({
-      currentHouseIndex: index,
-      currentHouse: houseOptions[index],
-      showHousePopup: false,
-    });
-  },
-
-  handleNavigate(event: WechatMiniprogram.BaseEvent) {
-    const { url } = event.currentTarget.dataset as { url?: string };
-
-    if (!url) {
-      return;
-    }
-
-    navigateTo(url);
+    this.setData({ activeTab: value });
   },
 });

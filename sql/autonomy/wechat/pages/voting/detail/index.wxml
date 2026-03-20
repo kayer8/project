@@ -2,20 +2,49 @@
   <app-navbar title="投票详情" />
 
   <view class="page-body">
-    <view wx:if="{{vote}}" class="card info-card">
+    <view wx:if="{{vote}}" class="summary-banner vote-detail__summary">
       <view class="badge-row">
         <t-tag theme="{{vote.status === '进行中' ? 'primary' : 'default'}}" variant="light">{{vote.status}}</t-tag>
         <t-tag theme="warning" variant="light">{{vote.type}}</t-tag>
+        <t-tag theme="{{vote.voted ? 'success' : 'warning'}}" variant="light">{{vote.voted ? '已投票' : '未投票'}}</t-tag>
       </view>
-      <view class="section-title">{{vote.title}}</view>
-      <view class="section-subtitle">截止 {{vote.endTime}} · {{vote.participants}} / {{vote.total}} 已参与</view>
-      <view class="list-desc">{{vote.description}}</view>
+      <view class="icon-title-row detail-title">
+        <t-icon name="check-circle" size="48rpx" class="ui-icon ui-icon--primary" />
+        <view class="summary-title">{{vote.title}}</view>
+      </view>
+      <view class="summary-desc">{{vote.description}}</view>
+      <view class="vote-meta-list">
+        <view class="vote-meta-list__item">
+          <view class="vote-meta-list__label">发起方</view>
+          <view class="vote-meta-list__value">{{vote.sponsor}}</view>
+        </view>
+        <view class="vote-meta-list__item">
+          <view class="vote-meta-list__label">参与范围</view>
+          <view class="vote-meta-list__value">{{vote.scope}}</view>
+        </view>
+        <view class="vote-meta-list__item">
+          <view class="vote-meta-list__label">截止时间</view>
+          <view class="vote-meta-list__value">{{vote.endTime}}</view>
+        </view>
+        <view class="vote-meta-list__item">
+          <view class="vote-meta-list__label">参与情况</view>
+          <view class="vote-meta-list__value">{{vote.participants}} / {{vote.total}}</view>
+        </view>
+      </view>
     </view>
 
     <view wx:if="{{vote && vote.status === '进行中' && !submitted}}" class="section card info-card">
-      <view class="section-title">请选择投票选项</view>
+      <view class="section-head">
+        <view>
+          <view class="section-title">参与表决</view>
+          <view class="section-subtitle">请选择一个选项并提交，本次提交后将计入议题归档结果。</view>
+        </view>
+      </view>
       <view wx:for="{{vote.options}}" wx:key="*this" class="vote-option {{selectedOption === index ? 'vote-option--active' : ''}}" data-index="{{index}}" bindtap="handleSelectOption">
-        <view>{{item}}</view>
+        <view class="icon-inline-row">
+          <t-icon name="check-circle" size="32rpx" class="ui-icon {{selectedOption === index ? 'ui-icon--primary' : ''}}" />
+          <view>{{item}}</view>
+        </view>
       </view>
       <view class="section">
         <button class="primary-button" bindtap="handleSubmitVote" disabled="{{selectedOption < 0}}">提交投票</button>
@@ -23,7 +52,12 @@
     </view>
 
     <view wx:if="{{vote && (vote.status !== '进行中' || submitted)}}" class="section card info-card">
-      <view class="section-title">{{submitted ? '你的投票已记录' : '投票结果'}}</view>
+      <view class="section-head">
+        <view>
+          <view class="section-title">{{submitted ? '你的投票已记录' : '投票结果'}}</view>
+          <view class="section-subtitle">结果以议题截止后的系统归档数据为准。</view>
+        </view>
+      </view>
       <view wx:for="{{vote.result}}" wx:key="label" class="result-block">
         <view class="record-row">
           <view class="record-note">{{item.label}}</view>

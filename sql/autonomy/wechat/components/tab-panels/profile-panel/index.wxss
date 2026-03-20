@@ -1,0 +1,43 @@
+.profile-auth-card .section-title {
+  margin-bottom: 8rpx;
+}
+
+.profile-process {
+  display: grid;
+  gap: 16rpx;
+  margin-top: 8rpx;
+}
+
+.profile-process__item {
+  padding: 20rpx;
+  border-radius: 16rpx;
+  border: 1px solid #e8edf3;
+  background: #f8fafc;
+}
+
+.profile-process__index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 20rpx;
+  background: #dfe9fb;
+  color: #1f5fbf;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.profile-process__title {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #1f2329;
+}
+
+.profile-process__desc {
+  margin-top: 8rpx;
+  font-size: 23rpx;
+  line-height: 1.65;
+  color: #5f6b7a;
+}

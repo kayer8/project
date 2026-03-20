@@ -1,0 +1,42 @@
+.voting-hero__meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16rpx;
+  margin-top: 20rpx;
+}
+
+.voting-hero__item {
+  padding: 18rpx 20rpx;
+  border-radius: 16rpx;
+  border: 1px solid #e2ebf8;
+  background: #f6f9fe;
+}
+
+.voting-hero__label {
+  font-size: 22rpx;
+  color: #86909c;
+}
+
+.voting-hero__value {
+  margin-top: 8rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #1f5fbf;
+}
+
+.vote-record + .vote-record {
+  margin-top: 20rpx;
+}
+
+.vote-record__meta {
+  display: grid;
+  gap: 10rpx;
+  margin-top: 14rpx;
+  padding-top: 14rpx;
+  border-top: 1px solid #edf1f5;
+}
+
+.vote-record__meta-item {
+  font-size: 23rpx;
+  color: #5f6b7a;
+}

@@ -5,7 +5,10 @@
     <view wx:for="{{items}}" wx:key="key" class="record-card permission-card">
       <view class="record-row">
         <view>
-          <view class="record-title">{{item.title}}</view>
+          <view class="icon-inline-row">
+            <t-icon name="setting" size="32rpx" class="ui-icon" />
+            <view class="record-title">{{item.title}}</view>
+          </view>
           <view class="record-note">{{item.desc}}</view>
         </view>
         <t-switch value="{{item.value}}" data-key="{{item.key}}" bind:change="handleSwitchChange" />
