@@ -1,26 +1,17 @@
-<view class="page-shell">
+﻿<view class="page-shell">
   <app-navbar title="公告通知" />
 
   <view class="page-body">
-    <view class="summary-banner">
-      <view class="icon-title-row">
-        <t-icon name="notification" size="48rpx" class="ui-icon ui-icon--primary" />
-        <view class="summary-title">公告通知</view>
-      </view>
-      <view class="summary-desc">公告统一按正式分类归档，支持按标题、分类与正文内容检索。</view>
-    </view>
-
     <view class="section card info-card notice-search">
       <t-input
         t-class="toolbar-input"
         t-class-input="toolbar-input__element"
         borderless="{{true}}"
         clearable="{{true}}"
-        placeholder="搜索公告、通知、分类"
+        placeholder="搜索公告 / 分类"
         value="{{keyword}}"
         bind:change="handleKeywordInput"
       />
-      <view class="field-hint">搜索结果仅用于检索定位，正式信息以公告详情页归档内容为准。</view>
     </view>
 
     <view class="section">

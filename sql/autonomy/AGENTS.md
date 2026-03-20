@@ -310,3 +310,7 @@
 ## 12. 一句话原则
 
 `项目文档.md` 定义“做什么”，根目录 `backend` / `admin-web` 定义“怎么组织代码”，`autonomy` 目录负责把两者组合成独立的物业自治三端项目。
+
+## 13. Frontend Skill Preference
+
+- 在 `autonomy` 工作区进行前端页面设计或重构时，优先使用 `frontend-design` skill。

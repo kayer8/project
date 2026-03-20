@@ -1,15 +1,7 @@
-<view class="page-shell">
+﻿<view class="page-shell">
   <app-navbar title="管理公开" />
 
   <view class="page-body">
-    <view class="summary-banner">
-      <view class="icon-title-row">
-        <t-icon name="setting" size="48rpx" class="ui-icon ui-icon--primary" />
-        <view class="summary-title">管理公开</view>
-      </view>
-      <view class="summary-desc">围绕维保、整改、合同与日常管理事项进行公开，强化社区治理事项的透明度和可监督性。</view>
-    </view>
-
     <view class="metric-grid">
       <view class="metric-card">
         <view class="metric-label">维保记录</view>
@@ -27,8 +19,6 @@
         <view class="metric-note">跟进中</view>
       </view>
     </view>
-
-    <view class="section page-note">维保记录和管理动态按时间顺序归档，重点整改事项将持续跟踪公开。</view>
 
     <view class="section action-row">
       <button class="primary-button" bindtap="openMaintenance">查看维保记录</button>

@@ -2,43 +2,39 @@
   <app-navbar title="公告详情" />
 
   <view class="page-body">
-    <view wx:if="{{item}}" class="summary-banner">
-      <view class="badge-row">
-        <t-tag theme="primary" variant="light">{{item.category}}</t-tag>
-        <t-tag wx:if="{{item.important}}" theme="warning" variant="light">重点公开</t-tag>
+    <view wx:if="{{item}}" class="section notice-doc">
+      <view class="notice-doc__tags">
+        <t-tag theme="default" variant="light">{{item.category}}</t-tag>
+        <t-tag wx:if="{{item.important}}" theme="danger" variant="light">重点</t-tag>
       </view>
-      <view class="icon-title-row detail-title">
-        <t-icon name="notification" size="48rpx" class="ui-icon ui-icon--primary" />
-        <view class="summary-title">{{item.title}}</view>
-      </view>
-      <view class="summary-desc">公告内容按正式公示口径归档，用于居民查阅、留痕与监督。</view>
-    </view>
 
-    <view wx:if="{{item}}" class="section card info-card detail-meta-card">
-      <view class="info-row">
-        <view class="info-label">发布单位</view>
-        <view class="info-value">{{item.publisher}}</view>
-      </view>
-      <view class="info-row">
-        <view class="info-label">公示编号</view>
-        <view class="info-value">{{item.sourceNo}}</view>
-      </view>
-      <view class="info-row">
-        <view class="info-label">发布时间</view>
-        <view class="info-value">{{item.date}}</view>
-      </view>
-      <view class="info-row">
-        <view class="info-label">阅读次数</view>
-        <view class="info-value">{{item.views}} 次</view>
-      </view>
-    </view>
+      <view class="notice-doc__title">{{item.title}}</view>
 
-    <view wx:if="{{item}}" class="section card info-card detail-meta-card">
-      <view class="icon-title-row">
-        <t-icon name="view-list" size="40rpx" class="ui-icon ui-icon--primary" />
-        <view class="section-title">公示内容</view>
+      <view class="notice-doc__meta-grid">
+        <view class="notice-doc__meta-item">
+          <view class="notice-doc__meta-label">发布单位</view>
+          <view class="notice-doc__meta-value">{{item.publisher}}</view>
+        </view>
+        <view class="notice-doc__meta-item">
+          <view class="notice-doc__meta-label">发布时间</view>
+          <view class="notice-doc__meta-value">{{item.date}}</view>
+        </view>
+        <view class="notice-doc__meta-item">
+          <view class="notice-doc__meta-label">公示编号</view>
+          <view class="notice-doc__meta-value">{{item.sourceNo}}</view>
+        </view>
+        <view class="notice-doc__meta-item notice-doc__meta-item--minor">
+          <view class="notice-doc__meta-label">阅读</view>
+          <view class="notice-doc__meta-value">{{item.views}} 次</view>
+        </view>
       </view>
-      <view class="list-desc detail-content">{{item.content}}</view>
+
+      <view class="notice-doc__divider" />
+
+      <view class="notice-doc__body">
+        <view class="notice-doc__body-title">公告正文</view>
+        <view class="detail-content">{{item.content}}</view>
+      </view>
     </view>
 
     <view wx:if="{{!item}}" class="section">

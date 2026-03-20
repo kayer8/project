@@ -1,17 +1,7 @@
-<view class="page-shell">
+﻿<view class="page-shell">
   <app-navbar title="发起投票" />
 
   <view class="page-body">
-    <view class="hero-panel">
-      <view class="icon-title-row">
-        <t-icon name="check-circle" size="48rpx" class="ui-icon ui-icon--primary" />
-        <view class="hero-title">提交投票草案</view>
-      </view>
-      <view class="hero-subtitle">用于发起正式投票或居民意见征集。草案提交后，可由后台进一步审核、完善并正式发布。</view>
-    </view>
-
-    <view class="section page-note">请明确议题名称、投票类型、截止时间与选项内容，确保议题表达清晰、范围明确。</view>
-
     <view class="section card form-card">
       <view class="field-block">
         <text class="field-label">投票标题</text>
@@ -35,7 +25,6 @@
           placement="right"
           bind:change="handleTypeChange"
         />
-        <view class="field-hint">正式决策建议使用一户一票，意见征集建议使用一人一票，避免议题性质和表决规则不一致。</view>
       </view>
 
       <view class="field-block">
@@ -59,8 +48,6 @@
         />
         <button class="secondary-button vote-create__add" bindtap="addOption">新增一个选项</button>
       </view>
-
-      <view class="page-note vote-create__note">当前入口用于提交草案，正式发布前建议再次核对投票范围、议题描述和截止时间。</view>
 
       <button class="primary-button" bindtap="handleSubmit" disabled="{{!title || !endDate}}">提交草稿</button>
     </view>

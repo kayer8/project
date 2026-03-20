@@ -1,15 +1,7 @@
-<view class="page-shell">
+﻿<view class="page-shell">
   <app-navbar title="财务公开" />
 
   <view class="page-body">
-    <view class="summary-banner financial-header">
-      <view class="icon-title-row">
-        <t-icon name="home" size="48rpx" class="ui-icon ui-icon--primary" />
-        <view class="summary-title">财务公开</view>
-      </view>
-      <view class="summary-desc">按季度公开物业收入、支出、公共收益与预算执行情况，确保社区资金使用透明、可追溯。</view>
-    </view>
-
     <view class="metric-grid">
       <view class="metric-card">
         <view class="metric-label">本季收入</view>
@@ -27,8 +19,6 @@
         <view class="metric-note">用于后续预算安排</view>
       </view>
     </view>
-
-    <view class="section page-note">财务报告与流水按时间归档展示，状态为“公示中”的报告表示当前处于居民查看和反馈阶段。</view>
 
     <view class="section card info-card">
       <t-tabs value="{{activeTab}}" theme="card" bind:change="handleTabChange">

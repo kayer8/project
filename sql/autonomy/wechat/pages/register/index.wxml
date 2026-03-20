@@ -1,38 +1,12 @@
-<view class="page-shell">
+﻿<view class="page-shell">
   <app-navbar title="绑定房屋" left-arrow="{{true}}" />
 
   <view class="page-body">
-    <view class="hero-panel">
-      <view class="icon-title-row">
-        <t-icon name="home" size="48rpx" class="ui-icon ui-icon--primary" />
-        <view class="hero-title">房屋绑定流程</view>
-      </view>
-      <view class="hero-subtitle">先通过微信手机号与物业留存数据比对。匹配成功将自动同步；未匹配时，再补充楼栋与房屋信息提交审核。</view>
-      <view class="register-steps">
-        <view class="register-step register-step--active">
-          <view class="register-step__index">1</view>
-          <view class="register-step__title">手机号核验</view>
-          <view class="register-step__desc">读取当前微信手机号</view>
-        </view>
-        <view class="register-step {{phase === 'form' ? 'register-step--active' : ''}}">
-          <view class="register-step__index">2</view>
-          <view class="register-step__title">补充房屋</view>
-          <view class="register-step__desc">选择楼栋与房屋信息</view>
-        </view>
-        <view class="register-step {{phase === 'form' ? 'register-step--active' : ''}}">
-          <view class="register-step__index">3</view>
-          <view class="register-step__title">提交审核</view>
-          <view class="register-step__desc">等待后台复核</view>
-        </view>
-      </view>
-    </view>
-
     <view wx:if="{{phase === 'phone'}}" class="section card form-card">
       <view class="icon-title-row">
         <t-icon name="user" size="40rpx" class="ui-icon ui-icon--primary" />
         <view class="section-title">第一步：手机号核验</view>
       </view>
-      <view class="section-subtitle">授权后系统会先读取微信手机号，并与物业留存资料进行自动比对。</view>
       <button
         class="primary-button section"
         open-type="getPhoneNumber"
@@ -41,8 +15,6 @@
       >
         微信授权手机号
       </button>
-      <view class="field-hint">点击后会先读取手机号，再与后台物业留存数据自动比对。</view>
-      <view class="field-hint">若暂时无法授权手机号，当前版本将无法完成房屋绑定，请联系物业管理员处理。</view>
       <view class="register-link-row">
         <text class="muted-text">继续即表示你已阅读并同意</text>
         <text class="section-link" bindtap="openPrivacy">《隐私政策》</text>
@@ -54,28 +26,22 @@
         <t-icon name="home" size="40rpx" class="ui-icon ui-icon--primary" />
         <view class="section-title">第二步：补充房屋信息</view>
       </view>
-      <view class="section-subtitle">当手机号未自动匹配到房屋资料时，请补充楼栋与房屋信息，提交后台人工核验。</view>
 
       <view class="field-block">
         <text class="field-label">手机号</text>
         <view class="text-input static-field">{{mobileMasked}}</view>
-        <view class="field-hint">{{syncMessage}}</view>
+        <view wx:if="{{syncMessage}}" class="field-hint">{{syncMessage}}</view>
       </view>
 
       <view class="field-block">
         <text class="field-label">楼栋</text>
         <view class="picker-field" bindtap="openBuildingPicker">{{selectedBuildingName || '请选择楼栋'}}</view>
-        <view class="field-hint">请手动选择楼栋后再提交，避免误提交到默认楼栋。</view>
       </view>
 
       <view class="field-block">
         <text class="field-label">房屋</text>
         <view class="picker-field" bindtap="openHousePicker">{{selectedHouseName || '请选择房屋'}}</view>
-        <view class="field-hint">房屋为可选项；未找到房屋时可先只提交楼栋，后续由后台核验。</view>
-        <view class="field-hint">提交后账户会进入待审核状态，确认信息无误后再提交。</view>
       </view>
-
-      <view class="page-note">审核结果将在“我的”页持续展示。若信息不完整或与留存资料不一致，后台可能要求补充说明。</view>
 
       <button class="primary-button section" bindtap="handleSubmitRequest" loading="{{submitting}}">
         提交楼栋信息

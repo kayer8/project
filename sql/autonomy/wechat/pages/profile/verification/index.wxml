@@ -1,22 +1,14 @@
-<view class="page-shell">
+﻿<view class="page-shell">
   <app-navbar title="身份认证" />
 
   <view class="page-body">
-    <view class="summary-banner">
+    <view class="section card info-card">
       <view class="badge-row verification-status">
         <t-tag wx:if="{{verification.status === 'verified'}}" theme="success" variant="light">已通过</t-tag>
         <t-tag wx:elif="{{verification.status === 'pending'}}" theme="warning" variant="light">审核中</t-tag>
         <t-tag wx:else theme="danger" variant="light">待提交</t-tag>
         <t-tag theme="primary" variant="light">实名认证</t-tag>
       </view>
-      <view class="icon-title-row">
-        <t-icon name="user" size="48rpx" class="ui-icon ui-icon--primary" />
-        <view class="summary-title">身份认证</view>
-      </view>
-      <view class="summary-desc">{{verification.status === 'verified' ? '当前账户已完成实名认证审核，可继续使用后续治理功能。' : '请按要求提交真实身份材料，审核结果将在此页持续展示。'}}</view>
-    </view>
-
-    <view class="section card info-card">
       <view class="icon-title-row">
         <t-icon name="view-list" size="40rpx" class="ui-icon ui-icon--primary" />
         <view class="section-title">认证流程</view>
@@ -74,8 +66,6 @@
       </view>
     </view>
 
-    <view class="section page-note">当前账号已通过实名认证审核。如需变更身份信息，可以重新提交新的认证材料，原有记录将作为历史档案保留。</view>
-
     <view wx:if="{{!editing}}" class="section">
       <button class="secondary-button" bindtap="openEdit">重新提交认证材料</button>
     </view>
@@ -116,7 +106,6 @@
           <t-tag theme="{{backImage ? 'success' : 'default'}}" variant="light">{{backImage ? '国徽面已上传' : '国徽面未上传'}}</t-tag>
         </view>
       </view>
-      <view class="page-note verification-upload-note">提交前请确认所填姓名、证件号码与上传照片清晰可辨，审核中如存在疑义将退回补充。</view>
       <button class="primary-button" bindtap="handleSubmit" disabled="{{!realName || idNo.length < 18 || !frontImage || !backImage}}">提交认证</button>
     </view>
   </view>

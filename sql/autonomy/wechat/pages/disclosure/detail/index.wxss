@@ -1,11 +1,71 @@
-.detail-title {
-  margin-top: 14rpx;
+.notice-doc {
+  padding: 40rpx 36rpx 48rpx;
+  background: #ffffff;
+  border-radius: 24rpx;
 }
 
-.detail-meta-card + .detail-meta-card {
-  margin-top: 16rpx;
+.notice-doc__tags {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.notice-doc__title {
+  margin-top: 24rpx;
+  font-size: 44rpx;
+  line-height: 1.45;
+  font-weight: 700;
+  color: #1f2d3d;
+}
+
+.notice-doc__meta-grid {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 28rpx;
+  gap: 20rpx 24rpx;
+}
+
+.notice-doc__meta-item {
+  width: calc(50% - 12rpx);
+  min-width: 0;
+}
+
+.notice-doc__meta-label {
+  font-size: 22rpx;
+  line-height: 1.5;
+  color: #8b95a1;
+}
+
+.notice-doc__meta-value {
+  margin-top: 6rpx;
+  font-size: 26rpx;
+  line-height: 1.6;
+  color: #2f3a47;
+  word-break: break-all;
+}
+
+.notice-doc__meta-item--minor .notice-doc__meta-value {
+  color: #8b95a1;
+}
+
+.notice-doc__divider {
+  height: 2rpx;
+  margin: 32rpx 0;
+  background: #e7ebf0;
+}
+
+.notice-doc__body-title {
+  font-size: 24rpx;
+  line-height: 1.5;
+  font-weight: 600;
+  color: #5f6b7a;
+  letter-spacing: 2rpx;
 }
 
 .detail-content {
-  margin-top: 16rpx;
+  margin-top: 24rpx;
+  font-size: 30rpx;
+  line-height: 1.8;
+  color: #1f2d3d;
+  white-space: pre-wrap;
 }

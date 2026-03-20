@@ -1,20 +1,8 @@
-<app-navbar title="我的" left-arrow="{{false}}" />
+﻿<app-navbar title="我的" left-arrow="{{false}}" />
 
 <view class="page-body page-body--with-tabbar">
-  <view class="summary-banner">
-    <view class="icon-title-row">
-      <t-icon name="user" size="48rpx" class="ui-icon ui-icon--primary" />
-      <view class="summary-title">我的</view>
-    </view>
-    <view class="summary-desc">
-      <block wx:if="{{checking}}">系统正在核验当前微信账号与社区账户的匹配状态，请稍候。</block>
-      <block wx:elif="{{hasAccount}}">当前微信账号已匹配社区账户，可继续查看认证状态与账户资料。</block>
-      <block wx:else>当前微信账号尚未匹配房屋信息，请先完成房屋绑定，再进入后续认证流程。</block>
-    </view>
-  </view>
-
   <view wx:if="{{checking}}" class="section card info-card">
-    <view class="empty-block">正在核验账户状态，请稍候。</view>
+    <view class="empty-block">正在校验账户状态，请稍候。</view>
   </view>
 
   <block wx:elif="{{hasAccount}}">
@@ -32,7 +20,7 @@
 
       <view class="info-row">
         <view class="info-label">账户状态</view>
-        <view class="info-value">已完成微信账号匹配</view>
+        <view class="info-value">已完成微信账户匹配</view>
       </view>
       <view class="info-row">
         <view class="info-label">实名认证</view>
@@ -51,7 +39,6 @@
             <t-icon name="setting" size="40rpx" class="ui-icon ui-icon--primary" />
             <view class="section-title">账户服务</view>
           </view>
-          <view class="section-subtitle">围绕房屋认证与资料说明提供统一入口</view>
         </view>
       </view>
       <t-cell-group>
@@ -82,7 +69,6 @@
           <t-icon name="home" size="40rpx" class="ui-icon ui-icon--warning" />
           <view class="section-title">未绑定房屋</view>
         </view>
-        <view class="section-subtitle">先完成房屋绑定，系统才能识别你的住户身份并进入认证流程。</view>
       </view>
     </view>
 
