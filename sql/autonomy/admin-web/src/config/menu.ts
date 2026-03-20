@@ -6,6 +6,7 @@ export type AdminMenuIcon =
   | 'category'
   | 'disclosure'
   | 'publish'
+  | 'management-fee'
   | 'house'
   | 'building'
   | 'member'
@@ -85,6 +86,12 @@ export const menuGroups: AdminMenuGroup[] = [
         path: '/disclosures/publish-records',
         matchPrefix: '/disclosures/publish-records',
         icon: 'publish',
+      },
+      {
+        title: '管理费公开',
+        path: '/disclosures/management-fees',
+        matchPrefix: '/disclosures/management-fees',
+        icon: 'management-fee',
       },
     ],
   },

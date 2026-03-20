@@ -10,6 +10,7 @@ import { UserModule } from './modules/user/user.module';
 import { HouseModule } from './modules/house/house.module';
 import { MemberModule } from './modules/member/member.module';
 import { BuildingModule } from './modules/building/building.module';
+import { ManagementFeeModule } from './modules/management-fee/management-fee.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { BuildingModule } from './modules/building/building.module';
     HouseModule,
     MemberModule,
     BuildingModule,
+    ManagementFeeModule,
     AdminModule,
   ],
 })

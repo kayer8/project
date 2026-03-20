@@ -1,49 +1,38 @@
 <template>
   <PageContainer title="用户数据">
     <template #actions>
+      <t-button variant="outline" @click="filterVisible = !filterVisible">
+        {{ filterVisible ? '收起筛选' : '筛选' }}
+      </t-button>
       <t-button theme="primary" @click="openCreate">新建用户</t-button>
     </template>
-
-    <section class="stats-strip">
-      <article v-for="item in summaryCards" :key="item.title" class="stat-card">
-        <div class="stat-card__label">{{ item.title }}</div>
-        <div class="stat-card__value">{{ item.value }}</div>
-        <div class="stat-card__meta">{{ item.description }}</div>
-      </article>
-    </section>
-
-    <section class="admin-panel">
-      <div class="admin-panel__header">
-        <div>
-          <div class="admin-panel__title">筛选查询</div>
-          <div class="admin-panel__desc">按账号信息、状态和所属小区快速定位目标用户。</div>
-        </div>
-      </div>
-      <div class="admin-panel__body">
-        <div class="filter-grid">
-          <t-input
-            v-model="filters.keyword"
-            clearable
-            placeholder="搜索姓名、昵称、手机号或 OpenID"
-          />
-          <t-select v-model="filters.status" :options="userStatusOptions" />
-          <t-select v-model="filters.communityId" :options="communityOptions" />
-          <div class="toolbar-actions">
-            <t-button theme="primary" @click="handleSearch">查询</t-button>
-            <t-button variant="outline" @click="resetFilters">重置</t-button>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <section class="admin-panel">
       <div class="admin-panel__header">
         <div>
           <div class="admin-panel__title">用户列表</div>
-          <div class="admin-panel__desc">默认展示当前分页数据，可在右侧操作列进行详情、编辑和删除。</div>
         </div>
       </div>
       <div class="admin-panel__body">
+        <div v-if="filterVisible" class="inline-filter-panel">
+          <div class="inline-filter-panel__header">
+            <div class="inline-filter-panel__title">筛选查询</div>
+          </div>
+          <div class="filter-grid">
+            <t-input
+              v-model="filters.keyword"
+              clearable
+              placeholder="搜索姓名、昵称、手机号或 OpenID"
+            />
+            <t-select v-model="filters.status" :options="userStatusOptions" />
+            <t-select v-model="filters.communityId" :options="communityOptions" />
+            <div class="toolbar-actions">
+              <t-button theme="primary" @click="handleSearch">查询</t-button>
+              <t-button variant="outline" @click="resetFilters">重置</t-button>
+            </div>
+          </div>
+        </div>
+
         <div class="table-toolbar">
           <div class="table-toolbar__meta">
             <span>共 {{ pagination.total }} 条记录</span>
@@ -140,7 +129,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import PageContainer from '@/components/PageContainer/index.vue';
 import { fetchCommunityOptions } from '@/modules/house/api';
@@ -158,6 +147,7 @@ const formDialogVisible = ref(false);
 const dialogMode = ref<'create' | 'edit'>('create');
 const detailDialogVisible = ref(false);
 const detailUserId = ref('');
+const filterVisible = ref(false);
 const communityOptions = ref([{ label: '全部小区', value: 'ALL' }]);
 const filters = reactive({
   keyword: '',
@@ -181,19 +171,6 @@ const columns = [
   { colKey: 'lastLoginAt', title: '最近登录', width: 160 },
   { colKey: 'actions', title: '操作', width: 180, fixed: 'right' },
 ];
-
-const summaryCards = computed(() => {
-  const activeCount = users.value.filter((item) => item.status === 'ACTIVE').length;
-  const disabledCount = users.value.filter((item) => item.status === 'DISABLED').length;
-  const houseCount = users.value.reduce((sum, item) => sum + item.houseCount, 0);
-
-  return [
-    { title: '用户总数', value: pagination.total, description: '按当前检索条件返回的用户总量' },
-    { title: '正常账号', value: activeCount, description: '当前分页内状态正常的居民账号' },
-    { title: '停用账号', value: disabledCount, description: '当前分页内被停用或限制访问的账号' },
-    { title: '房屋关联数', value: houseCount, description: '当前分页用户合计关联的房屋数量' },
-  ];
-});
 
 function getUserStatusTheme(status: UserListItem['status']) {
   if (status === 'ACTIVE') return 'success';

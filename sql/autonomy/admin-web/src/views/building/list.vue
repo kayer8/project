@@ -1,44 +1,33 @@
 <template>
   <PageContainer title="楼栋管理">
     <template #actions>
+      <t-button variant="outline" @click="filterVisible = !filterVisible">
+        {{ filterVisible ? '收起筛选' : '筛选' }}
+      </t-button>
       <t-button theme="primary" @click="openCreate">新建楼栋</t-button>
     </template>
-
-    <section class="stats-strip">
-      <article v-for="item in summaryCards" :key="item.title" class="stat-card">
-        <div class="stat-card__label">{{ item.title }}</div>
-        <div class="stat-card__value">{{ item.value }}</div>
-        <div class="stat-card__meta">{{ item.description }}</div>
-      </article>
-    </section>
-
-    <section class="admin-panel">
-      <div class="admin-panel__header">
-        <div>
-          <div class="admin-panel__title">筛选查询</div>
-          <div class="admin-panel__desc">支持按楼栋名称、编码和状态筛选基础档案。</div>
-        </div>
-      </div>
-      <div class="admin-panel__body">
-        <div class="filter-grid" style="grid-template-columns: minmax(280px, 2fr) minmax(180px, 1fr) auto;">
-          <t-input v-model="filters.keyword" clearable placeholder="搜索楼栋名称或编码" />
-          <t-select v-model="filters.status" :options="buildingStatusOptions" />
-          <div class="toolbar-actions">
-            <t-button theme="primary" @click="handleSearch">查询</t-button>
-            <t-button variant="outline" @click="resetFilters">重置</t-button>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <section class="admin-panel">
       <div class="admin-panel__header">
         <div>
           <div class="admin-panel__title">楼栋列表</div>
-          <div class="admin-panel__desc">推荐低频维护，日常以初始化导入或补录纠错为主。</div>
         </div>
       </div>
       <div class="admin-panel__body">
+        <div v-if="filterVisible" class="inline-filter-panel">
+          <div class="inline-filter-panel__header">
+            <div class="inline-filter-panel__title">筛选查询</div>
+          </div>
+          <div class="filter-grid" style="grid-template-columns: minmax(280px, 2fr) minmax(180px, 1fr) auto;">
+            <t-input v-model="filters.keyword" clearable placeholder="搜索楼栋名称或编码" />
+            <t-select v-model="filters.status" :options="buildingStatusOptions" />
+            <div class="toolbar-actions">
+              <t-button theme="primary" @click="handleSearch">查询</t-button>
+              <t-button variant="outline" @click="resetFilters">重置</t-button>
+            </div>
+          </div>
+        </div>
+
         <div class="table-toolbar">
           <div class="table-toolbar__meta">
             <span>共 {{ pagination.total }} 条记录</span>
@@ -122,7 +111,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import PageContainer from '@/components/PageContainer/index.vue';
 import { fetchBuildingDetail, fetchBuildingList, removeBuilding } from '@/modules/building/api';
@@ -136,6 +125,7 @@ const selectedRowKeys = ref<Array<string | number>>([]);
 const editingBuilding = ref<BuildingDetail | null>(null);
 const dialogVisible = ref(false);
 const dialogMode = ref<'create' | 'edit'>('create');
+const filterVisible = ref(false);
 const filters = reactive({
   keyword: '',
   status: 'ALL',
@@ -155,19 +145,6 @@ const columns = [
   { colKey: 'updatedAt', title: '更新时间', width: 180 },
   { colKey: 'actions', title: '操作', width: 140, fixed: 'right' },
 ];
-
-const summaryCards = computed(() => {
-  const activeCount = buildings.value.filter((item) => item.status === 'ACTIVE').length;
-  const disabledCount = buildings.value.filter((item) => item.status === 'DISABLED').length;
-  const houseCount = buildings.value.reduce((sum, item) => sum + item.houseCount, 0);
-
-  return [
-    { title: '楼栋总数', value: pagination.total, description: '按当前检索条件返回的楼栋总量' },
-    { title: '启用楼栋', value: activeCount, description: '当前分页内可正常使用的楼栋档案' },
-    { title: '停用楼栋', value: disabledCount, description: '当前分页内已停用的楼栋档案' },
-    { title: '房屋总数', value: houseCount, description: '当前分页楼栋下已建档的房屋数量' },
-  ];
-});
 
 async function loadList() {
   const result = await fetchBuildingList({

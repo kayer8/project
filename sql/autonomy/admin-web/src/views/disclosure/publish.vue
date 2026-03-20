@@ -4,7 +4,6 @@
       <div class="admin-panel__header">
         <div>
           <div class="admin-panel__title">发布留痕</div>
-          <div class="admin-panel__desc">记录发布人、渠道和结果，便于问题排查和内容复核。</div>
         </div>
       </div>
       <div class="admin-panel__body">

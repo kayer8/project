@@ -240,6 +240,7 @@ model House {
   voteRepresentatives  VoteRepresentative[]
   residentArchives     ResidentArchive[]
   registrationRequests RegistrationRequest[]
+  managementFeeRecords ManagementFeeRecord[]
 
   @@unique([buildingId, unitNo, roomNo])
   @@index([buildingId])
@@ -466,4 +467,27 @@ model AuditLog {
   @@index([createdAt])
   @@index([actorType, createdAt])
   @@map("audit_logs")
+}
+
+model ManagementFeeRecord {
+  id            String    @id @default(uuid())
+  periodKey     String    @map("period_key") @db.VarChar(40) @default("")
+  periodMonth   String    @map("period_month") @db.VarChar(7)
+  houseId       String    @map("house_id")
+  house         House     @relation(fields: [houseId], references: [id])
+  chargeStartDate DateTime? @map("charge_start_date")
+  chargeEndDate   DateTime? @map("charge_end_date")
+  dueDate         DateTime? @map("due_date")
+  paymentStatus String    @map("payment_status") @db.VarChar(20)
+  source        String    @default("manual_import") @db.VarChar(30)
+  paidAt        DateTime? @map("paid_at")
+  note          String?   @db.VarChar(255)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@unique([periodKey, houseId])
+  @@index([periodKey, paymentStatus])
+  @@index([periodMonth, paymentStatus])
+  @@index([houseId])
+  @@map("management_fee_records")
 }

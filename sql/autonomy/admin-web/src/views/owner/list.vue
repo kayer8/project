@@ -4,7 +4,6 @@
       <div class="admin-panel__header">
         <div>
           <div class="admin-panel__title">业主台账</div>
-          <div class="admin-panel__desc">面向后续房屋认证、投票资格和成员关系管理的基础数据视图。</div>
         </div>
       </div>
       <div class="admin-panel__body">

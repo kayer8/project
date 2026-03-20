@@ -13,6 +13,8 @@ import { AdminUsersController } from './admin-users.controller';
 import { AdminHousesController } from './admin-houses.controller';
 import { AdminMembersController } from './admin-members.controller';
 import { AdminBuildingsController } from './admin-buildings.controller';
+import { ManagementFeeModule } from '../management-fee/management-fee.module';
+import { AdminManagementFeesController } from './admin-management-fees.controller';
 
 @Module({
   imports: [
@@ -32,6 +34,7 @@ import { AdminBuildingsController } from './admin-buildings.controller';
     HouseModule,
     MemberModule,
     BuildingModule,
+    ManagementFeeModule,
   ],
   controllers: [
     AdminAuthController,
@@ -39,6 +42,7 @@ import { AdminBuildingsController } from './admin-buildings.controller';
     AdminHousesController,
     AdminMembersController,
     AdminBuildingsController,
+    AdminManagementFeesController,
   ],
   providers: [AdminAuthService, AdminJwtStrategy],
 })

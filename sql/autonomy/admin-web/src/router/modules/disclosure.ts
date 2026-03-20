@@ -17,6 +17,14 @@ const disclosureRoutes: RouteRecordRaw[] = [
       title: '发布记录',
     },
   },
+  {
+    path: 'disclosures/management-fees',
+    name: 'AutonomyDisclosureManagementFees',
+    component: () => import('@/views/disclosure/management-fee.vue'),
+    meta: {
+      title: '管理费公开',
+    },
+  },
 ];
 
 export default disclosureRoutes;

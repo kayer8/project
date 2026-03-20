@@ -1,45 +1,34 @@
 <template>
   <PageContainer title="公告列表">
     <template #actions>
+      <t-button variant="outline" @click="filterVisible = !filterVisible">
+        {{ filterVisible ? '收起筛选' : '筛选' }}
+      </t-button>
       <t-button theme="primary">新建公告</t-button>
     </template>
-
-    <section class="stats-strip">
-      <article v-for="item in summaryCards" :key="item.title" class="stat-card">
-        <div class="stat-card__label">{{ item.title }}</div>
-        <div class="stat-card__value">{{ item.value }}</div>
-        <div class="stat-card__meta">{{ item.description }}</div>
-      </article>
-    </section>
-
-    <section class="admin-panel">
-      <div class="admin-panel__header">
-        <div>
-          <div class="admin-panel__title">筛选查询</div>
-          <div class="admin-panel__desc">按标题、分类和发布状态检索正式公告内容。</div>
-        </div>
-      </div>
-      <div class="admin-panel__body">
-        <div class="filter-grid">
-          <t-input v-model="filters.keyword" clearable placeholder="搜索公告标题 / 发布单位" />
-          <t-select v-model="filters.category" :options="categoryOptions" />
-          <t-select v-model="filters.status" :options="statusOptions" />
-          <div class="toolbar-actions">
-            <t-button theme="primary">查询</t-button>
-            <t-button variant="outline" @click="resetFilters">重置</t-button>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <section class="admin-panel">
       <div class="admin-panel__header">
         <div>
           <div class="admin-panel__title">公告台账</div>
-          <div class="admin-panel__desc">统一以表格方式查看标题、分类、发布单位、发布时间和状态。</div>
         </div>
       </div>
       <div class="admin-panel__body">
+        <div v-if="filterVisible" class="inline-filter-panel">
+          <div class="inline-filter-panel__header">
+            <div class="inline-filter-panel__title">筛选查询</div>
+          </div>
+          <div class="filter-grid">
+            <t-input v-model="filters.keyword" clearable placeholder="搜索公告标题 / 发布单位" />
+            <t-select v-model="filters.category" :options="categoryOptions" />
+            <t-select v-model="filters.status" :options="statusOptions" />
+            <div class="toolbar-actions">
+              <t-button theme="primary">查询</t-button>
+              <t-button variant="outline" @click="resetFilters">重置</t-button>
+            </div>
+          </div>
+        </div>
+
         <t-table :data="filteredRows" :columns="columns" row-key="id" size="small" bordered hover>
           <template #titleCell="{ row }">
             <div class="table-primary-cell">
@@ -68,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { MessagePlugin } from 'tdesign-vue-next';
 import PageContainer from '@/components/PageContainer/index.vue';
 import { announcementRecords } from '@/mock/governance';
@@ -78,6 +67,7 @@ const filters = reactive({
   category: 'ALL',
   status: 'ALL',
 });
+const filterVisible = ref(false);
 
 const categoryOptions = [
   { label: '全部分类', value: 'ALL' },
@@ -118,25 +108,6 @@ const filteredRows = computed(() =>
     return matchKeyword && matchCategory && matchStatus;
   }),
 );
-
-const summaryCards = computed(() => [
-  { title: '公告总数', value: filteredRows.value.length, description: '当前筛选条件下的公告总量' },
-  {
-    title: '已发布',
-    value: filteredRows.value.filter((item) => item.status === '已发布').length,
-    description: '已正式对外展示的公告数量',
-  },
-  {
-    title: '草稿数',
-    value: filteredRows.value.filter((item) => item.status === '草稿').length,
-    description: '仍在编辑中的公告内容',
-  },
-  {
-    title: '重点公告',
-    value: filteredRows.value.filter((item) => item.priority === '重点').length,
-    description: '当前样本中被标记为重点的公告数量',
-  },
-]);
 
 function resetFilters() {
   filters.keyword = '';

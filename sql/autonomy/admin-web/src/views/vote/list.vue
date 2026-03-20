@@ -1,45 +1,34 @@
 <template>
   <PageContainer title="投票列表">
     <template #actions>
+      <t-button variant="outline" @click="filterVisible = !filterVisible">
+        {{ filterVisible ? '收起筛选' : '筛选' }}
+      </t-button>
       <t-button theme="primary">新建投票</t-button>
     </template>
-
-    <section class="stats-strip">
-      <article v-for="item in summaryCards" :key="item.title" class="stat-card">
-        <div class="stat-card__label">{{ item.title }}</div>
-        <div class="stat-card__value">{{ item.value }}</div>
-        <div class="stat-card__meta">{{ item.description }}</div>
-      </article>
-    </section>
-
-    <section class="admin-panel">
-      <div class="admin-panel__header">
-        <div>
-          <div class="admin-panel__title">筛选查询</div>
-          <div class="admin-panel__desc">支持按标题、类型和状态快速定位投票事项。</div>
-        </div>
-      </div>
-      <div class="admin-panel__body">
-        <div class="filter-grid">
-          <t-input v-model="filters.keyword" clearable placeholder="搜索投票标题 / 发起方" />
-          <t-select v-model="filters.type" :options="typeOptions" />
-          <t-select v-model="filters.status" :options="statusOptions" />
-          <div class="toolbar-actions">
-            <t-button theme="primary">查询</t-button>
-            <t-button variant="outline" @click="resetFilters">重置</t-button>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <section class="admin-panel">
       <div class="admin-panel__header">
         <div>
           <div class="admin-panel__title">投票列表</div>
-          <div class="admin-panel__desc">操作列集中提供查看、结束和编辑，便于高频治理操作。</div>
         </div>
       </div>
       <div class="admin-panel__body">
+        <div v-if="filterVisible" class="inline-filter-panel">
+          <div class="inline-filter-panel__header">
+            <div class="inline-filter-panel__title">筛选查询</div>
+          </div>
+          <div class="filter-grid">
+            <t-input v-model="filters.keyword" clearable placeholder="搜索投票标题 / 发起方" />
+            <t-select v-model="filters.type" :options="typeOptions" />
+            <t-select v-model="filters.status" :options="statusOptions" />
+            <div class="toolbar-actions">
+              <t-button theme="primary">查询</t-button>
+              <t-button variant="outline" @click="resetFilters">重置</t-button>
+            </div>
+          </div>
+        </div>
+
         <div class="table-toolbar">
           <div class="table-toolbar__meta">
             <span>共 {{ filteredVotes.length }} 条记录</span>
@@ -108,8 +97,8 @@ const filters = reactive({
   type: 'ALL',
   status: 'ALL',
 });
-
 const selectedRowKeys = ref<Array<string | number>>([]);
+const filterVisible = ref(false);
 
 const typeOptions = [
   { label: '全部类型', value: 'ALL' },
@@ -151,29 +140,6 @@ const filteredVotes = computed(() =>
     return matchKeyword && matchType && matchStatus;
   }),
 );
-
-const summaryCards = computed(() => [
-  {
-    title: '投票总数',
-    value: filteredVotes.value.length,
-    description: '当前筛选条件下的投票事项总量',
-  },
-  {
-    title: '进行中',
-    value: filteredVotes.value.filter((item) => item.status === '进行中').length,
-    description: '需要重点盯住截止时间和参与率的事项',
-  },
-  {
-    title: '草稿数',
-    value: filteredVotes.value.filter((item) => item.status === '草稿').length,
-    description: '尚未发布、仍可继续编辑的投票事项',
-  },
-  {
-    title: '平均参与率',
-    value: '73.1%',
-    description: '当前样本投票的平均参与率水平',
-  },
-]);
 
 function handleSelectChange(keys: Array<string | number>) {
   selectedRowKeys.value = keys;

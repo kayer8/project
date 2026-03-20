@@ -83,6 +83,7 @@ const iconMap = {
   category: FileIcon,
   disclosure: CatalogIcon,
   publish: SendIcon,
+  'management-fee': ChartBarIcon,
   house: HomeIcon,
   building: BuildingIcon,
   member: ViewListIcon,

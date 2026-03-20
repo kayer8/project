@@ -4,19 +4,10 @@
       <t-button theme="primary">创建内容</t-button>
     </template>
 
-    <section class="stats-strip">
-      <article v-for="item in summaryCards" :key="item.title" class="stat-card">
-        <div class="stat-card__label">{{ item.title }}</div>
-        <div class="stat-card__value">{{ item.value }}</div>
-        <div class="stat-card__meta">{{ item.description }}</div>
-      </article>
-    </section>
-
     <section class="admin-panel">
       <div class="admin-panel__header">
         <div>
           <div class="admin-panel__title">内容台账</div>
-          <div class="admin-panel__desc">信息公开更强调内容权威性、审核状态与发布窗口控制。</div>
         </div>
       </div>
       <div class="admin-panel__body">
@@ -62,13 +53,6 @@ const columns = [
   { colKey: 'publishWindow', title: '发布窗口', width: 180 },
   { colKey: 'updatedAt', title: '更新时间', width: 160 },
   { colKey: 'actions', title: '操作', width: 160, fixed: 'right' },
-];
-
-const summaryCards = [
-  { title: '公开内容数', value: disclosureRecords.length, description: '当前已建档的信息公开内容总量' },
-  { title: '待审核', value: 1, description: '需要管理员确认后才能对外发布的内容数量' },
-  { title: '草稿', value: 1, description: '仍在编辑中的公开内容数量' },
-  { title: '已发布', value: 1, description: '当前已正式上线展示的信息公开内容数量' },
 ];
 
 function notifyAction(action: string, title: string) {

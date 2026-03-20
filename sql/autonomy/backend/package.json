@@ -11,10 +11,13 @@
     "test": "jest",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
     "prisma:migrate": "prisma migrate dev",
     "seed:hjy-housing": "ts-node scripts/seed-hjy-housing.ts",
     "seed:mock-residents": "ts-node scripts/seed-mock-residents.ts",
-    "cleanup:non-hjy-housing": "ts-node scripts/cleanup-non-hjy-housing.ts"
+    "cleanup:non-hjy-housing": "ts-node scripts/cleanup-non-hjy-housing.ts",
+    "import:hjy-management-fees": "ts-node scripts/import-hjy-management-fees.ts",
+    "import:management-fees:json": "ts-node scripts/import-management-fees-from-json.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",

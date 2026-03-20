@@ -9,7 +9,6 @@
         <div class="admin-panel__header">
           <div>
             <div class="admin-panel__title">社区基础信息</div>
-            <div class="admin-panel__desc">用于公告、信息公开和认证回执中的统一主体信息。</div>
           </div>
         </div>
         <div class="admin-panel__body">
@@ -38,7 +37,6 @@
         <div class="admin-panel__header">
           <div>
             <div class="admin-panel__title">投票规则</div>
-            <div class="admin-panel__desc">明确正式表决和意见征集两类投票的默认治理规则。</div>
           </div>
         </div>
         <div class="admin-panel__body">
@@ -69,7 +67,6 @@
         <div class="admin-panel__header">
           <div>
             <div class="admin-panel__title">公告与公开策略</div>
-            <div class="admin-panel__desc">统一控制公告置顶策略、附件限制和公开内容审核要求。</div>
           </div>
         </div>
         <div class="admin-panel__body">
@@ -98,7 +95,6 @@
         <div class="admin-panel__header">
           <div>
             <div class="admin-panel__title">管理说明</div>
-            <div class="admin-panel__desc">用于后台显示的制度说明和发布口径。</div>
           </div>
         </div>
         <div class="admin-panel__body">

@@ -1,45 +1,34 @@
 <template>
   <PageContainer title="房屋数据">
     <template #actions>
+      <t-button variant="outline" @click="filterVisible = !filterVisible">
+        {{ filterVisible ? '收起筛选' : '筛选' }}
+      </t-button>
       <t-button theme="primary" @click="openCreate">新建房屋</t-button>
     </template>
-
-    <section class="stats-strip">
-      <article v-for="item in summaryCards" :key="item.title" class="stat-card">
-        <div class="stat-card__label">{{ item.title }}</div>
-        <div class="stat-card__value">{{ item.value }}</div>
-        <div class="stat-card__meta">{{ item.description }}</div>
-      </article>
-    </section>
-
-    <section class="admin-panel">
-      <div class="admin-panel__header">
-        <div>
-          <div class="admin-panel__title">筛选查询</div>
-          <div class="admin-panel__desc">按房屋名称、楼栋和占用状态快速筛选目标档案。</div>
-        </div>
-      </div>
-      <div class="admin-panel__body">
-        <div class="filter-grid">
-          <t-input v-model="filters.keyword" clearable placeholder="搜索房屋名称、楼栋或房号" />
-          <t-select v-model="filters.buildingId" :options="buildingOptions" />
-          <t-select v-model="filters.houseStatus" :options="houseStatusOptions" />
-          <div class="toolbar-actions">
-            <t-button theme="primary" @click="handleSearch">查询</t-button>
-            <t-button variant="outline" @click="resetFilters">重置</t-button>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <section class="admin-panel">
       <div class="admin-panel__header">
         <div>
           <div class="admin-panel__title">房屋列表</div>
-          <div class="admin-panel__desc">以表格形式集中展示房屋状态、成员数量与主角色信息。</div>
         </div>
       </div>
       <div class="admin-panel__body">
+        <div v-if="filterVisible" class="inline-filter-panel">
+          <div class="inline-filter-panel__header">
+            <div class="inline-filter-panel__title">筛选查询</div>
+          </div>
+          <div class="filter-grid">
+            <t-input v-model="filters.keyword" clearable placeholder="搜索房屋名称、楼栋或房号" />
+            <t-select v-model="filters.buildingId" :options="buildingOptions" />
+            <t-select v-model="filters.houseStatus" :options="houseStatusOptions" />
+            <div class="toolbar-actions">
+              <t-button theme="primary" @click="handleSearch">查询</t-button>
+              <t-button variant="outline" @click="resetFilters">重置</t-button>
+            </div>
+          </div>
+        </div>
+
         <div class="table-toolbar">
           <div class="table-toolbar__meta">
             <span>共 {{ pagination.total }} 条记录</span>
@@ -136,7 +125,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import PageContainer from '@/components/PageContainer/index.vue';
 import { fetchBuildingOptions, fetchHouseDetail, fetchHouseList, removeHouse } from '@/modules/house/api';
@@ -153,6 +142,7 @@ const formDialogVisible = ref(false);
 const dialogMode = ref<'create' | 'edit'>('create');
 const detailDialogVisible = ref(false);
 const detailHouseId = ref('');
+const filterVisible = ref(false);
 const buildingOptions = ref([{ label: '全部楼栋', value: 'ALL' }]);
 const filters = reactive({
   keyword: '',
@@ -175,19 +165,6 @@ const columns = [
   { colKey: 'createdAt', title: '创建时间', width: 160 },
   { colKey: 'actions', title: '操作', width: 180, fixed: 'right' },
 ];
-
-const summaryCards = computed(() => {
-  const selfOccupiedCount = houses.value.filter((item) => item.houseStatus === 'SELF_OCCUPIED').length;
-  const rentedCount = houses.value.filter((item) => item.houseStatus === 'RENTED').length;
-  const memberCount = houses.value.reduce((sum, item) => sum + item.memberCount, 0);
-
-  return [
-    { title: '房屋总数', value: pagination.total, description: '按当前检索条件返回的房屋档案总量' },
-    { title: '自住房屋', value: selfOccupiedCount, description: '当前分页内标记为自住的房屋数量' },
-    { title: '出租房屋', value: rentedCount, description: '当前分页内标记为出租的房屋数量' },
-    { title: '成员关系数', value: memberCount, description: '当前分页房屋累计关联的成员数量' },
-  ];
-});
 
 function getHouseStatusTheme(status: HouseListItem['houseStatus']) {
   if (status === 'SELF_OCCUPIED') return 'success';

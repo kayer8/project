@@ -1,18 +1,9 @@
 <template>
   <PageContainer title="投票结果">
-    <section class="stats-strip">
-      <article v-for="item in summaryCards" :key="item.title" class="stat-card">
-        <div class="stat-card__label">{{ item.title }}</div>
-        <div class="stat-card__value">{{ item.value }}</div>
-        <div class="stat-card__meta">{{ item.description }}</div>
-      </article>
-    </section>
-
     <section class="admin-panel">
       <div class="admin-panel__header">
         <div>
           <div class="admin-panel__title">结果台账</div>
-          <div class="admin-panel__desc">投票结果页更强调结果追溯、参与覆盖率和结论沉淀。</div>
         </div>
       </div>
       <div class="admin-panel__body">
@@ -64,13 +55,6 @@ const columns = [
   { colKey: 'result', title: '结果', width: 100 },
   { colKey: 'endedAt', title: '结束时间', width: 160 },
   { colKey: 'actions', title: '操作', width: 160, fixed: 'right' },
-];
-
-const summaryCards = [
-  { title: '已归档结果', value: voteResultRecords.length, description: '已形成结果台账的投票事项总量' },
-  { title: '通过事项', value: 1, description: '已经达到规则门槛并通过的正式事项' },
-  { title: '未通过事项', value: 1, description: '已结束但未达成通过门槛的事项' },
-  { title: '平均覆盖率', value: '80.2%', description: '已归档投票结果的平均覆盖户数比例' },
 ];
 
 function notifyAction(action: string, title: string) {

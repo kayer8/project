@@ -4,20 +4,11 @@
       <t-button theme="primary" variant="outline">导出概览</t-button>
     </template>
 
-    <section class="stats-strip">
-      <article v-for="item in summaryCards" :key="item.title" class="stat-card">
-        <div class="stat-card__label">{{ item.title }}</div>
-        <div class="stat-card__value">{{ item.value }}</div>
-        <div class="stat-card__meta">{{ item.description }}</div>
-      </article>
-    </section>
-
     <section class="table-summary-grid">
       <section class="admin-panel">
         <div class="admin-panel__header">
           <div>
             <div class="admin-panel__title">治理待办</div>
-            <div class="admin-panel__desc">优先处理认证审核、草稿待发布和即将截止的投票事项。</div>
           </div>
         </div>
         <div class="admin-panel__body">
@@ -29,7 +20,6 @@
         <div class="admin-panel__header">
           <div>
             <div class="admin-panel__title">快捷动作</div>
-            <div class="admin-panel__desc">结合文档中管理端主链路，优先保留高频治理动作。</div>
           </div>
         </div>
         <div class="admin-panel__body">
@@ -47,7 +37,6 @@
       <div class="admin-panel__header">
         <div>
           <div class="admin-panel__title">最近发布动态</div>
-          <div class="admin-panel__desc">展示公告与信息公开的最近发布记录，便于快速核对内容是否已对外生效。</div>
         </div>
       </div>
       <div class="admin-panel__body">
@@ -65,29 +54,6 @@ import {
   publishRecords,
   voteRecords,
 } from '@/mock/governance';
-
-const summaryCards = [
-  {
-    title: '进行中投票',
-    value: voteRecords.filter((item) => item.status === '进行中').length,
-    description: '包括正式表决与意见征集两类事项',
-  },
-  {
-    title: '已发布公告',
-    value: announcementRecords.filter((item) => item.status === '已发布').length,
-    description: '当前可对居民公开查看的公告总数',
-  },
-  {
-    title: '待审核认证',
-    value: ownerReviewRecords.filter((item) => item.status === '待审核').length,
-    description: '需要管理员人工确认身份材料的申请数量',
-  },
-  {
-    title: '发布成功率',
-    value: '96%',
-    description: '最近 30 天公告与公开内容发布成功率',
-  },
-];
 
 const todoColumns = [
   { colKey: 'title', title: '事项名称', ellipsis: true },

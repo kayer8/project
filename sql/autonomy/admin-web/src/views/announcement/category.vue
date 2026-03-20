@@ -8,7 +8,6 @@
       <div class="admin-panel__header">
         <div>
           <div class="admin-panel__title">分类列表</div>
-          <div class="admin-panel__desc">分类是公告系统的基础配置，应控制编码、范围与启用状态。</div>
         </div>
       </div>
       <div class="admin-panel__body">
