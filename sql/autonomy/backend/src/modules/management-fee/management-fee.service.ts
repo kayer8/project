@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuditLogService } from '../audit-log/audit-log.service';
+import { AdminAuditContext } from '../audit-log/audit-log.types';
 import {
   AdminManagementFeeHouseQueryDto,
   CreateManagementFeePeriodDto,
@@ -70,7 +72,10 @@ const LEGACY_BASE_AMOUNT = 18;
 
 @Injectable()
 export class ManagementFeeService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLogService: AuditLogService,
+  ) {}
 
   async listPeriods() {
     const periods = await this.prisma.managementFeePeriod.findMany({
@@ -109,7 +114,7 @@ export class ManagementFeeService {
     return this.listLegacyPeriods();
   }
 
-  async createPeriod(dto: CreateManagementFeePeriodDto) {
+  async createPeriod(dto: CreateManagementFeePeriodDto, context?: AdminAuditContext) {
     const periodKey = `${dto.chargeStartDate}_${dto.chargeEndDate}`;
     const chargeStartDate = this.createDateTime(dto.chargeStartDate, 'start');
     const chargeEndDate = this.createDateTime(dto.chargeEndDate, 'end');
@@ -204,10 +209,20 @@ export class ManagementFeeService {
     const periods = await this.listPeriods();
     const created = periods.find((item) => item.periodKey === periodKey);
     if (created) {
+      await this.auditLogService.recordAdminAction({
+        context,
+        action: 'CREATE',
+        resourceType: 'MANAGEMENT_FEE_PERIOD',
+        resourceId: period.id,
+        resourceName: `${period.periodKey} 管理时段`,
+        snapshot: {
+          after: created,
+        },
+      });
       return created;
     }
 
-    return {
+    const fallbackCreated = {
       periodKey: period.periodKey,
       periodMonth: period.periodMonth,
       chargeStartDate: period.chargeStartDate.toISOString(),
@@ -221,6 +236,19 @@ export class ManagementFeeService {
       paidHouseholds: 0,
       unpaidHouseholds: houses.length,
     };
+
+    await this.auditLogService.recordAdminAction({
+      context,
+      action: 'CREATE',
+      resourceType: 'MANAGEMENT_FEE_PERIOD',
+      resourceId: period.id,
+      resourceName: `${period.periodKey} 管理时段`,
+      snapshot: {
+        after: fallbackCreated,
+      },
+    });
+
+    return fallbackCreated;
   }
 
   async getAdminSummary(query: ManagementFeePeriodQueryDto) {
@@ -384,7 +412,7 @@ export class ManagementFeeService {
     });
   }
 
-  async updateHousePaymentStatus(id: string, paymentStatus: PaymentStatus) {
+  async updateHousePaymentStatus(id: string, paymentStatus: PaymentStatus, context?: AdminAuditContext) {
     const existed = await this.prisma.managementFeeRecord.findUnique({
       where: { id },
       include: {
@@ -429,6 +457,30 @@ export class ManagementFeeService {
     });
 
     const record = this.mapRecord(updated);
+    await this.auditLogService.recordAdminAction({
+      context,
+      action: 'STATUS_UPDATE',
+      resourceType: 'MANAGEMENT_FEE_RECORD',
+      resourceId: id,
+      resourceName: `${record.buildingName} ${record.displayName}`,
+      snapshot: {
+        before: {
+          paymentStatus: currentRecord.paymentStatus,
+          paidAmount: currentRecord.paidAmount,
+          outstandingAmount: currentRecord.outstandingAmount,
+          periodKey: currentRecord.periodKey,
+          houseId: currentRecord.houseId,
+        },
+        after: {
+          paymentStatus: record.paymentStatus,
+          paidAmount: record.paidAmount,
+          outstandingAmount: record.outstandingAmount,
+          periodKey: record.periodKey,
+          houseId: record.houseId,
+        },
+      },
+    });
+
     return {
       ...record,
       paymentStatusLabel: PAYMENT_STATUS_LABEL_MAP[record.paymentStatus],

@@ -93,6 +93,19 @@
           <t-input-number v-model="periodForm.baseAmount" theme="normal" placeholder="默认 0" />
         </div>
       </div>
+      <div class="pricing-rule-note">
+        <div class="pricing-rule-note__title">收费规则说明</div>
+        <div class="pricing-rule-note__text">每户应缴费用 = 建筑面积 × 每平米单价 + 固定费用。</div>
+        <div class="pricing-rule-note__text">
+          当前按房屋建筑面积统一计算，若固定费用不收取，请保持为 0。
+        </div>
+        <div class="pricing-rule-note__example">
+          例如：建筑面积 100㎡，每平米单价 2.68 元，固定费用 0 元，则该户应缴 268 元。
+        </div>
+        <div class="pricing-rule-note__example">
+          例如：建筑面积 100㎡，每平米单价 2.68 元，固定费用 20 元，则该户应缴 288 元。
+        </div>
+      </div>
     </t-dialog>
   </PageContainer>
 </template>
@@ -115,7 +128,7 @@ const periodForm = reactive({
   chargeEndDate: '',
   dueDate: '',
   unitPrice: 2.68,
-  baseAmount: 18,
+  baseAmount: 0,
 });
 
 const periodColumns = [
@@ -173,7 +186,7 @@ function resetForm() {
   periodForm.chargeEndDate = '';
   periodForm.dueDate = '';
   periodForm.unitPrice = 2.68;
-  periodForm.baseAmount = 18;
+  periodForm.baseAmount = 0;
   submitting.value = false;
 }
 
@@ -253,6 +266,34 @@ onMounted(async () => {
 .field-label.required::after {
   content: ' *';
   color: #d54941;
+}
+
+.pricing-rule-note {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid #dbe4f0;
+  border-radius: 10px;
+  background: #f8fbff;
+}
+
+.pricing-rule-note__title {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e3a5f;
+}
+
+.pricing-rule-note__text {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #526079;
+}
+
+.pricing-rule-note__example {
+  font-size: 13px;
+  line-height: 1.7;
+  font-weight: 600;
+  color: #1e3a5f;
 }
 
 @media (max-width: 768px) {

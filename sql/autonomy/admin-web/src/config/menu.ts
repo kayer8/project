@@ -2,8 +2,6 @@ export type AdminMenuIcon =
   | 'dashboard'
   | 'vote'
   | 'vote-result'
-  | 'announcement'
-  | 'category'
   | 'disclosure'
   | 'publish'
   | 'management-fee'
@@ -56,23 +54,6 @@ export const menuGroups: AdminMenuGroup[] = [
     ],
   },
   {
-    title: '公告管理',
-    items: [
-      {
-        title: '公告列表',
-        path: '/announcements/list',
-        matchPrefix: '/announcements/list',
-        icon: 'announcement',
-      },
-      {
-        title: '分类管理',
-        path: '/announcements/categories',
-        matchPrefix: '/announcements/categories',
-        icon: 'category',
-      },
-    ],
-  },
-  {
     title: '信息公开',
     items: [
       {
@@ -80,12 +61,6 @@ export const menuGroups: AdminMenuGroup[] = [
         path: '/disclosures/content',
         matchPrefix: '/disclosures/content',
         icon: 'disclosure',
-      },
-      {
-        title: '发布记录',
-        path: '/disclosures/publish-records',
-        matchPrefix: '/disclosures/publish-records',
-        icon: 'publish',
       },
       {
         title: '管理费公开',
@@ -138,6 +113,12 @@ export const menuGroups: AdminMenuGroup[] = [
   {
     title: '系统设置',
     items: [
+      {
+        title: '操作记录',
+        path: '/disclosures/publish-records',
+        matchPrefix: '/disclosures/publish-records',
+        icon: 'publish',
+      },
       {
         title: '系统设置',
         path: '/settings',

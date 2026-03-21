@@ -9,12 +9,16 @@ import { UserModule } from '../user/user.module';
 import { HouseModule } from '../house/house.module';
 import { MemberModule } from '../member/member.module';
 import { BuildingModule } from '../building/building.module';
+import { DisclosureModule } from '../disclosure/disclosure.module';
+import { AuditLogModule } from '../audit-log/audit-log.module';
 import { AdminUsersController } from './admin-users.controller';
 import { AdminHousesController } from './admin-houses.controller';
 import { AdminMembersController } from './admin-members.controller';
 import { AdminBuildingsController } from './admin-buildings.controller';
 import { ManagementFeeModule } from '../management-fee/management-fee.module';
 import { AdminManagementFeesController } from './admin-management-fees.controller';
+import { AdminDisclosureContentsController } from './admin-disclosure-contents.controller';
+import { AdminOperationLogsController } from './admin-operation-logs.controller';
 
 @Module({
   imports: [
@@ -34,6 +38,8 @@ import { AdminManagementFeesController } from './admin-management-fees.controlle
     HouseModule,
     MemberModule,
     BuildingModule,
+    DisclosureModule,
+    AuditLogModule,
     ManagementFeeModule,
   ],
   controllers: [
@@ -42,6 +48,8 @@ import { AdminManagementFeesController } from './admin-management-fees.controlle
     AdminHousesController,
     AdminMembersController,
     AdminBuildingsController,
+    AdminDisclosureContentsController,
+    AdminOperationLogsController,
     AdminManagementFeesController,
   ],
   providers: [AdminAuthService, AdminJwtStrategy],

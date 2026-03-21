@@ -3,6 +3,8 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BusinessException } from '../../common/exceptions/business.exception';
 import { AppErrorCode } from '../../common/exceptions/app-error-code';
+import { AuditLogService } from '../audit-log/audit-log.service';
+import { AdminAuditContext } from '../audit-log/audit-log.types';
 import {
   AdminBuildingListQueryDto,
   CreateAdminBuildingDto,
@@ -11,7 +13,10 @@ import {
 
 @Injectable()
 export class BuildingService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLogService: AuditLogService,
+  ) {}
 
   async listAdmin(query: AdminBuildingListQueryDto) {
     const page = query.page ?? 1;
@@ -115,7 +120,7 @@ export class BuildingService {
     });
   }
 
-  async createAdmin(dto: CreateAdminBuildingDto) {
+  async createAdmin(dto: CreateAdminBuildingDto, context?: AdminAuditContext) {
     const buildingCode = dto.buildingCode.trim();
     await this.ensureBuildingCodeAvailable(buildingCode);
 
@@ -128,11 +133,21 @@ export class BuildingService {
       },
     });
 
-    return this.getAdminDetail(building.id);
+    const created = await this.getAdminDetail(building.id);
+    await this.auditLogService.recordAdminAction({
+      context,
+      action: 'CREATE',
+      resourceType: 'BUILDING',
+      resourceId: building.id,
+      resourceName: building.buildingName,
+      snapshot: { after: created },
+    });
+
+    return created;
   }
 
-  async updateAdmin(id: string, dto: UpdateAdminBuildingDto) {
-    await this.ensureBuildingExists(id);
+  async updateAdmin(id: string, dto: UpdateAdminBuildingDto, context?: AdminAuditContext) {
+    const before = await this.getAdminDetail(id);
 
     if (dto.buildingCode?.trim()) {
       await this.ensureBuildingCodeAvailable(dto.buildingCode.trim(), id);
@@ -148,11 +163,21 @@ export class BuildingService {
       },
     });
 
-    return this.getAdminDetail(id);
+    const updated = await this.getAdminDetail(id);
+    await this.auditLogService.recordAdminAction({
+      context,
+      action: 'UPDATE',
+      resourceType: 'BUILDING',
+      resourceId: id,
+      resourceName: updated.buildingName,
+      snapshot: { before, after: updated },
+    });
+
+    return updated;
   }
 
-  async removeAdmin(id: string) {
-    await this.ensureBuildingExists(id);
+  async removeAdmin(id: string, context?: AdminAuditContext) {
+    const before = await this.getAdminDetail(id);
 
     const houseCount = await this.prisma.house.count({
       where: { buildingId: id },
@@ -168,6 +193,15 @@ export class BuildingService {
 
     await this.prisma.building.delete({
       where: { id },
+    });
+
+    await this.auditLogService.recordAdminAction({
+      context,
+      action: 'DELETE',
+      resourceType: 'BUILDING',
+      resourceId: id,
+      resourceName: before.buildingName,
+      snapshot: { before },
     });
 
     return {

@@ -10,6 +10,8 @@ import { UserModule } from './modules/user/user.module';
 import { HouseModule } from './modules/house/house.module';
 import { MemberModule } from './modules/member/member.module';
 import { BuildingModule } from './modules/building/building.module';
+import { DisclosureModule } from './modules/disclosure/disclosure.module';
+import { AuditLogModule } from './modules/audit-log/audit-log.module';
 import { ManagementFeeModule } from './modules/management-fee/management-fee.module';
 
 @Module({
@@ -26,6 +28,8 @@ import { ManagementFeeModule } from './modules/management-fee/management-fee.mod
     HouseModule,
     MemberModule,
     BuildingModule,
+    DisclosureModule,
+    AuditLogModule,
     ManagementFeeModule,
     AdminModule,
   ],

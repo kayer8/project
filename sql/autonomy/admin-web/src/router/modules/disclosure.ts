@@ -14,7 +14,7 @@ const disclosureRoutes: RouteRecordRaw[] = [
     name: 'AutonomyDisclosurePublishRecords',
     component: () => import('@/views/disclosure/publish.vue'),
     meta: {
-      title: '发布记录',
+      title: '操作记录',
     },
   },
   {

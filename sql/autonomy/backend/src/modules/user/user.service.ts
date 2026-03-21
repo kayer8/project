@@ -2,6 +2,8 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BusinessException } from '../../common/exceptions/business.exception';
 import { AppErrorCode } from '../../common/exceptions/app-error-code';
+import { AuditLogService } from '../audit-log/audit-log.service';
+import { AdminAuditContext } from '../audit-log/audit-log.types';
 import {
   AdminUserListQueryDto,
   CreateAdminUserDto,
@@ -30,7 +32,10 @@ const householdGroupLabelMap: Record<string, string> = {
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLogService: AuditLogService,
+  ) {}
 
   async getById(id: string) {
     const user = await this.prisma.user.findUnique({
@@ -184,7 +189,7 @@ export class UserService {
     });
   }
 
-  async createAdmin(dto: CreateAdminUserDto) {
+  async createAdmin(dto: CreateAdminUserDto, context?: AdminAuditContext) {
     const user = await this.prisma.user.create({
       data: {
         wechatOpenid: dto.wechatOpenid,
@@ -197,11 +202,21 @@ export class UserService {
       },
     });
 
-    return this.getById(user.id);
+    const created = await this.getById(user.id);
+    await this.auditLogService.recordAdminAction({
+      context,
+      action: 'CREATE',
+      resourceType: 'USER',
+      resourceId: user.id,
+      resourceName: created.realName || created.nickname || created.mobile || created.wechatOpenid,
+      snapshot: { after: created },
+    });
+
+    return created;
   }
 
-  async updateAdmin(id: string, dto: UpdateAdminUserDto) {
-    await this.ensureUserExists(id);
+  async updateAdmin(id: string, dto: UpdateAdminUserDto, context?: AdminAuditContext) {
+    const before = await this.getById(id);
 
     await this.prisma.user.update({
       where: { id },
@@ -216,11 +231,21 @@ export class UserService {
       },
     });
 
-    return this.getById(id);
+    const updated = await this.getById(id);
+    await this.auditLogService.recordAdminAction({
+      context,
+      action: 'UPDATE',
+      resourceType: 'USER',
+      resourceId: id,
+      resourceName: updated.realName || updated.nickname || updated.mobile || updated.wechatOpenid,
+      snapshot: { before, after: updated },
+    });
+
+    return updated;
   }
 
-  async removeAdmin(id: string) {
-    await this.ensureUserExists(id);
+  async removeAdmin(id: string, context?: AdminAuditContext) {
+    const before = await this.getById(id);
 
     await this.prisma.user.update({
       where: { id },
@@ -228,6 +253,15 @@ export class UserService {
         status: 'DELETED',
         deletedAt: new Date(),
       },
+    });
+
+    await this.auditLogService.recordAdminAction({
+      context,
+      action: 'DELETE',
+      resourceType: 'USER',
+      resourceId: id,
+      resourceName: before.realName || before.nickname || before.mobile || before.wechatOpenid,
+      snapshot: { before },
     });
 
     return {

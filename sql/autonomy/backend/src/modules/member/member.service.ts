@@ -2,6 +2,8 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BusinessException } from '../../common/exceptions/business.exception';
 import { AppErrorCode } from '../../common/exceptions/app-error-code';
+import { AuditLogService } from '../audit-log/audit-log.service';
+import { AdminAuditContext } from '../audit-log/audit-log.types';
 import {
   AdminMemberListQueryDto,
   CreateAdminMemberDto,
@@ -24,7 +26,10 @@ const householdGroupLabelMap: Record<string, string> = {
 
 @Injectable()
 export class MemberService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLogService: AuditLogService,
+  ) {}
 
   async listMine(userId: string) {
     const relations = await this.prisma.houseMemberRelation.findMany({
@@ -163,7 +168,7 @@ export class MemberService {
     return this.mapMemberDetail(relation);
   }
 
-  async createAdmin(dto: CreateAdminMemberDto) {
+  async createAdmin(dto: CreateAdminMemberDto, context?: AdminAuditContext) {
     await this.ensureMemberDependencies(dto.userId, dto.houseId, dto.householdGroupId);
     await this.ensurePrimaryRoleConstraint(
       dto.relationType,
@@ -203,28 +208,28 @@ export class MemberService {
       });
     });
 
-    return this.getAdminDetail(relation.id);
-  }
-
-  async updateAdmin(id: string, dto: UpdateAdminMemberDto) {
-    const current = await this.prisma.houseMemberRelation.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        userId: true,
-        houseId: true,
-        householdGroupId: true,
-        relationType: true,
-      },
+    const created = await this.getAdminDetail(relation.id);
+    await this.auditLogService.recordAdminAction({
+      context,
+      action: 'CREATE',
+      resourceType: 'MEMBER',
+      resourceId: relation.id,
+      resourceName: `${created.userName} / ${created.houseDisplayName}`,
+      snapshot: { after: created },
     });
 
-    if (!current) {
-      throw new BusinessException(
-        AppErrorCode.MEMBER_NOT_FOUND,
-        'Member relation not found',
-        HttpStatus.NOT_FOUND,
-      );
-    }
+    return created;
+  }
+
+  async updateAdmin(id: string, dto: UpdateAdminMemberDto, context?: AdminAuditContext) {
+    const before = await this.getAdminDetail(id);
+    const current = {
+      id: before.id,
+      userId: before.userId,
+      houseId: before.houseId,
+      householdGroupId: before.householdGroupId,
+      relationType: before.relationType,
+    };
 
     await this.ensureMemberDependencies(
       dto.userId ?? current.userId,
@@ -282,22 +287,21 @@ export class MemberService {
       });
     });
 
-    return this.getAdminDetail(id);
-  }
-
-  async removeAdmin(id: string) {
-    const current = await this.prisma.houseMemberRelation.findUnique({
-      where: { id },
-      select: { id: true },
+    const updated = await this.getAdminDetail(id);
+    await this.auditLogService.recordAdminAction({
+      context,
+      action: 'UPDATE',
+      resourceType: 'MEMBER',
+      resourceId: id,
+      resourceName: `${updated.userName} / ${updated.houseDisplayName}`,
+      snapshot: { before, after: updated },
     });
 
-    if (!current) {
-      throw new BusinessException(
-        AppErrorCode.MEMBER_NOT_FOUND,
-        'Member relation not found',
-        HttpStatus.NOT_FOUND,
-      );
-    }
+    return updated;
+  }
+
+  async removeAdmin(id: string, context?: AdminAuditContext) {
+    const before = await this.getAdminDetail(id);
 
     await this.prisma.houseMemberRelation.update({
       where: { id },
@@ -305,6 +309,15 @@ export class MemberService {
         status: 'REMOVED',
         expiredAt: new Date(),
       },
+    });
+
+    await this.auditLogService.recordAdminAction({
+      context,
+      action: 'DELETE',
+      resourceType: 'MEMBER',
+      resourceId: id,
+      resourceName: `${before.userName} / ${before.houseDisplayName}`,
+      snapshot: { before },
     });
 
     return {

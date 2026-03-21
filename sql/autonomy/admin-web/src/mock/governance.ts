@@ -22,37 +22,6 @@ export interface VoteResultRecord {
   endedAt: string;
 }
 
-export interface AnnouncementRecord {
-  id: string;
-  title: string;
-  category: string;
-  issuer: string;
-  publishAt: string;
-  status: '已发布' | '草稿' | '待发布';
-  priority: '普通' | '重点';
-  isPinned: boolean;
-}
-
-export interface AnnouncementCategoryRecord {
-  id: string;
-  name: string;
-  code: string;
-  visibility: '全体居民' | '认证住户' | '委员会内部';
-  count: number;
-  updatedAt: string;
-  status: '启用' | '停用';
-}
-
-export interface DisclosureRecord {
-  id: string;
-  title: string;
-  category: '财务公开' | '会议纪要' | '管理公开' | '通知公示';
-  owner: string;
-  status: '已发布' | '草稿' | '待审核';
-  publishWindow: string;
-  updatedAt: string;
-}
-
 export interface PublishRecord {
   id: string;
   title: string;
@@ -165,99 +134,6 @@ export const voteResultRecords: VoteResultRecord[] = [
     passRate: '78.2%',
     result: '未通过',
     endedAt: '2025-12-25 18:00',
-  },
-];
-
-export const announcementRecords: AnnouncementRecord[] = [
-  {
-    id: 'A-001',
-    title: '关于 3 月度消防联检安排的通知',
-    category: '社区公告',
-    issuer: '物业服务中心',
-    publishAt: '2026-03-20 08:00',
-    status: '已发布',
-    priority: '重点',
-    isPinned: true,
-  },
-  {
-    id: 'A-002',
-    title: '清明节期间门岗值班与访客登记说明',
-    category: '通知公告',
-    issuer: '社区办公室',
-    publishAt: '2026-03-19 17:30',
-    status: '已发布',
-    priority: '普通',
-    isPinned: false,
-  },
-  {
-    id: 'A-003',
-    title: '停车场月租续费流程更新',
-    category: '办事指南',
-    issuer: '物业服务中心',
-    publishAt: '2026-03-18 12:00',
-    status: '草稿',
-    priority: '普通',
-    isPinned: false,
-  },
-];
-
-export const announcementCategoryRecords: AnnouncementCategoryRecord[] = [
-  {
-    id: 'C-01',
-    name: '社区公告',
-    code: 'ANN_COMMUNITY',
-    visibility: '全体居民',
-    count: 28,
-    updatedAt: '2026-03-18 10:00',
-    status: '启用',
-  },
-  {
-    id: 'C-02',
-    name: '通知公告',
-    code: 'ANN_NOTICE',
-    visibility: '认证住户',
-    count: 16,
-    updatedAt: '2026-03-12 09:20',
-    status: '启用',
-  },
-  {
-    id: 'C-03',
-    name: '委员会内部',
-    code: 'ANN_COMMITTEE',
-    visibility: '委员会内部',
-    count: 8,
-    updatedAt: '2026-03-01 14:00',
-    status: '停用',
-  },
-];
-
-export const disclosureRecords: DisclosureRecord[] = [
-  {
-    id: 'D-001',
-    title: '2026 年 2 月财务收支公开',
-    category: '财务公开',
-    owner: '财务管理员',
-    status: '已发布',
-    publishWindow: '2026-03-01 至 2026-03-31',
-    updatedAt: '2026-03-05 11:00',
-  },
-  {
-    id: 'D-002',
-    title: '第二届业委会第三次例会纪要',
-    category: '会议纪要',
-    owner: '业委会秘书处',
-    status: '待审核',
-    publishWindow: '待定',
-    updatedAt: '2026-03-18 16:20',
-  },
-  {
-    id: 'D-003',
-    title: '公共区域保洁整改结果公示',
-    category: '管理公开',
-    owner: '物业服务中心',
-    status: '草稿',
-    publishWindow: '待定',
-    updatedAt: '2026-03-20 09:15',
   },
 ];
 

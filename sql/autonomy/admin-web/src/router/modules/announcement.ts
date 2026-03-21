@@ -4,7 +4,7 @@ const announcementRoutes: RouteRecordRaw[] = [
   {
     path: 'announcements/list',
     name: 'AutonomyAnnouncementList',
-    component: () => import('@/views/announcement/list.vue'),
+    redirect: '/disclosures/content?category=通知公告',
     meta: {
       title: '公告列表',
     },
@@ -12,7 +12,7 @@ const announcementRoutes: RouteRecordRaw[] = [
   {
     path: 'announcements/categories',
     name: 'AutonomyAnnouncementCategories',
-    component: () => import('@/views/announcement/category.vue'),
+    redirect: '/disclosures/content?category=通知公告',
     meta: {
       title: '分类管理',
     },

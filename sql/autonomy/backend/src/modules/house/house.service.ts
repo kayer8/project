@@ -2,6 +2,8 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BusinessException } from '../../common/exceptions/business.exception';
 import { AppErrorCode } from '../../common/exceptions/app-error-code';
+import { AuditLogService } from '../audit-log/audit-log.service';
+import { AdminAuditContext } from '../audit-log/audit-log.types';
 import {
   AdminHouseListQueryDto,
   CreateAdminHouseDto,
@@ -24,7 +26,10 @@ const memberRelationLabelMap: Record<string, string> = {
 
 @Injectable()
 export class HouseService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLogService: AuditLogService,
+  ) {}
 
   async listMine(userId: string) {
     const relations = await this.prisma.houseMemberRelation.findMany({
@@ -305,7 +310,7 @@ export class HouseService {
     });
   }
 
-  async createAdmin(dto: CreateAdminHouseDto) {
+  async createAdmin(dto: CreateAdminHouseDto, context?: AdminAuditContext) {
     await this.ensureBuildingExists(dto.buildingId);
 
     const house = await this.prisma.$transaction(async (tx) => {
@@ -335,11 +340,21 @@ export class HouseService {
       return created;
     });
 
-    return this.getAdminDetail(house.id);
+    const created = await this.getAdminDetail(house.id);
+    await this.auditLogService.recordAdminAction({
+      context,
+      action: 'CREATE',
+      resourceType: 'HOUSE',
+      resourceId: house.id,
+      resourceName: created.displayName,
+      snapshot: { after: created },
+    });
+
+    return created;
   }
 
-  async updateAdmin(id: string, dto: UpdateAdminHouseDto) {
-    await this.ensureHouseExists(id);
+  async updateAdmin(id: string, dto: UpdateAdminHouseDto, context?: AdminAuditContext) {
+    const before = await this.getAdminDetail(id);
 
     if (dto.buildingId) {
       await this.ensureBuildingExists(dto.buildingId);
@@ -358,11 +373,21 @@ export class HouseService {
       },
     });
 
-    return this.getAdminDetail(id);
+    const updated = await this.getAdminDetail(id);
+    await this.auditLogService.recordAdminAction({
+      context,
+      action: 'UPDATE',
+      resourceType: 'HOUSE',
+      resourceId: id,
+      resourceName: updated.displayName,
+      snapshot: { before, after: updated },
+    });
+
+    return updated;
   }
 
-  async removeAdmin(id: string) {
-    await this.ensureHouseExists(id);
+  async removeAdmin(id: string, context?: AdminAuditContext) {
+    const before = await this.getAdminDetail(id);
 
     const [memberCount, identityCount, voteCount] = await this.prisma.$transaction([
       this.prisma.houseMemberRelation.count({ where: { houseId: id } }),
@@ -386,6 +411,15 @@ export class HouseService {
         where: { id },
       }),
     ]);
+
+    await this.auditLogService.recordAdminAction({
+      context,
+      action: 'DELETE',
+      resourceType: 'HOUSE',
+      resourceId: id,
+      resourceName: before.displayName,
+      snapshot: { before },
+    });
 
     return {
       id,

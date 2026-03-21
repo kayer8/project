@@ -49,10 +49,7 @@
 <script setup lang="ts">
 import PageContainer from '@/components/PageContainer/index.vue';
 import {
-  announcementRecords,
-  ownerReviewRecords,
   publishRecords,
-  voteRecords,
 } from '@/mock/governance';
 
 const todoColumns = [
@@ -65,7 +62,7 @@ const todoColumns = [
 const todoItems = [
   { title: '审核新提交的业主认证资料', owner: '认证审核', deadline: '今日 18:00', status: '待审核' },
   { title: '检查即将截止的公共收益使用表决', owner: '投票列表', deadline: '03-25 18:00', status: '进行中' },
-  { title: '发布 3 月消防联检正式公告', owner: '公告列表', deadline: '今日 17:00', status: '待发布' },
+  { title: '发布 3 月消防联检正式公告', owner: '内容管理', deadline: '今日 17:00', status: '待发布' },
   { title: '复核会议纪要对外公开版本', owner: '内容管理', deadline: '本周内', status: '待审核' },
 ];
 

@@ -477,18 +477,41 @@ model AuditLog {
   actorUser    User?          @relation("AuditActorUser", fields: [actorUserId], references: [id])
   actorAdminId String?        @map("actor_admin_id")
   actorAdmin   AdminUser?     @relation("AuditActorAdmin", fields: [actorAdminId], references: [id])
+  actorLabel   String?        @map("actor_label") @db.VarChar(120)
   action       String         @db.VarChar(100)
   resourceType String         @map("resource_type") @db.VarChar(100)
   resourceId   String         @map("resource_id") @db.VarChar(64)
+  resourceName String?        @map("resource_name") @db.VarChar(200)
   snapshotJson Json?          @map("snapshot_json")
   ip           String?        @db.VarChar(45)
   userAgent    String?        @map("user_agent") @db.VarChar(500)
   createdAt    DateTime       @default(now()) @map("created_at")
 
   @@index([resourceType, resourceId])
+  @@index([resourceType, action])
+  @@index([action, createdAt])
   @@index([createdAt])
   @@index([actorType, createdAt])
   @@map("audit_logs")
+}
+
+model DisclosureContent {
+  id             String    @id @default(uuid())
+  title          String    @db.VarChar(150)
+  category       String    @db.VarChar(50)
+  publisher      String    @default("") @db.VarChar(100)
+  summary        String?   @db.VarChar(255)
+  content        String    @db.Text
+  status         String    @default("DRAFT") @db.VarChar(20)
+  publishStartAt DateTime? @map("publish_start_at")
+  publishEndAt   DateTime? @map("publish_end_at")
+  publishedAt    DateTime? @map("published_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  @@index([status, category])
+  @@index([publishedAt])
+  @@map("disclosure_contents")
 }
 
 model ManagementFeeRecord {

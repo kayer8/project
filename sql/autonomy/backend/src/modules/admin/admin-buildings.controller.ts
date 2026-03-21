@@ -1,5 +1,7 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import type { Request } from 'express';
+import { Admin } from '../../common/decorators/admin.decorator';
 import { AdminJwtAuthGuard } from '../../common/guards/admin-jwt-auth.guard';
 import { BuildingService } from '../building/building.service';
 import {
@@ -7,6 +9,7 @@ import {
   CreateAdminBuildingDto,
   UpdateAdminBuildingDto,
 } from '../building/dto/building.dto';
+import { AdminAuthUser } from './interfaces/admin-auth-user.interface';
 
 @ApiTags('admin-buildings')
 @ApiBearerAuth()
@@ -31,17 +34,25 @@ export class AdminBuildingsController {
   }
 
   @Post()
-  create(@Body() dto: CreateAdminBuildingDto) {
-    return this.buildingService.createAdmin(dto);
+  create(@Body() dto: CreateAdminBuildingDto, @Admin() admin: AdminAuthUser, @Req() request: Request) {
+    return this.buildingService.createAdmin(dto, buildAuditContext(admin, request));
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateAdminBuildingDto) {
-    return this.buildingService.updateAdmin(id, dto);
+  update(@Param('id') id: string, @Body() dto: UpdateAdminBuildingDto, @Admin() admin: AdminAuthUser, @Req() request: Request) {
+    return this.buildingService.updateAdmin(id, dto, buildAuditContext(admin, request));
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.buildingService.removeAdmin(id);
+  remove(@Param('id') id: string, @Admin() admin: AdminAuthUser, @Req() request: Request) {
+    return this.buildingService.removeAdmin(id, buildAuditContext(admin, request));
   }
+}
+
+function buildAuditContext(admin: AdminAuthUser, request: Request) {
+  return {
+    admin,
+    ip: request.ip,
+    userAgent: request.headers['user-agent'] || null,
+  };
 }

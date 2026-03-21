@@ -1,0 +1,21 @@
+node:net:1912
+    const ex = new UVExceptionWithHostPort(err, 'listen', address, port);
+               ^
+
+Error: listen EADDRINUSE: address already in use :::3000
+    at Server.setupListenHandle [as _listen2] (node:net:1912:16)
+    at listenInCluster (node:net:1969:12)
+    at Server.listen (node:net:2074:7)
+    at ExpressAdapter.listen (E:\ai-work\project\sql\autonomy\backend\node_modules\.pnpm\@nestjs+platform-express@10_795a7c87fa3e5cd6ba081ef20e3755d8\node_modules\@nestjs\platform-express\adapters\express-adapter.js:95:32)
+    at E:\ai-work\project\sql\autonomy\backend\node_modules\.pnpm\@nestjs+core@10.4.22_@nestj_558ae3c7cf983d845eb445c3b6d17e96\node_modules\@nestjs\core\nest-application.js:183:30
+    at new Promise (<anonymous>)
+    at NestApplication.listen (E:\ai-work\project\sql\autonomy\backend\node_modules\.pnpm\@nestjs+core@10.4.22_@nestj_558ae3c7cf983d845eb445c3b6d17e96\node_modules\@nestjs\core\nest-application.js:173:16)
+    at async bootstrap (E:\ai-work\project\sql\autonomy\backend\src\main.ts:44:3) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 3000
+}
+
+Node.js v22.12.0

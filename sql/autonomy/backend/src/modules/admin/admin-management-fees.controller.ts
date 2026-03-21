@@ -1,5 +1,7 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import type { Request } from 'express';
+import { Admin } from '../../common/decorators/admin.decorator';
 import { AdminJwtAuthGuard } from '../../common/guards/admin-jwt-auth.guard';
 import { ManagementFeeService } from '../management-fee/management-fee.service';
 import {
@@ -8,6 +10,7 @@ import {
   ManagementFeePeriodQueryDto,
   UpdateManagementFeeStatusDto,
 } from '../management-fee/dto/management-fee.dto';
+import { AdminAuthUser } from './interfaces/admin-auth-user.interface';
 
 @ApiTags('admin-management-fees')
 @ApiBearerAuth()
@@ -22,8 +25,8 @@ export class AdminManagementFeesController {
   }
 
   @Post('periods')
-  createPeriod(@Body() dto: CreateManagementFeePeriodDto) {
-    return this.managementFeeService.createPeriod(dto);
+  createPeriod(@Body() dto: CreateManagementFeePeriodDto, @Admin() admin: AdminAuthUser, @Req() request: Request) {
+    return this.managementFeeService.createPeriod(dto, buildAuditContext(admin, request));
   }
 
   @Get('summary')
@@ -52,7 +55,20 @@ export class AdminManagementFeesController {
   }
 
   @Patch('houses/:id/status')
-  updateHouseStatus(@Param('id') id: string, @Body() dto: UpdateManagementFeeStatusDto) {
-    return this.managementFeeService.updateHousePaymentStatus(id, dto.paymentStatus);
+  updateHouseStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateManagementFeeStatusDto,
+    @Admin() admin: AdminAuthUser,
+    @Req() request: Request,
+  ) {
+    return this.managementFeeService.updateHousePaymentStatus(id, dto.paymentStatus, buildAuditContext(admin, request));
   }
+}
+
+function buildAuditContext(admin: AdminAuthUser, request: Request) {
+  return {
+    admin,
+    ip: request.ip,
+    userAgent: request.headers['user-agent'] || null,
+  };
 }
