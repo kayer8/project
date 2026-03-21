@@ -36,7 +36,7 @@ const submit = async () => {
     const result = await loginAdmin(form);
     userStore.setToken(result.accessToken);
     userStore.setName(result.admin.email);
-    router.push('/dashboard');
+    router.push('/votes/list');
   } finally {
     submitting.value = false;
   }

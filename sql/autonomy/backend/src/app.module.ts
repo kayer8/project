@@ -13,6 +13,7 @@ import { BuildingModule } from './modules/building/building.module';
 import { DisclosureModule } from './modules/disclosure/disclosure.module';
 import { AuditLogModule } from './modules/audit-log/audit-log.module';
 import { ManagementFeeModule } from './modules/management-fee/management-fee.module';
+import { VoteModule } from './modules/vote/vote.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { ManagementFeeModule } from './modules/management-fee/management-fee.mod
     DisclosureModule,
     AuditLogModule,
     ManagementFeeModule,
+    VoteModule,
     AdminModule,
   ],
 })

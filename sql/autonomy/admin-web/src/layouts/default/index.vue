@@ -63,9 +63,7 @@ import {
   CatalogIcon,
   ChartBarIcon,
   CheckCircleIcon,
-  FileIcon,
   HomeIcon,
-  NotificationIcon,
   SendIcon,
   SystemSettingIcon,
   UserListIcon,
@@ -76,11 +74,8 @@ import { flatMenuItems, menuGroups } from '@/config/menu';
 const route = useRoute();
 
 const iconMap = {
-  dashboard: ChartBarIcon,
   vote: CatalogIcon,
   'vote-result': CheckCircleIcon,
-  announcement: NotificationIcon,
-  category: FileIcon,
   disclosure: CatalogIcon,
   publish: SendIcon,
   'management-fee': ChartBarIcon,

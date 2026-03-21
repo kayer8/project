@@ -5,7 +5,8 @@ export type OperationResourceType =
   | 'BUILDING'
   | 'HOUSE'
   | 'MEMBER'
-  | 'USER';
+  | 'USER'
+  | 'VOTE';
 export type OperationAction = 'CREATE' | 'UPDATE' | 'PUBLISH' | 'DELETE' | 'STATUS_UPDATE';
 
 export interface OperationLogItem {
@@ -44,6 +45,7 @@ export const operationResourceTypeLabelMap: Record<OperationResourceType, string
   HOUSE: '房屋信息',
   MEMBER: '成员关系',
   USER: '用户信息',
+  VOTE: '投票管理',
 };
 
 export const operationActionLabelMap: Record<OperationAction, string> = {
@@ -71,6 +73,7 @@ export const operationResourceTypeOptions = [
   { label: operationResourceTypeLabelMap.HOUSE, value: 'HOUSE' },
   { label: operationResourceTypeLabelMap.MEMBER, value: 'MEMBER' },
   { label: operationResourceTypeLabelMap.USER, value: 'USER' },
+  { label: operationResourceTypeLabelMap.VOTE, value: 'VOTE' },
 ];
 
 export const operationActionOptions = [

@@ -19,6 +19,9 @@ import { ManagementFeeModule } from '../management-fee/management-fee.module';
 import { AdminManagementFeesController } from './admin-management-fees.controller';
 import { AdminDisclosureContentsController } from './admin-disclosure-contents.controller';
 import { AdminOperationLogsController } from './admin-operation-logs.controller';
+import { VoteModule } from '../vote/vote.module';
+import { AdminVotesController } from './admin-votes.controller';
+import { AdminOwnersController } from './admin-owners.controller';
 
 @Module({
   imports: [
@@ -41,6 +44,7 @@ import { AdminOperationLogsController } from './admin-operation-logs.controller'
     DisclosureModule,
     AuditLogModule,
     ManagementFeeModule,
+    VoteModule,
   ],
   controllers: [
     AdminAuthController,
@@ -51,6 +55,8 @@ import { AdminOperationLogsController } from './admin-operation-logs.controller'
     AdminDisclosureContentsController,
     AdminOperationLogsController,
     AdminManagementFeesController,
+    AdminVotesController,
+    AdminOwnersController,
   ],
   providers: [AdminAuthService, AdminJwtStrategy],
 })

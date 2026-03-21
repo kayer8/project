@@ -9,6 +9,7 @@ import {
   CreateAdminUserDto,
   UpdateAdminUserDto,
 } from './dto/user.dto';
+import { AdminOwnerListQueryDto } from './dto/owner.dto';
 
 const memberRelationLabelMap: Record<string, string> = {
   MAIN_OWNER: '主业主',
@@ -28,6 +29,18 @@ const householdGroupLabelMap: Record<string, string> = {
   OWNER_HOUSEHOLD: '业主住户组',
   TENANT_HOUSEHOLD: '租户住户组',
   CO_LIVING_HOUSEHOLD: '合住住户组',
+};
+
+const ownerAuthStatusLabelMap: Record<string, string> = {
+  VERIFIED: '已认证',
+  SUPPLEMENT_REQUIRED: '待补充材料',
+  INVALID: '已失效',
+};
+
+const voteQualificationLabelMap: Record<string, string> = {
+  QUALIFIED: '有资格',
+  NEEDS_AUTHORIZATION: '需授权',
+  UNQUALIFIED: '无资格',
 };
 
 @Injectable()
@@ -171,6 +184,96 @@ export class UserService {
 
     return {
       items: items.map((item) => this.mapUserListItem(item)),
+      total,
+      page,
+      pageSize,
+    };
+  }
+
+  async listOwnersAdmin(query: AdminOwnerListQueryDto) {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const andWhere: any[] = [
+      {
+        householdGroup: {
+          groupType: 'OWNER_HOUSEHOLD',
+          status: 'ACTIVE',
+        },
+      },
+    ];
+
+    if (query.keyword?.trim()) {
+      const keyword = query.keyword.trim();
+      andWhere.push({
+        OR: [
+          { user: { realName: { contains: keyword } } },
+          { user: { nickname: { contains: keyword } } },
+          { user: { mobile: { contains: keyword } } },
+          { house: { displayName: { contains: keyword } } },
+          { house: { building: { buildingName: { contains: keyword } } } },
+        ],
+      });
+    }
+
+    if (query.buildingId?.trim()) {
+      andWhere.push({
+        house: {
+          buildingId: query.buildingId.trim(),
+        },
+      });
+    }
+
+    const where = andWhere.length > 0 ? { AND: andWhere } : undefined;
+
+    const relations = await this.prisma.houseMemberRelation.findMany({
+      where,
+      orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+      include: {
+        user: {
+          include: {
+            identityApplications: {
+              orderBy: {
+                createdAt: 'desc',
+              },
+            },
+            registrationRequests: {
+              include: {
+                building: true,
+                house: true,
+              },
+              orderBy: {
+                createdAt: 'desc',
+              },
+              take: 1,
+            },
+          },
+        },
+        house: {
+          include: {
+            building: true,
+          },
+        },
+        householdGroup: true,
+      },
+    });
+
+    let items = relations.map((item) => this.mapOwnerListItem(item));
+
+    if (query.authStatus?.trim()) {
+      items = items.filter((item) => item.authStatus === query.authStatus?.trim());
+    }
+
+    if (query.voteQualification?.trim()) {
+      items = items.filter(
+        (item) => item.voteQualification === query.voteQualification?.trim(),
+      );
+    }
+
+    const total = items.length;
+    const start = (page - 1) * pageSize;
+
+    return {
+      items: items.slice(start, start + pageSize),
       total,
       page,
       pageSize,
@@ -431,5 +534,80 @@ export class UserService {
           }
         : null,
     };
+  }
+
+  private mapOwnerListItem(relation: any) {
+    const latestIdentityApplication =
+      relation.user.identityApplications.find((item: any) =>
+        ['OWNER_VERIFY', 'TENANT_VERIFY'].includes(item.applicationType),
+      ) ?? null;
+    const latestRegistrationRequest = relation.user.registrationRequests?.[0] ?? null;
+    const authStatus = this.resolveOwnerAuthStatus(
+      relation,
+      latestIdentityApplication,
+      latestRegistrationRequest,
+    );
+    const voteQualification = this.resolveVoteQualification(relation);
+
+    return {
+      id: relation.id,
+      userId: relation.userId,
+      name: relation.user.realName ?? relation.user.nickname ?? '未实名用户',
+      mobile: relation.user.mobile ?? '-',
+      houseId: relation.houseId,
+      house: relation.house.displayName,
+      buildingId: relation.house.buildingId,
+      buildingName: relation.house.building.buildingName,
+      identity: memberRelationLabelMap[relation.relationType] ?? relation.relationType,
+      authStatus,
+      authStatusLabel: ownerAuthStatusLabelMap[authStatus] ?? authStatus,
+      voteQualification,
+      voteQualificationLabel:
+        voteQualificationLabelMap[voteQualification] ?? voteQualification,
+      updatedAt: relation.updatedAt,
+    };
+  }
+
+  private resolveOwnerAuthStatus(
+    relation: any,
+    latestIdentityApplication: any,
+    latestRegistrationRequest: any,
+  ) {
+    if (latestIdentityApplication?.status === 'SUPPLEMENT_REQUIRED') {
+      return 'SUPPLEMENT_REQUIRED';
+    }
+
+    if (
+      ['REJECTED', 'WITHDRAWN'].includes(latestIdentityApplication?.status) ||
+      ['REJECTED', 'INACTIVE', 'EXPIRED', 'REMOVED'].includes(relation.status)
+    ) {
+      return 'INVALID';
+    }
+
+    if (relation.status === 'PENDING' || latestRegistrationRequest?.status === 'PENDING') {
+      return 'SUPPLEMENT_REQUIRED';
+    }
+
+    return 'VERIFIED';
+  }
+
+  private resolveVoteQualification(relation: any) {
+    if (relation.status !== 'ACTIVE') {
+      return 'UNQUALIFIED';
+    }
+
+    if (relation.relationType === 'MAIN_OWNER') {
+      return 'QUALIFIED';
+    }
+
+    if (
+      relation.canBeVoteDelegate ||
+      relation.canActAsAgent ||
+      ['FAMILY_MEMBER', 'AGENT'].includes(relation.relationType)
+    ) {
+      return 'NEEDS_AUTHORIZATION';
+    }
+
+    return 'UNQUALIFIED';
   }
 }

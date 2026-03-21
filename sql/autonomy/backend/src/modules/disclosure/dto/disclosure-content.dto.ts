@@ -25,6 +25,19 @@ export class AdminDisclosureContentListQueryDto extends PaginationDto {
   status?: string;
 }
 
+export class PublicDisclosureContentListQueryDto extends PaginationDto {
+  @ApiPropertyOptional({ description: '搜索标题、摘要、分类或正文' })
+  @IsOptional()
+  @IsString()
+  keyword?: string;
+
+  @ApiPropertyOptional({ description: '内容分类' })
+  @IsOptional()
+  @IsString()
+  @IsIn(DISCLOSURE_CONTENT_CATEGORIES)
+  category?: string;
+}
+
 export class CreateAdminDisclosureContentDto {
   @ApiProperty({ description: '标题' })
   @IsString()

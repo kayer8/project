@@ -10,6 +10,7 @@ const AUDIT_RESOURCE_TYPES = [
   'HOUSE',
   'MEMBER',
   'USER',
+  'VOTE',
 ] as const;
 const AUDIT_ACTIONS = ['CREATE', 'UPDATE', 'PUBLISH', 'DELETE', 'STATUS_UPDATE'] as const;
 

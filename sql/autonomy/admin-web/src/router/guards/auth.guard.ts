@@ -8,7 +8,7 @@ export function setupAuthGuard(router: Router) {
 
     if (to.path === '/login') {
       if (token) {
-        return '/dashboard';
+        return '/votes/list';
       }
       return true;
     }

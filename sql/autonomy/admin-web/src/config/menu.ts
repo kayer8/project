@@ -1,5 +1,4 @@
 export type AdminMenuIcon =
-  | 'dashboard'
   | 'vote'
   | 'vote-result'
   | 'disclosure'
@@ -25,17 +24,6 @@ export interface AdminMenuGroup {
 }
 
 export const menuGroups: AdminMenuGroup[] = [
-  {
-    title: '概览',
-    items: [
-      {
-        title: '数据总览',
-        path: '/dashboard',
-        matchPrefix: '/dashboard',
-        icon: 'dashboard',
-      },
-    ],
-  },
   {
     title: '投票管理',
     items: [

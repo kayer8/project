@@ -1,7 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router';
 import DefaultLayout from '@/layouts/default/index.vue';
 import BlankLayout from '@/layouts/blank/index.vue';
-import dashboardRoutes from './modules/dashboard';
 import voteRoutes from './modules/vote';
 import announcementRoutes from './modules/announcement';
 import disclosureRoutes from './modules/disclosure';
@@ -27,9 +26,8 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     component: DefaultLayout,
-    redirect: '/dashboard',
+    redirect: '/votes/list',
     children: [
-      ...dashboardRoutes,
       ...voteRoutes,
       ...announcementRoutes,
       ...disclosureRoutes,
@@ -42,7 +40,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/:pathMatch(.*)*',
-    redirect: '/dashboard',
+    redirect: '/votes/list',
   },
 ];
 

@@ -8,6 +8,7 @@ import { AdminAuditContext } from '../audit-log/audit-log.types';
 import {
   AdminDisclosureContentListQueryDto,
   CreateAdminDisclosureContentDto,
+  PublicDisclosureContentListQueryDto,
   UpdateAdminDisclosureContentDto,
 } from './dto/disclosure-content.dto';
 
@@ -61,9 +62,52 @@ export class DisclosureService {
     };
   }
 
+  async listPublic(query: PublicDisclosureContentListQueryDto) {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const skip = (page - 1) * pageSize;
+    const where = this.buildPublicWhere(query);
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.disclosureContent.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: [{ publishedAt: 'desc' }, { updatedAt: 'desc' }, { createdAt: 'desc' }],
+      }),
+      this.prisma.disclosureContent.count({ where }),
+    ]);
+
+    return {
+      items: items.map((item) => this.mapItem(item)),
+      total,
+      page,
+      pageSize,
+    };
+  }
+
   async getAdminDetail(id: string) {
     const content = await this.prisma.disclosureContent.findUnique({
       where: { id },
+    });
+
+    if (!content) {
+      throw new BusinessException(
+        AppErrorCode.DISCLOSURE_CONTENT_NOT_FOUND,
+        'Disclosure content not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    return this.mapItem(content);
+  }
+
+  async getPublicDetail(id: string) {
+    const content = await this.prisma.disclosureContent.findFirst({
+      where: {
+        id,
+        ...this.buildPublicVisibilityWhere(),
+      },
     });
 
     if (!content) {
@@ -202,6 +246,42 @@ export class DisclosureService {
       ...(dto.content !== undefined ? { content: dto.content.trim() } : {}),
       ...(dto.publishStartAt !== undefined ? { publishStartAt: dto.publishStartAt ? publishStartAt : null } : {}),
       ...(dto.publishEndAt !== undefined ? { publishEndAt: dto.publishEndAt ? publishEndAt : null } : {}),
+    };
+  }
+
+  private buildPublicWhere(query: PublicDisclosureContentListQueryDto): Prisma.DisclosureContentWhereInput {
+    const where: Prisma.DisclosureContentWhereInput = this.buildPublicVisibilityWhere();
+
+    if (query.keyword?.trim()) {
+      const keyword = query.keyword.trim();
+      where.OR = [
+        { title: { contains: keyword } },
+        { publisher: { contains: keyword } },
+        { summary: { contains: keyword } },
+        { category: { contains: keyword } },
+        { content: { contains: keyword } },
+      ];
+    }
+
+    if (query.category?.trim()) {
+      where.category = query.category.trim();
+    }
+
+    return where;
+  }
+
+  private buildPublicVisibilityWhere(): Prisma.DisclosureContentWhereInput {
+    const now = new Date();
+    return {
+      status: 'PUBLISHED',
+      AND: [
+        {
+          OR: [{ publishStartAt: null }, { publishStartAt: { lte: now } }],
+        },
+        {
+          OR: [{ publishEndAt: null }, { publishEndAt: { gte: now } }],
+        },
+      ],
     };
   }
 

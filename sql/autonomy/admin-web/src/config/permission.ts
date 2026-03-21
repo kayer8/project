@@ -1,1 +1,1 @@
-export const defaultPermissions = ['dashboard:view'];
+export const defaultPermissions: string[] = [];

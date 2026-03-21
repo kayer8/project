@@ -470,6 +470,52 @@ model VoteRepresentative {
   @@map("vote_representatives")
 }
 
+model Vote {
+  id               String   @id @default(uuid())
+  title            String   @db.VarChar(150)
+  type             String   @db.VarChar(30)
+  sponsor          String   @db.VarChar(100)
+  scope            String   @db.VarChar(100)
+  scopeType        String   @default("ALL") @map("scope_type") @db.VarChar(20)
+  scopeAudience    String   @default("OWNER") @map("scope_audience") @db.VarChar(20)
+  scopeBuildingId  String?  @map("scope_building_id") @db.VarChar(64)
+  scopeBuildingName String? @map("scope_building_name") @db.VarChar(100)
+  scopeBuildingIdsJson Json? @map("scope_building_ids_json")
+  scopeBuildingNamesJson Json? @map("scope_building_names_json")
+  description      String?  @db.Text
+  totalHouseholds  Int      @default(0) @map("total_households")
+  participantCount Int      @default(0) @map("participant_count")
+  passRate         Float    @default(0) @map("pass_rate")
+  result           String   @default("PENDING") @db.VarChar(20)
+  status           String   @default("DRAFT") @db.VarChar(20)
+  deadline         DateTime?
+  publishedAt      DateTime? @map("published_at")
+  endedAt          DateTime? @map("ended_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  options VoteOption[]
+
+  @@index([status, type])
+  @@index([deadline])
+  @@index([publishedAt])
+  @@index([endedAt])
+  @@map("votes")
+}
+
+model VoteOption {
+  id         String   @id @default(uuid())
+  voteId     String   @map("vote_id")
+  vote       Vote     @relation(fields: [voteId], references: [id], onDelete: Cascade)
+  optionText String   @map("option_text") @db.VarChar(150)
+  sortNo     Int      @default(1) @map("sort_no")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([voteId, sortNo])
+  @@map("vote_options")
+}
+
 model AuditLog {
   id           String         @id @default(uuid())
   actorType    AuditActorType @map("actor_type")
