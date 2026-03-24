@@ -55,16 +55,17 @@
   <view class="section card info-card disclosure-section-block">
     <view class="section-head disclosure-section-block__head">
       <view class="icon-title-row">
-        <view class="section-title">公开栏目</view>
+        <view class="section-title">常用工具</view>
       </view>
     </view>
 
     <view class="disclosure-section-grid">
       <view
         wx:for="{{sections}}"
-        wx:key="title"
+        wx:key="key"
         class="disclosure-section-grid__item"
         data-url="{{item.url}}"
+        data-requires-house="{{item.requiresHouse}}"
         bindtap="openSection"
       >
         <view
@@ -78,7 +79,17 @@
     </view>
   </view>
 
-  <view class="section section--fill card info-card disclosure-latest-block">
+  <view class="section card info-card vote-guide-card">
+    <view class="vote-guide-card__content">
+      <view class="vote-guide-card__eyebrow">投票提醒</view>
+      <view class="vote-guide-card__title">{{voteGuideCard.title}}</view>
+    </view>
+    <button class="vote-guide-card__button" bindtap="openVoteGuide">
+      {{voteGuideCard.buttonText}}
+    </button>
+  </view>
+
+  <view class="section  card info-card disclosure-latest-block">
     <view class="section-head">
       <view class="icon-title-row">
         <view class="section-title">最新公示</view>

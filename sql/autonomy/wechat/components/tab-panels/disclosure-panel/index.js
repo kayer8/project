@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const routes_1 = require("../../../constants/routes");
 const disclosure_1 = require("../../../services/disclosure");
+const vote_1 = require("../../../services/vote");
 const user_1 = require("../../../services/user");
 const session_1 = require("../../../services/session");
 const app_1 = require("../../../store/app");
@@ -15,32 +16,76 @@ const relationTypeLabelMap = {
 };
 const sections = [
     {
-        title: '通知公告',
+        key: 'vote',
+        title: '投票表决',
+        url: routes_1.ROUTES.voting.index,
+        icon: 'check-circle',
+        iconColor: '#2f6bff',
+        iconBackground: '#eaf1ff',
+        requiresHouse: true,
+    },
+    {
+        key: 'notice',
+        title: '公告通知',
         url: routes_1.ROUTES.disclosure.announcements,
         icon: 'notification',
         iconColor: '#2f6bff',
         iconBackground: '#eaf1ff',
+        requiresHouse: false,
     },
     {
+        key: 'financial',
         title: '财务公开',
         url: routes_1.ROUTES.disclosure.financial,
         icon: 'home',
         iconColor: '#1f9d55',
         iconBackground: '#e9f9ef',
+        requiresHouse: false,
     },
     {
+        key: 'management',
         title: '管理公开',
         url: routes_1.ROUTES.disclosure.management,
         icon: 'setting',
         iconColor: '#f08c00',
         iconBackground: '#fff4e5',
+        requiresHouse: false,
     },
     {
+        key: 'payment',
         title: '收费公开',
         url: routes_1.ROUTES.disclosure.payment,
         icon: 'time',
         iconColor: '#8b5cf6',
         iconBackground: '#f3edff',
+        requiresHouse: false,
+    },
+    {
+        key: 'repair',
+        title: '报修反馈',
+        url: routes_1.ROUTES.services.repair,
+        icon: 'tools',
+        iconColor: '#f08c00',
+        iconBackground: '#fff4e5',
+        requiresHouse: true,
+    },
+    {
+        key: 'access',
+        title: '门禁通行',
+        url: routes_1.ROUTES.services.access,
+        icon: 'secured',
+        iconColor: '#2f6bff',
+        iconBackground: '#eaf1ff',
+        requiresHouse: true,
+    },
+    {
+        key: 'visitor',
+        title: '访客登记',
+        url: routes_1.ROUTES.services.visitor,
+        icon: 'user-add',
+        iconColor: '#1f9d55',
+        iconBackground: '#e9f9ef',
+        requiresHouse: true,
     },
 ];
 function mapAnnouncement(item) {
@@ -48,6 +93,21 @@ function mapAnnouncement(item) {
         ...item,
         displayDate: (0, disclosure_1.formatDisclosureDate)((0, disclosure_1.getDisclosureDisplayDate)(item)),
     };
+}
+function createDefaultVoteGuideCard() {
+    return {
+        title: '当前暂无进行中的投票',
+        buttonText: '查看投票',
+    };
+}
+function createVoteGuideCard(count) {
+    if (count > 0) {
+        return {
+            title: `当前有${count}个投票进行中`,
+            buttonText: '去参与',
+        };
+    }
+    return createDefaultVoteGuideCard();
 }
 function createDefaultHomeProfileCard() {
     return {
@@ -95,12 +155,16 @@ Component({
     data: {
         sections,
         homeProfileCard: createDefaultHomeProfileCard(),
+        voteGuideCard: createDefaultVoteGuideCard(),
         latestAnnouncements: [],
+        hasBoundHouse: false,
+        loadingVoteGuide: false,
         loadingLatest: false,
     },
     lifetimes: {
         attached() {
             void this.loadHomeProfile();
+            void this.loadVoteGuide();
             void this.loadLatestAnnouncements();
         },
     },
@@ -111,18 +175,47 @@ Component({
                 if (!hasSession || !app_1.appStore.hasAccessToken()) {
                     this.setData({
                         homeProfileCard: createDefaultHomeProfileCard(),
+                        hasBoundHouse: false,
                     });
                     return;
                 }
                 const user = await (0, user_1.fetchCurrentUser)();
                 this.setData({
                     homeProfileCard: mapHomeProfileCard(user.currentHouseProfile),
+                    hasBoundHouse: Boolean(user.currentHouseProfile?.houseDisplayName),
                 });
             }
             catch (error) {
                 console.error('load current user profile failed', error);
                 this.setData({
                     homeProfileCard: createDefaultHomeProfileCard(),
+                    hasBoundHouse: false,
+                });
+            }
+        },
+        async loadVoteGuide() {
+            this.setData({
+                loadingVoteGuide: true,
+            });
+            try {
+                const result = await (0, vote_1.fetchVotes)({
+                    page: 1,
+                    pageSize: 1,
+                    status: 'ONGOING',
+                });
+                this.setData({
+                    voteGuideCard: createVoteGuideCard(result.total || 0),
+                });
+            }
+            catch (error) {
+                console.error('load vote guide failed', error);
+                this.setData({
+                    voteGuideCard: createDefaultVoteGuideCard(),
+                });
+            }
+            finally {
+                this.setData({
+                    loadingVoteGuide: false,
                 });
             }
         },
@@ -159,8 +252,15 @@ Component({
             (0, nav_1.navigateTo)(routes_1.ROUTES.disclosure.detail, { id });
         },
         openSection(event) {
-            const { url } = event.currentTarget.dataset;
+            const { url, requiresHouse } = event.currentTarget.dataset;
             if (!url) {
+                return;
+            }
+            if (requiresHouse && !this.data.hasBoundHouse) {
+                wx.showToast({
+                    title: '请先绑定房屋',
+                    icon: 'none',
+                });
                 return;
             }
             (0, nav_1.navigateTo)(url);
@@ -171,6 +271,9 @@ Component({
                 return;
             }
             (0, nav_1.navigateTo)(url);
+        },
+        openVoteGuide() {
+            (0, nav_1.navigateTo)(routes_1.ROUTES.voting.index);
         },
     },
 });

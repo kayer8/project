@@ -1,6 +1,6 @@
 <app-navbar title="我的" left-arrow="{{false}}" />
 
-<view class="profile-page">
+<view class="page-body">
   <view wx:if="{{checking}}" class="profile-section profile-card profile-card--loading">
     <view class="profile-loading__avatar"></view>
     <view class="profile-loading__content">
@@ -67,91 +67,7 @@
       </view>
     </view>
 
-    <view class="profile-section profile-card">
-      <view class="profile-section__head">
-        <view>
-          <view class="profile-section__title">快捷功能</view>
-          <view class="profile-section__desc">常用服务入口集中展示</view>
-        </view>
-      </view>
-
-      <view class="quick-grid">
-        <view
-          wx:for="{{quickActions}}"
-          wx:key="key"
-          class="quick-grid__item"
-          data-url="{{item.url}}"
-          data-requires-house="{{item.requiresHouse}}"
-          bindtap="handleQuickActionTap"
-        >
-          <view class="quick-grid__icon">
-            <t-icon name="{{item.icon}}" size="38rpx" class="profile-grid-icon" />
-          </view>
-          <text class="quick-grid__label">{{item.label}}</text>
-        </view>
-      </view>
-    </view>
-
-    <view class="profile-section profile-card">
-      <view class="profile-section__head">
-        <view>
-          <view class="profile-section__title">待办与消息</view>
-          <view class="profile-section__desc">优先处理需要你关注的事项</view>
-        </view>
-      </view>
-
-      <view class="todo-list">
-        <view
-          wx:for="{{todoItems}}"
-          wx:key="key"
-          class="todo-item"
-          data-url="{{item.url}}"
-          data-requires-house="{{item.requiresHouse}}"
-          bindtap="handleTodoTap"
-        >
-          <view class="todo-item__icon todo-item__icon--{{item.accent}}">
-            <t-icon name="{{item.icon}}" size="32rpx" class="profile-todo-icon" />
-          </view>
-          <view class="todo-item__content">
-            <view class="todo-item__row">
-              <text class="todo-item__title">{{item.title}}</text>
-              <text class="todo-item__badge todo-item__badge--{{item.accent}}">{{item.badge}}</text>
-            </view>
-            <text class="todo-item__note">{{item.note}}</text>
-          </view>
-        </view>
-      </view>
-    </view>
-
-    <view wx:if="{{!hasBoundHouse}}" class="profile-section profile-guide">
-      <view class="profile-section__head">
-        <view>
-          <view class="profile-section__title">绑定房屋后可使用全部功能</view>
-          <view class="profile-section__desc">完成认证后即可使用投票、门禁、公告等完整服务</view>
-        </view>
-      </view>
-
-      <view class="guide-steps">
-        <view wx:for="{{guideSteps}}" wx:key="key" class="guide-step">
-          <view class="guide-step__index">{{item.index}}</view>
-          <view class="guide-step__content">
-            <text class="guide-step__title">{{item.title}}</text>
-            <text class="guide-step__desc">{{item.desc}}</text>
-          </view>
-        </view>
-      </view>
-
-      <button class="guide-button" bindtap="goBindHouse">绑定房屋</button>
-    </view>
-
-    <view class="profile-section profile-card">
-      <view class="profile-section__head">
-        <view>
-          <view class="profile-section__title">个人功能</view>
-          <view class="profile-section__desc">查看记录、设置和联系入口</view>
-        </view>
-      </view>
-
+    <view class="profile-section profile-card profile-card--menu">
       <view class="menu-list">
         <view
           wx:for="{{personalMenus}}"
@@ -163,14 +79,10 @@
         >
           <view class="menu-item__left">
             <view class="menu-item__icon">
-              <t-icon name="{{item.icon}}" size="32rpx" class="profile-menu-icon" />
+              <t-icon name="{{item.icon}}" size="36rpx" class="profile-menu-icon" />
             </view>
-            <view class="menu-item__content">
-              <text class="menu-item__title">{{item.label}}</text>
-              <text class="menu-item__desc">{{item.desc}}</text>
-            </view>
+            <text class="menu-item__title">{{item.label}}</text>
           </view>
-          <t-icon name="chevron-right" size="28rpx" class="menu-item__arrow" />
         </view>
       </view>
     </view>

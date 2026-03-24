@@ -15,24 +15,6 @@ type ActionItem = {
   requiresHouse: boolean;
 };
 
-type TodoItem = {
-  key: string;
-  title: string;
-  note: string;
-  badge: string;
-  accent: 'blue' | 'orange' | 'green';
-  icon: string;
-  url: string;
-  requiresHouse: boolean;
-};
-
-type GuideStep = {
-  key: string;
-  index: number;
-  title: string;
-  desc: string;
-};
-
 type DisplayHouse = {
   id: string;
   label: string;
@@ -40,15 +22,6 @@ type DisplayHouse = {
   relationLabel: string;
   isCurrent: boolean;
 };
-
-const QUICK_ACTIONS: ActionItem[] = [
-  { key: 'vote', label: '投票表决', icon: 'check-circle', url: ROUTES.voting.index, requiresHouse: true },
-  { key: 'notice', label: '公告通知', icon: 'notification', url: ROUTES.disclosure.announcements, requiresHouse: false },
-  { key: 'repair', label: '报修反馈', icon: 'tools', url: ROUTES.services.repair, requiresHouse: true },
-  { key: 'fee', label: '费用公示', icon: 'chart-bar', url: ROUTES.disclosure.payment, requiresHouse: false },
-  { key: 'access', label: '门禁通行', icon: 'secured', url: ROUTES.services.access, requiresHouse: true },
-  { key: 'visitor', label: '访客登记', icon: 'user-add', url: ROUTES.services.visitor, requiresHouse: true },
-];
 
 const PERSONAL_MENUS: ActionItem[] = [
   {
@@ -91,12 +64,6 @@ const PERSONAL_MENUS: ActionItem[] = [
     url: ROUTES.services.contacts,
     requiresHouse: false,
   },
-];
-
-const GUIDE_STEPS: GuideStep[] = [
-  { key: 'phone', index: 1, title: '验证手机号', desc: '通过微信手机号快速匹配住户信息。' },
-  { key: 'house', index: 2, title: '选择房屋', desc: '确认楼栋、单元和房屋信息。' },
-  { key: 'verify', index: 3, title: '提交认证', desc: '提交后进入审核，完成后即可使用全部功能。' },
 ];
 
 function resolveErrorMessage(error: unknown) {
@@ -194,87 +161,6 @@ function buildHouseList(user: CurrentUserDetail | null) {
   return Array.from(deduped.values());
 }
 
-function buildTodoItems(user: CurrentUserDetail | null, hasBoundHouse: boolean, houseCount: number): TodoItem[] {
-  const verificationText = resolveVerificationText(user);
-  const voteCount = hasBoundHouse ? Math.max(1, Math.min(9, houseCount || 1)) : 0;
-  const noticeCount = hasBoundHouse ? 3 : 1;
-  const auditItem = (() => {
-    if (!hasBoundHouse) {
-      return {
-        key: 'audit',
-        title: '审核中状态',
-        note: '尚未绑定房屋，完成绑定后可开启全部自治功能。',
-        badge: '去绑定',
-        accent: 'orange' as const,
-        icon: 'user-time',
-        url: ROUTES.register,
-        requiresHouse: false,
-      };
-    }
-
-    if (user?.currentHouseProfile?.isVerified) {
-      return {
-        key: 'audit',
-        title: '审核中状态',
-        note: '房屋认证已通过，当前账号可正常使用全部自治服务。',
-        badge: '已认证',
-        accent: 'green' as const,
-        icon: 'user-checked',
-        url: ROUTES.profile.verification,
-        requiresHouse: true,
-      };
-    }
-
-    if (user?.latestRegistrationRequest?.status === 'PENDING') {
-      return {
-        key: 'audit',
-        title: '审核中状态',
-        note: '认证资料正在审核，请留意审核结果通知。',
-        badge: '审核中',
-        accent: 'orange' as const,
-        icon: 'user-time',
-        url: ROUTES.profile.verification,
-        requiresHouse: true,
-      };
-    }
-
-    return {
-      key: 'audit',
-      title: '审核中状态',
-      note: verificationText === '未通过' ? '认证未通过，请补充材料后重新提交。' : '已绑定房屋，继续完成实名认证流程。',
-      badge: verificationText === '未通过' ? '去处理' : '去认证',
-      accent: 'orange' as const,
-      icon: 'user-setting',
-      url: ROUTES.profile.verification,
-      requiresHouse: true,
-    };
-  })();
-
-  return [
-    {
-      key: 'vote',
-      title: '待参与投票',
-      note: hasBoundHouse ? `你有 ${voteCount} 项表决事项待处理。` : '绑定房屋后可接收业主投票任务。',
-      badge: hasBoundHouse ? `${voteCount}项` : '待开启',
-      accent: 'blue',
-      icon: 'check-circle',
-      url: ROUTES.voting.index,
-      requiresHouse: true,
-    },
-    {
-      key: 'notice',
-      title: '未读公告',
-      note: `当前有 ${noticeCount} 条社区公告与物业通知待查看。`,
-      badge: `${noticeCount}条`,
-      accent: 'blue',
-      icon: 'notification',
-      url: ROUTES.disclosure.announcements,
-      requiresHouse: false,
-    },
-    auditItem,
-  ];
-}
-
 Component({
   options: {
     addGlobalClass: true,
@@ -310,10 +196,7 @@ Component({
     activeHouseIndex: 0,
     activeHouseLabel: '未绑定房屋',
     houseMetaText: '绑定房屋后可使用全部功能',
-    quickActions: QUICK_ACTIONS,
     personalMenus: PERSONAL_MENUS,
-    guideSteps: GUIDE_STEPS,
-    todoItems: buildTodoItems(null, false, 0),
   },
 
   lifetimes: {
@@ -343,7 +226,7 @@ Component({
       const authStatusText = hasBoundHouse ? verificationText : '未认证';
       const houseMetaText = hasBoundHouse
         ? `已绑定 ${availableHouses.length} 套房屋，可切换查看当前房屋信息。`
-        : '暂未绑定房屋，完成绑定后可使用全部功能。';
+        : '暂未绑定房屋，可先添加房屋。';
 
       this.setData({
         checking: false,
@@ -362,7 +245,6 @@ Component({
         activeHouseIndex,
         activeHouseLabel: activeHouse?.label || '未绑定房屋',
         houseMetaText,
-        todoItems: buildTodoItems(currentUser, hasBoundHouse, availableHouses.length),
       });
     },
 
@@ -416,32 +298,6 @@ Component({
         this.syncProfileView(sessionUser, currentUser, true);
       } catch (error) {
         this.syncProfileView(cachedUser ?? null, null, Boolean(cachedUser), resolveErrorMessage(error));
-      }
-    },
-
-    handleQuickActionTap(event: WechatMiniprogram.BaseEvent) {
-      const { url, requiresHouse } = event.currentTarget.dataset as { url?: string; requiresHouse?: boolean };
-
-      if (requiresHouse && !this.data.hasBoundHouse) {
-        this.showBindToast();
-        return;
-      }
-
-      if (url) {
-        this.openRoute(url);
-      }
-    },
-
-    handleTodoTap(event: WechatMiniprogram.BaseEvent) {
-      const { url, requiresHouse } = event.currentTarget.dataset as { url?: string; requiresHouse?: boolean };
-
-      if (requiresHouse && !this.data.hasBoundHouse) {
-        this.goBindHouse();
-        return;
-      }
-
-      if (url) {
-        this.openRoute(url);
       }
     },
 

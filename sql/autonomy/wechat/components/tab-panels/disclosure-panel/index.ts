@@ -5,21 +5,29 @@ import {
   getDisclosureDisplayDate,
   PublicDisclosureContentItem,
 } from '../../../services/disclosure';
+import { fetchVotes } from '../../../services/vote';
 import { CurrentHouseProfile, fetchCurrentUser } from '../../../services/user';
 import { bootstrapWechatSession } from '../../../services/session';
 import { appStore } from '../../../store/app';
 import { navigateTo } from '../../../utils/nav';
 
 interface DisclosureSectionItem {
+  key: string;
   title: string;
   url: string;
   icon: string;
   iconColor: string;
   iconBackground: string;
+  requiresHouse: boolean;
 }
 
 interface LatestAnnouncementItem extends PublicDisclosureContentItem {
   displayDate: string;
+}
+
+interface VoteGuideCard {
+  title: string;
+  buttonText: string;
 }
 
 interface HomeProfileCardAction {
@@ -53,32 +61,76 @@ const relationTypeLabelMap: Record<string, string> = {
 
 const sections: DisclosureSectionItem[] = [
   {
-    title: '通知公告',
+    key: 'vote',
+    title: '投票表决',
+    url: ROUTES.voting.index,
+    icon: 'check-circle',
+    iconColor: '#2f6bff',
+    iconBackground: '#eaf1ff',
+    requiresHouse: true,
+  },
+  {
+    key: 'notice',
+    title: '公告通知',
     url: ROUTES.disclosure.announcements,
     icon: 'notification',
     iconColor: '#2f6bff',
     iconBackground: '#eaf1ff',
+    requiresHouse: false,
   },
   {
+    key: 'financial',
     title: '财务公开',
     url: ROUTES.disclosure.financial,
     icon: 'home',
     iconColor: '#1f9d55',
     iconBackground: '#e9f9ef',
+    requiresHouse: false,
   },
   {
+    key: 'management',
     title: '管理公开',
     url: ROUTES.disclosure.management,
     icon: 'setting',
     iconColor: '#f08c00',
     iconBackground: '#fff4e5',
+    requiresHouse: false,
   },
   {
+    key: 'payment',
     title: '收费公开',
     url: ROUTES.disclosure.payment,
     icon: 'time',
     iconColor: '#8b5cf6',
     iconBackground: '#f3edff',
+    requiresHouse: false,
+  },
+  {
+    key: 'repair',
+    title: '报修反馈',
+    url: ROUTES.services.repair,
+    icon: 'tools',
+    iconColor: '#f08c00',
+    iconBackground: '#fff4e5',
+    requiresHouse: true,
+  },
+  {
+    key: 'access',
+    title: '门禁通行',
+    url: ROUTES.services.access,
+    icon: 'secured',
+    iconColor: '#2f6bff',
+    iconBackground: '#eaf1ff',
+    requiresHouse: true,
+  },
+  {
+    key: 'visitor',
+    title: '访客登记',
+    url: ROUTES.services.visitor,
+    icon: 'user-add',
+    iconColor: '#1f9d55',
+    iconBackground: '#e9f9ef',
+    requiresHouse: true,
   },
 ];
 
@@ -87,6 +139,24 @@ function mapAnnouncement(item: PublicDisclosureContentItem): LatestAnnouncementI
     ...item,
     displayDate: formatDisclosureDate(getDisclosureDisplayDate(item)),
   };
+}
+
+function createDefaultVoteGuideCard(): VoteGuideCard {
+  return {
+    title: '当前暂无进行中的投票',
+    buttonText: '查看投票',
+  };
+}
+
+function createVoteGuideCard(count: number): VoteGuideCard {
+  if (count > 0) {
+    return {
+      title: `当前有${count}个投票进行中`,
+      buttonText: '去参与',
+    };
+  }
+
+  return createDefaultVoteGuideCard();
 }
 
 function createDefaultHomeProfileCard(): HomeProfileCard {
@@ -139,13 +209,17 @@ Component({
   data: {
     sections,
     homeProfileCard: createDefaultHomeProfileCard(),
+    voteGuideCard: createDefaultVoteGuideCard(),
     latestAnnouncements: [] as LatestAnnouncementItem[],
+    hasBoundHouse: false,
+    loadingVoteGuide: false,
     loadingLatest: false,
   },
 
   lifetimes: {
     attached() {
       void this.loadHomeProfile();
+      void this.loadVoteGuide();
       void this.loadLatestAnnouncements();
     },
   },
@@ -158,6 +232,7 @@ Component({
         if (!hasSession || !appStore.hasAccessToken()) {
           this.setData({
             homeProfileCard: createDefaultHomeProfileCard(),
+            hasBoundHouse: false,
           });
           return;
         }
@@ -166,11 +241,40 @@ Component({
 
         this.setData({
           homeProfileCard: mapHomeProfileCard(user.currentHouseProfile),
+          hasBoundHouse: Boolean(user.currentHouseProfile?.houseDisplayName),
         });
       } catch (error) {
         console.error('load current user profile failed', error);
         this.setData({
           homeProfileCard: createDefaultHomeProfileCard(),
+          hasBoundHouse: false,
+        });
+      }
+    },
+
+    async loadVoteGuide() {
+      this.setData({
+        loadingVoteGuide: true,
+      });
+
+      try {
+        const result = await fetchVotes({
+          page: 1,
+          pageSize: 1,
+          status: 'ONGOING',
+        });
+
+        this.setData({
+          voteGuideCard: createVoteGuideCard(result.total || 0),
+        });
+      } catch (error) {
+        console.error('load vote guide failed', error);
+        this.setData({
+          voteGuideCard: createDefaultVoteGuideCard(),
+        });
+      } finally {
+        this.setData({
+          loadingVoteGuide: false,
         });
       }
     },
@@ -212,9 +316,17 @@ Component({
     },
 
     openSection(event: WechatMiniprogram.BaseEvent) {
-      const { url } = event.currentTarget.dataset as { url?: string };
+      const { url, requiresHouse } = event.currentTarget.dataset as { url?: string; requiresHouse?: boolean };
 
       if (!url) {
+        return;
+      }
+
+      if (requiresHouse && !this.data.hasBoundHouse) {
+        wx.showToast({
+          title: '请先绑定房屋',
+          icon: 'none',
+        });
         return;
       }
 
@@ -229,6 +341,10 @@ Component({
       }
 
       navigateTo(url);
+    },
+
+    openVoteGuide() {
+      navigateTo(ROUTES.voting.index);
     },
   },
 });
