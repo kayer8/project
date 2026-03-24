@@ -21,6 +21,7 @@
       showLoading="{{true}}"
       isLoadMore="{{isLoadMore}}"
       finished="{{finished}}"
+      content-class="list-content"
       emptyDescription="{{errorMessage || '暂无管理公开内容'}}"
       bind:refresh="onListRefresh"
       bind:loadMore="onListLoadMore"

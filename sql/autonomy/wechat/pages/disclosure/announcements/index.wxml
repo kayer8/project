@@ -1,12 +1,12 @@
   <app-navbar title="通知公告" />
 
   <view class="page-body">
-    <view class="section notice-search">
+    <view class="section search-field">
       <t-input
-        t-class="toolbar-input notice-search__input"
-        t-class-input="toolbar-input__element notice-search__input-element"
-        t-class-prefix-icon="notice-search__icon"
-        t-class-clearable="notice-search__clear"
+        t-class="search-field__input"
+        t-class-input="search-field__input-element"
+        t-class-prefix-icon="search-field__icon"
+        t-class-clearable="search-field__clear"
         borderless="{{true}}"
         clearable="{{true}}"
         prefix-icon="search"
@@ -24,6 +24,7 @@
         showLoading="{{true}}"
         isLoadMore="{{isLoadMore}}"
         finished="{{finished}}"
+        content-class="list-content"
         emptyDescription="{{errorMessage || '没有找到相关公告'}}"
         bind:refresh="onListRefresh"
         bind:loadMore="onListLoadMore"

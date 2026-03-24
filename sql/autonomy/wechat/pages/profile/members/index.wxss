@@ -1,3 +1,11 @@
+.page-body {
+  padding: 24rpx 24rpx 48rpx;
+}
+
+.list-content {
+  padding-bottom: 24rpx;
+}
+
 .member-card + .member-card {
   margin-top: 20rpx;
 }

@@ -1,4 +1,4 @@
-  <app-navbar title="{{pageTitle}}" />
+  <app-navbar title="公告" />
 
   <view class="page-body">
     <view wx:if="{{loading}}" class="section">
@@ -6,11 +6,21 @@
     </view>
 
     <view wx:if="{{item}}" class="section notice-doc">
-      <view class="notice-doc__tags">
-        <t-tag theme="default" variant="light">{{item.category}}</t-tag>
+      <view class="notice-doc__title">{{item.title}}</view>
+
+      <view class="notice-doc__body">
+        <block wx:if="{{item.contentParagraphs.length}}">
+          <view
+            wx:for="{{item.contentParagraphs}}"
+            wx:for-item="paragraph"
+            wx:key="index"
+            class="notice-doc__paragraph"
+          >{{paragraph}}</view>
+        </block>
+        <view wx:else class="notice-doc__paragraph">{{item.contentText}}</view>
       </view>
 
-      <view class="notice-doc__title">{{item.title}}</view>
+      <view class="notice-doc__divider" />
 
       <view class="notice-doc__meta-grid">
         <view class="notice-doc__meta-item">
@@ -25,18 +35,6 @@
           <view class="notice-doc__meta-label">公开分类</view>
           <view class="notice-doc__meta-value">{{item.category}}</view>
         </view>
-      </view>
-
-      <view class="notice-doc__divider" />
-
-      <view wx:if="{{item.summary}}" class="notice-doc__body">
-        <view class="notice-doc__body-title">内容摘要</view>
-        <view class="detail-content">{{item.summary}}</view>
-      </view>
-
-      <view class="notice-doc__body">
-        <view class="notice-doc__body-title">正文内容</view>
-        <view class="detail-content">{{item.content}}</view>
       </view>
     </view>
 

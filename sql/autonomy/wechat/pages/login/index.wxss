@@ -1,3 +1,7 @@
+.page-body {
+  padding: 24rpx 24rpx 48rpx;
+}
+
 .login-retry {
   margin-top: 24rpx;
 }

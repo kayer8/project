@@ -5,12 +5,26 @@ import {
   PublicDisclosureContentItem,
 } from '../../../services/disclosure';
 
+function splitDisclosureParagraphs(content: string) {
+  return content
+    .split(/\n+/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+}
+
 Page({
   data: {
-    pageTitle: '公开详情',
     loading: false,
     errorMessage: '',
-    item: null as (PublicDisclosureContentItem & { displayDate: string }) | null,
+    item: null as
+      | (PublicDisclosureContentItem & {
+          displayDate: string;
+          summaryText: string;
+          contentText: string;
+          summaryParagraphs: string[];
+          contentParagraphs: string[];
+        })
+      | null,
   },
 
   onLoad(query: Record<string, string | undefined>) {
@@ -37,8 +51,11 @@ Page({
         item: {
           ...item,
           displayDate: formatDisclosureDate(getDisclosureDisplayDate(item)),
+          summaryText: item.summary || '',
+          contentText: item.content || '',
+          summaryParagraphs: splitDisclosureParagraphs(item.summary || ''),
+          contentParagraphs: splitDisclosureParagraphs(item.content || ''),
         },
-        pageTitle: item.title,
       });
     } catch (error) {
       console.error('load disclosure detail failed', error);

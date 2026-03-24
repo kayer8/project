@@ -12,13 +12,17 @@
       <t-icon name="home" size="40rpx" class="ui-icon ui-icon--primary" />
       <view class="section-title">选择小区</view>
     </view>
-    <view class="field-block">
+    <view class="field-block search-field">
       <text class="field-label">搜索小区</text>
       <t-input
-        t-class="td-input"
-        t-class-input="td-input__element"
+        t-class="search-field__input"
+        t-class-input="search-field__input-element"
+        t-class-prefix-icon="search-field__icon"
+        t-class-clearable="search-field__clear"
         borderless="{{true}}"
         clearable="{{true}}"
+        prefix-icon="search"
+        placeholder-style="color: #7a8594; font-size: 30rpx;"
         placeholder="请输入小区名称"
         value="{{keyword}}"
         bind:change="handleKeywordInput"
@@ -30,6 +34,7 @@
       showLoading="{{true}}"
       isLoadMore="{{isLoadMore}}"
       finished="{{finished}}"
+      content-class="list-content"
       emptyDescription="暂无匹配小区"
       bind:refresh="onListRefresh"
       bind:loadMore="onListLoadMore"

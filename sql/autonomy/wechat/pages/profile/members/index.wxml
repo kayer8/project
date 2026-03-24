@@ -20,6 +20,7 @@
       showLoading="{{true}}"
       isLoadMore="{{isLoadMore}}"
       finished="{{finished}}"
+      content-class="list-content"
       bind:refresh="onListRefresh"
       bind:loadMore="onListLoadMore"
     >

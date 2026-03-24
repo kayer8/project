@@ -1,9 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const disclosure_1 = require("../../../services/disclosure");
+function splitDisclosureParagraphs(content) {
+    return content
+        .split(/\n+/)
+        .map((paragraph) => paragraph.trim())
+        .filter(Boolean);
+}
 Page({
     data: {
-        pageTitle: '公开详情',
         loading: false,
         errorMessage: '',
         item: null,
@@ -28,8 +33,11 @@ Page({
                 item: {
                     ...item,
                     displayDate: (0, disclosure_1.formatDisclosureDate)((0, disclosure_1.getDisclosureDisplayDate)(item)),
+                    summaryText: item.summary || '',
+                    contentText: item.content || '',
+                    summaryParagraphs: splitDisclosureParagraphs(item.summary || ''),
+                    contentParagraphs: splitDisclosureParagraphs(item.content || ''),
                 },
-                pageTitle: item.title,
             });
         }
         catch (error) {

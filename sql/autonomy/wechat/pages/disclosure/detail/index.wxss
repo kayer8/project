@@ -1,60 +1,71 @@
+.page-body {
+  padding: 0rpx 32rpx 56rpx;
+  background: #f6f7f9;
+}
+
 .notice-doc {
-  padding: 40rpx 36rpx 48rpx;
-  background: #ffffff;
-  border-radius: 24rpx;
+  padding: 8rpx 0 0;
+  background: transparent;
 }
 
 .notice-doc__tags {
   display: flex;
   align-items: center;
   gap: 12rpx;
+  margin-top: 16rpx;
 }
 
 .notice-doc__title {
-  margin-top: 24rpx;
-  font-size: 44rpx;
-  line-height: 1.45;
+  font-size: 36rpx;
+  line-height: 1.5;
   font-weight: 700;
   color: #1f2d3d;
+  letter-spacing: 1rpx;
+}
+
+.notice-doc__tag {
+  font-size: 20rpx;
+  line-height: 1.2;
+  color: #7b8794;
 }
 
 .notice-doc__meta-grid {
-  display: flex;
-  flex-wrap: wrap;
-  margin-top: 28rpx;
-  gap: 20rpx 24rpx;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 0;
+  gap: 24rpx 32rpx;
 }
 
 .notice-doc__meta-item {
-  width: calc(50% - 12rpx);
   min-width: 0;
 }
 
 .notice-doc__meta-label {
   font-size: 22rpx;
   line-height: 1.5;
-  color: #8b95a1;
+  color: #98a2b3;
 }
 
 .notice-doc__meta-value {
-  margin-top: 6rpx;
-  font-size: 26rpx;
+  margin-top: 8rpx;
+  font-size: 25rpx;
   line-height: 1.6;
-  color: #2f3a47;
+  color: #344054;
   word-break: break-all;
-}
-
-.notice-doc__meta-item--minor .notice-doc__meta-value {
-  color: #8b95a1;
 }
 
 .notice-doc__divider {
   height: 2rpx;
-  margin: 32rpx 0;
-  background: #e7ebf0;
+  margin: 36rpx 0 40rpx;
+  background: #e4e7ec;
 }
 
-.notice-doc__body-title {
+.notice-doc__summary {
+  padding: 0 0 0 24rpx;
+  border-left: 4rpx solid #cfd8e3;
+}
+
+.notice-doc__summary-title {
   font-size: 24rpx;
   line-height: 1.5;
   font-weight: 600;
@@ -62,10 +73,28 @@
   letter-spacing: 2rpx;
 }
 
-.detail-content {
-  margin-top: 24rpx;
+.notice-doc__summary-body {
+  margin-top: 16rpx;
+}
+
+.notice-doc__summary-paragraph,
+.notice-doc__paragraph {
   font-size: 30rpx;
-  line-height: 1.8;
+  line-height: 1.75;
   color: #1f2d3d;
   white-space: pre-wrap;
+  text-indent: 2em;
+}
+
+.notice-doc__summary-paragraph + .notice-doc__summary-paragraph,
+.notice-doc__paragraph + .notice-doc__paragraph {
+  margin-top: 12rpx;
+}
+
+.notice-doc__body {
+  margin-top: 20rpx;
+}
+
+.notice-doc__paragraph {
+  color: #2f3a47;
 }

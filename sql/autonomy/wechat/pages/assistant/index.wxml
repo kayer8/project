@@ -20,6 +20,7 @@
       showLoading="{{false}}"
       isLoadMore="{{isLoadMore}}"
       finished="{{finished}}"
+      content-class="list-content"
       emptyDescription="暂无推荐问题"
       bind:refresh="onListRefresh"
       bind:loadMore="onListLoadMore"

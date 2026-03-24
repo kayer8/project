@@ -388,6 +388,109 @@ export class ManagementFeeService {
     };
   }
 
+  async getDisclosureTree(query: ManagementFeePeriodQueryDto) {
+    const listedPeriods: Array<{
+      periodKey: string;
+      periodMonth: string | null;
+      chargeStartDate: string | null;
+      chargeEndDate: string | null;
+      dueDate: string | null;
+      pricingMode: PricingMode;
+      unitPrice: number | null;
+      baseAmount: number;
+      defaultArea: number;
+      houseCount: number;
+      paidHouseholds: number;
+      unpaidHouseholds: number;
+    }> = (await this.listPeriods()).map((item) => ({
+      periodKey: item.periodKey,
+      periodMonth: item.periodMonth ?? null,
+      chargeStartDate: item.chargeStartDate ?? null,
+      chargeEndDate: item.chargeEndDate ?? null,
+      dueDate: item.dueDate ?? null,
+      pricingMode: item.pricingMode as PricingMode,
+      unitPrice: item.unitPrice ?? null,
+      baseAmount: item.baseAmount,
+      defaultArea: item.defaultArea,
+      houseCount: item.houseCount,
+      paidHouseholds: item.paidHouseholds,
+      unpaidHouseholds: item.unpaidHouseholds,
+    }));
+    let matchedPeriods = listedPeriods;
+
+    if (query.periodKey?.trim()) {
+      matchedPeriods = matchedPeriods.filter((item) => item.periodKey === query.periodKey?.trim());
+    }
+
+    if (query.periodMonth?.trim()) {
+      matchedPeriods = matchedPeriods.filter((item) => item.periodMonth === query.periodMonth?.trim());
+    }
+
+    if (!matchedPeriods.length && (query.periodKey?.trim() || query.periodMonth?.trim())) {
+      const resolved = await this.resolvePeriod(query);
+      matchedPeriods = [
+        {
+          periodKey: resolved.periodKey,
+          periodMonth: resolved.periodMonth ?? null,
+          chargeStartDate: resolved.chargeStartDate ? resolved.chargeStartDate.toISOString() : null,
+          chargeEndDate: resolved.chargeEndDate ? resolved.chargeEndDate.toISOString() : null,
+          dueDate: resolved.dueDate ? resolved.dueDate.toISOString() : null,
+          pricingMode: resolved.pricingMode,
+          unitPrice: resolved.unitPrice,
+          baseAmount: resolved.baseAmount,
+          defaultArea: resolved.defaultArea,
+          houseCount: 0,
+          paidHouseholds: 0,
+          unpaidHouseholds: 0,
+        },
+      ];
+    }
+
+    const periods = [];
+
+    for (const item of matchedPeriods) {
+      const period = await this.resolvePeriod({ periodKey: item.periodKey });
+      const records = await this.loadHouseRecords(period);
+      const summary = this.buildSummary(records, period);
+      const buildings = this.buildDisclosureBuildings(records);
+
+      periods.push({
+        periodKey: period.periodKey,
+        periodMonth: period.periodMonth,
+        title: `${this.getRangeLabel(period.chargeStartDate, period.chargeEndDate, period.periodMonth)} 绠＄悊璐圭即绾冲叕寮€`,
+        rangeLabel: this.getRangeLabel(period.chargeStartDate, period.chargeEndDate, period.periodMonth),
+        chargeStartDate: period.chargeStartDate ? period.chargeStartDate.toISOString() : null,
+        chargeEndDate: period.chargeEndDate ? period.chargeEndDate.toISOString() : null,
+        dueDate: period.dueDate ? period.dueDate.toISOString() : null,
+        buildingCount: buildings.length,
+        summary: {
+          ...summary,
+          unpaidHouseholds: Math.max(summary.houseCount - summary.paidHouseholds, 0),
+        },
+        buildings,
+      });
+    }
+
+    const summary = this.buildDisclosureTreeSummary(periods);
+    const buildingOptions = Array.from(
+      new Map(
+        periods
+          .flatMap((item) => item.buildings)
+          .map((item) => [item.buildingId, { buildingId: item.buildingId, buildingName: item.buildingName }]),
+      ).values(),
+    ).sort((a, b) => a.buildingName.localeCompare(b.buildingName, 'zh-CN'));
+
+    return {
+      title: '鏀惰垂鍏紑',
+      publisher: '鐗╀笟璐㈠姟涓庝俊鎭叕寮€缁?',
+      note: '褰撳墠鍏紑鏁版嵁鎸夎处鏈熴€佹ゼ鏍嬩笌鎴垮眿缁撴瀯灞曠ず锛岀敤浜庡叕绀鸿处鍗曟墽琛屼笌缂寸撼鎯呭喌銆?',
+      summary,
+      buildingOptions,
+      periods,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
   async listBuildingOptions(query?: ManagementFeePeriodQueryDto) {
     const period = await this.resolvePeriod(query);
 
@@ -588,6 +691,147 @@ export class ManagementFeeService {
       paidHouseholds,
       partialHouseholds,
       overdueHouseholds,
+    };
+  }
+
+  private buildDisclosureBuildings(records: ManagementFeeHouseRecord[]) {
+    const buildingMap = new Map<
+      string,
+      {
+        buildingId: string;
+        buildingName: string;
+        houseCount: number;
+        receivableAmount: number;
+        paidAmount: number;
+        outstandingAmount: number;
+        paidHouseholds: number;
+        partialHouseholds: number;
+        overdueHouseholds: number;
+        houses: Array<{
+          id: string;
+          houseId: string;
+          displayName: string;
+          unitNo: string;
+          roomNo: string;
+          grossArea: number;
+          receivableAmount: number;
+          paidAmount: number;
+          outstandingAmount: number;
+          paymentRate: number;
+          paymentStatus: PaymentStatus;
+          paymentStatusLabel: string;
+          lastPaidAt: string | null;
+        }>;
+      }
+    >();
+
+    for (const item of records) {
+      const current =
+        buildingMap.get(item.buildingId) ??
+        {
+          buildingId: item.buildingId,
+          buildingName: item.buildingName,
+          houseCount: 0,
+          receivableAmount: 0,
+          paidAmount: 0,
+          outstandingAmount: 0,
+          paidHouseholds: 0,
+          partialHouseholds: 0,
+          overdueHouseholds: 0,
+          houses: [],
+        };
+
+      current.houseCount += 1;
+      current.receivableAmount += item.receivableAmount;
+      current.paidAmount += item.paidAmount;
+      current.outstandingAmount += item.outstandingAmount;
+
+      if (item.paymentStatus === 'PAID') {
+        current.paidHouseholds += 1;
+      } else if (item.paymentStatus === 'PARTIAL') {
+        current.partialHouseholds += 1;
+      } else if (item.paymentStatus === 'OVERDUE') {
+        current.overdueHouseholds += 1;
+      }
+
+      current.houses.push({
+        id: item.id,
+        houseId: item.houseId,
+        displayName: item.displayName,
+        unitNo: item.unitNo,
+        roomNo: item.roomNo,
+        grossArea: item.grossArea,
+        receivableAmount: item.receivableAmount,
+        paidAmount: item.paidAmount,
+        outstandingAmount: item.outstandingAmount,
+        paymentRate: item.paymentRate,
+        paymentStatus: item.paymentStatus,
+        paymentStatusLabel: PAYMENT_STATUS_LABEL_MAP[item.paymentStatus],
+        lastPaidAt: item.lastPaidAt,
+      });
+
+      buildingMap.set(item.buildingId, current);
+    }
+
+    return Array.from(buildingMap.values())
+      .map((item) => ({
+        ...item,
+        receivableAmount: this.round(item.receivableAmount),
+        paidAmount: this.round(item.paidAmount),
+        outstandingAmount: this.round(item.outstandingAmount),
+        unpaidHouseholds: Math.max(item.houseCount - item.paidHouseholds, 0),
+        paymentRate: item.receivableAmount > 0 ? this.round((item.paidAmount / item.receivableAmount) * 100) : 0,
+      }))
+      .sort((a, b) => a.buildingName.localeCompare(b.buildingName, 'zh-CN'));
+  }
+
+  private buildDisclosureTreeSummary(
+    periods: Array<{
+      summary: {
+        houseCount: number;
+        receivableAmount: number;
+        paidAmount: number;
+        outstandingAmount: number;
+        paidHouseholds: number;
+        partialHouseholds: number;
+        overdueHouseholds: number;
+      };
+    }>,
+  ) {
+    const aggregated = periods.reduce(
+      (result, item) => {
+        result.periodCount += 1;
+        result.houseCount += item.summary.houseCount;
+        result.receivableAmount += item.summary.receivableAmount;
+        result.paidAmount += item.summary.paidAmount;
+        result.outstandingAmount += item.summary.outstandingAmount;
+        result.paidHouseholds += item.summary.paidHouseholds;
+        result.partialHouseholds += item.summary.partialHouseholds;
+        result.overdueHouseholds += item.summary.overdueHouseholds;
+        return result;
+      },
+      {
+        periodCount: 0,
+        houseCount: 0,
+        receivableAmount: 0,
+        paidAmount: 0,
+        outstandingAmount: 0,
+        paidHouseholds: 0,
+        partialHouseholds: 0,
+        overdueHouseholds: 0,
+      },
+    );
+
+    return {
+      ...aggregated,
+      receivableAmount: this.round(aggregated.receivableAmount),
+      paidAmount: this.round(aggregated.paidAmount),
+      outstandingAmount: this.round(aggregated.outstandingAmount),
+      unpaidHouseholds: Math.max(aggregated.houseCount - aggregated.paidHouseholds, 0),
+      paymentRate:
+        aggregated.receivableAmount > 0
+          ? this.round((aggregated.paidAmount / aggregated.receivableAmount) * 100)
+          : 0,
     };
   }
 

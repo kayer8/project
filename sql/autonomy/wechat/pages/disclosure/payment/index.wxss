@@ -1,3 +1,370 @@
-.payment-card + .payment-card {
+.page-body {
+  min-height: 100vh;
+  padding-bottom: 48rpx;
+  background: #f5f7fa;
+}
+
+.payment-list-content {
+  padding: 0 32rpx 32rpx;
+}
+
+.payment-hero,
+.payment-overview,
+.payment-filters,
+.payment-period {
+  background: #ffffff;
+}
+
+.payment-hero {
+  padding: 32rpx;
+  border-bottom: 2rpx solid #e7edf3;
+}
+
+.payment-hero__eyebrow {
+  font-size: 24rpx;
+  font-weight: 600;
+  line-height: 36rpx;
+  letter-spacing: 4rpx;
+  color: #7b8795;
+}
+
+.payment-hero__title {
+  margin-top: 12rpx;
+  font-size: 42rpx;
+  font-weight: 700;
+  line-height: 58rpx;
+  color: #1f2937;
+}
+
+.payment-hero__desc {
   margin-top: 16rpx;
+  font-size: 28rpx;
+  line-height: 44rpx;
+  color: #526273;
+}
+
+.payment-hero__meta {
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  line-height: 36rpx;
+  color: #8b97a6;
+}
+
+.payment-overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-bottom: 2rpx solid #e7edf3;
+}
+
+.payment-overview__item {
+  min-width: 0;
+  padding: 28rpx 24rpx;
+  border-right: 2rpx solid #eef2f6;
+  border-bottom: 2rpx solid #eef2f6;
+}
+
+.payment-overview__item:nth-child(3n) {
+  border-right: 0;
+}
+
+.payment-overview__item:nth-last-child(-n + 3) {
+  border-bottom: 0;
+}
+
+.payment-overview__label {
+  font-size: 24rpx;
+  line-height: 36rpx;
+  color: #7b8795;
+}
+
+.payment-overview__value {
+  margin-top: 10rpx;
+  font-size: 34rpx;
+  font-weight: 700;
+  line-height: 46rpx;
+  color: #1e3a5f;
+}
+
+.payment-overview__meta {
+  margin-top: 10rpx;
+  font-size: 28rpx;
+  line-height: 40rpx;
+  color: #1f2937;
+}
+
+.payment-filters {
+  padding: 32rpx;
+  border-bottom: 2rpx solid #e7edf3;
+}
+
+.payment-filters__row {
+  display: flex;
+  gap: 20rpx;
+}
+
+.payment-filter {
+  flex: 1;
+  min-width: 0;
+}
+
+.payment-filter__field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 92rpx;
+  padding: 0 24rpx;
+  border: 2rpx solid #dbe4ec;
+  border-radius: 24rpx;
+  background: #ffffff;
+}
+
+.payment-filter__content {
+  min-width: 0;
+  flex: 1;
+}
+
+.payment-filter__label {
+  font-size: 22rpx;
+  line-height: 32rpx;
+  color: #8a96a3;
+}
+
+.payment-filter__value {
+  margin-top: 6rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 28rpx;
+  line-height: 40rpx;
+  color: #1f2937;
+}
+
+.payment-filter__arrow {
+  width: 14rpx;
+  height: 14rpx;
+  margin-left: 16rpx;
+  border-right: 2rpx solid #8a96a3;
+  border-bottom: 2rpx solid #8a96a3;
+  transform: rotate(45deg);
+}
+
+.payment-search {
+  margin-top: 24rpx;
+}
+
+.payment-periods {
+  margin-top: 24rpx;
+}
+
+.payment-period {
+  overflow: hidden;
+  border: 2rpx solid #e3eaf1;
+}
+
+.payment-period + .payment-period {
+  margin-top: 24rpx;
+}
+
+.payment-period__head,
+.payment-building__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.payment-period__head {
+  padding: 28rpx 32rpx 24rpx;
+}
+
+.payment-period__title-wrap,
+.payment-building__title-wrap {
+  min-width: 0;
+  flex: 1;
+}
+
+.payment-period__title {
+  font-size: 34rpx;
+  font-weight: 700;
+  line-height: 48rpx;
+  color: #1f2937;
+}
+
+.payment-period__subtitle,
+.payment-building__subtitle {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  line-height: 36rpx;
+  color: #8894a3;
+}
+
+.payment-period__arrow,
+.payment-building__arrow {
+  width: 16rpx;
+  height: 16rpx;
+  border-right: 3rpx solid #728196;
+  border-bottom: 3rpx solid #728196;
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+}
+
+.payment-period__arrow.is-open,
+.payment-building__arrow.is-open {
+  transform: rotate(225deg);
+}
+
+.payment-period__summary,
+.payment-building__summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20rpx 24rpx;
+  padding: 0 32rpx 28rpx;
+}
+
+.payment-period__metric,
+.payment-building__metric {
+  min-width: 0;
+}
+
+.payment-period__metric-label,
+.payment-building__metric-label {
+  font-size: 22rpx;
+  line-height: 32rpx;
+  color: #8a96a3;
+}
+
+.payment-period__metric-value,
+.payment-building__metric-value {
+  margin-top: 8rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 42rpx;
+  color: #1f2937;
+}
+
+.payment-period__metric-meta,
+.payment-building__metric-meta {
+  margin-top: 8rpx;
+  font-size: 28rpx;
+  line-height: 40rpx;
+  color: #415a77;
+}
+
+.payment-period__metric--minor .payment-period__metric-meta,
+.payment-building__metric--minor .payment-building__metric-meta {
+  color: #5d6d81;
+}
+
+.payment-building-list {
+  border-top: 2rpx solid #edf2f6;
+}
+
+.payment-building {
+  background: #fbfcfd;
+}
+
+.payment-building + .payment-building {
+  border-top: 2rpx solid #edf2f6;
+}
+
+.payment-building__head {
+  padding: 24rpx 32rpx 20rpx;
+}
+
+.payment-building__title {
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 42rpx;
+  color: #24364d;
+}
+
+.payment-building__summary {
+  padding-top: 0;
+}
+
+.payment-house-list {
+  border-top: 2rpx solid #e8eef4;
+  background: #ffffff;
+}
+
+.payment-house {
+  padding: 24rpx 32rpx;
+}
+
+.payment-house + .payment-house {
+  border-top: 2rpx solid #eef3f7;
+}
+
+.payment-house__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.payment-house__title {
+  min-width: 0;
+  flex: 1;
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 42rpx;
+  color: #1f2937;
+}
+
+.payment-house__status {
+  border-radius: 999rpx !important;
+  padding: 0 18rpx !important;
+  font-size: 22rpx !important;
+  font-weight: 600 !important;
+  line-height: 40rpx !important;
+}
+
+.payment-house__status--paid {
+  color: #2c6a52 !important;
+  background: #e9f6ef !important;
+}
+
+.payment-house__status--partial {
+  color: #9a5f17 !important;
+  background: #fff3e2 !important;
+}
+
+.payment-house__status--unpaid {
+  color: #8b4a4a !important;
+  background: #f8ecec !important;
+}
+
+.payment-house__meta {
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 36rpx;
+  color: #7b8795;
+}
+
+.payment-house__finance {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20rpx;
+  margin-top: 18rpx;
+}
+
+.payment-house__finance-item {
+  min-width: 0;
+}
+
+.payment-house__finance-label {
+  font-size: 22rpx;
+  line-height: 32rpx;
+  color: #8a96a3;
+}
+
+.payment-house__finance-value {
+  margin-top: 8rpx;
+  font-size: 26rpx;
+  line-height: 38rpx;
+  color: #24364d;
+}
+
+.payment-house__finance-value--muted {
+  color: #66758a;
 }

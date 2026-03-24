@@ -1,3 +1,7 @@
+.page-body {
+  padding: 24rpx 24rpx 48rpx;
+}
+
 .verification-status {
   margin-bottom: 8rpx;
 }

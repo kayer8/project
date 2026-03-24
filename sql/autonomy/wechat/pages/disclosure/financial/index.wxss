@@ -1,3 +1,11 @@
+.page-body {
+  padding: 24rpx 24rpx 48rpx;
+}
+
+.list-content {
+  padding-bottom: 24rpx;
+}
+
 .financial-card + .financial-card {
   margin-top: 16rpx;
 }

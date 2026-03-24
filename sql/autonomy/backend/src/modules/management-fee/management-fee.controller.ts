@@ -12,4 +12,9 @@ export class ManagementFeeController {
   disclosure(@Query() query: ManagementFeePeriodQueryDto) {
     return this.managementFeeService.getDisclosure(query);
   }
+
+  @Get('disclosure-tree')
+  disclosureTree(@Query() query: ManagementFeePeriodQueryDto) {
+    return this.managementFeeService.getDisclosureTree(query);
+  }
 }

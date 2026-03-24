@@ -19,7 +19,6 @@ t-date-time-picker {
 }
 
 .page-body {
-  padding: 24rpx 24rpx 48rpx;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
@@ -276,10 +275,6 @@ t-date-time-picker {
   border: 1px solid #e8edf3;
   box-shadow: none;
 }
-.list-content{
-  padding: 0 24rpx;
-}
-
 .record-card + .record-card {
   margin-top: 16rpx;
 }
@@ -387,6 +382,44 @@ t-date-time-picker {
   display: flex;
   gap: 16rpx;
   align-items: center;
+}
+
+.search-field {
+  padding: 0;
+  --td-input-vertical-padding: 20rpx;
+}
+
+.search-field__input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  border-radius: 16rpx;
+  background: #ffffff;
+  border: 2rpx solid #e5e9f0;
+  overflow: hidden;
+}
+
+.search-field__input-element {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 92rpx;
+  padding: 0 32rpx 0 0;
+  font-size: 30rpx;
+  line-height: 1.5;
+  color: #1f2329;
+  background: transparent;
+}
+
+.search-field__icon {
+  margin-left: 16rpx;
+  color: #6f8fbe;
+  font-size: 34rpx;
+}
+
+.search-field__clear {
+  margin-right: 24rpx;
+  color: #90a1b5;
 }
 
 .toolbar-input,

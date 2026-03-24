@@ -1,3 +1,11 @@
 page {
   background: #edf2f7;
 }
+
+.page-body {
+  padding: 24rpx 24rpx 48rpx;
+}
+
+.list-content {
+  padding-bottom: 24rpx;
+}
