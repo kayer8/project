@@ -1,6 +1,6 @@
 import { ROUTES } from '../../../constants/routes';
-import { verificationRecord } from '../../../mock/community';
-import { loginWithWechat, getWechatLoginCode } from '../../../services/auth';
+import { bootstrapWechatSession } from '../../../services/session';
+import { CurrentUserDetail, fetchCurrentUser } from '../../../services/user';
 import { appStore } from '../../../store/app';
 import { navigateTo } from '../../../utils/nav';
 
@@ -12,9 +12,26 @@ function resolveErrorMessage(error: unknown) {
   return '状态获取失败，请稍后重试';
 }
 
+function resolveVerificationText(user: CurrentUserDetail | null) {
+  if (user?.currentHouseProfile?.isVerified) {
+    return '已通过';
+  }
+
+  if (user?.latestRegistrationRequest?.status === 'PENDING') {
+    return '审核中';
+  }
+
+  if (user?.residentStatus === 'REJECTED') {
+    return '未通过';
+  }
+
+  return '待提交';
+}
+
 Component({
   options: {
     addGlobalClass: true,
+    virtualHost:true
   },
 
   properties: {
@@ -34,7 +51,8 @@ Component({
     hasAccount: false,
     errorMessage: '',
     sessionUser: null as ReturnType<typeof appStore.getSessionUser>,
-    verification: verificationRecord,
+    currentUser: null as CurrentUserDetail | null,
+    verificationText: '待提交',
   },
 
   lifetimes: {
@@ -47,50 +65,55 @@ Component({
 
   methods: {
     async bootstrap() {
+      const cachedUser = appStore.getSessionUser();
+
       this.setData({
         checking: true,
         errorMessage: '',
       });
 
       try {
-        const cachedUser = appStore.getSessionUser();
+        const hasSession = await bootstrapWechatSession();
 
-        if (appStore.hasAccessToken() && cachedUser) {
-          this.setData({
-            checking: false,
-            hasAccount: true,
-            sessionUser: cachedUser,
-          });
-          return;
-        }
-
-        const code = await getWechatLoginCode();
-        const result = await loginWithWechat({ code });
-
-        if (result.needRegister || !result.accessToken || !result.user) {
+        if (!hasSession || !appStore.hasAccessToken()) {
           appStore.clearSession();
           this.setData({
             checking: false,
             hasAccount: false,
             sessionUser: null,
+            currentUser: null,
+            verificationText: '待提交',
           });
           return;
         }
 
-        appStore.setAccessToken(result.accessToken);
-        appStore.setSessionUser(result.user);
+        const currentUser = await fetchCurrentUser();
+        const sessionUser = {
+          id: currentUser.id,
+          nickname: currentUser.nickname || '',
+          avatarUrl: currentUser.avatarUrl,
+          mobile: currentUser.mobile,
+          realName: currentUser.realName,
+        };
+
+        appStore.setSessionUser(sessionUser);
 
         this.setData({
           checking: false,
           hasAccount: true,
-          sessionUser: result.user,
+          sessionUser,
+          currentUser,
+          verificationText: resolveVerificationText(currentUser),
         });
       } catch (error) {
-        appStore.clearSession();
+        const fallbackUser = cachedUser ?? null;
+
         this.setData({
           checking: false,
-          hasAccount: false,
-          sessionUser: null,
+          hasAccount: Boolean(fallbackUser),
+          sessionUser: fallbackUser,
+          currentUser: null,
+          verificationText: '待提交',
           errorMessage: resolveErrorMessage(error),
         });
       }

@@ -40,3 +40,11 @@
   font-size: 23rpx;
   color: #5f6b7a;
 }
+
+
+.page-body{
+  padding: 24rpx 0;
+}
+.list-content{
+  padding:  0 24rpx;
+}

@@ -1,44 +1,48 @@
-﻿<view class="page-shell">
-  <app-navbar title="公告通知" />
+  <app-navbar title="通知公告" />
 
   <view class="page-body">
-    <view class="section card info-card notice-search">
+    <view class="section notice-search">
       <t-input
-        t-class="toolbar-input"
-        t-class-input="toolbar-input__element"
+        t-class="toolbar-input notice-search__input"
+        t-class-input="toolbar-input__element notice-search__input-element"
+        t-class-prefix-icon="notice-search__icon"
+        t-class-clearable="notice-search__clear"
         borderless="{{true}}"
         clearable="{{true}}"
-        placeholder="搜索公告 / 分类"
+        prefix-icon="search"
+        placeholder-style="color: #7a8594; font-size: 30rpx;"
+        placeholder="搜索标题、分类、正文"
         value="{{keyword}}"
         bind:change="handleKeywordInput"
       />
     </view>
 
-    <view class="section">
-      <view wx:for="{{filteredAnnouncements}}" wx:key="id" class="record-card notice-card" data-id="{{item.id}}" bindtap="openDetail">
-        <view class="record-row">
-          <view class="notice-card__main">
-            <view class="icon-inline-row">
-              <view class="record-title">{{item.title}}</view>
+    <view class="section section--fill">
+      <app-list
+        list="{{filteredAnnouncements}}"
+        loading="{{loading}}"
+        showLoading="{{true}}"
+        isLoadMore="{{isLoadMore}}"
+        finished="{{finished}}"
+        emptyDescription="{{errorMessage || '没有找到相关公告'}}"
+        bind:refresh="onListRefresh"
+        bind:loadMore="onListLoadMore"
+      >
+        <view wx:for="{{filteredAnnouncements}}" wx:key="id" class="record-card notice-card" data-id="{{item.id}}" bindtap="openDetail">
+          <view class="record-row">
+            <view class="notice-card__main">
+              <view class="icon-inline-row">
+                <view class="record-title">{{item.title}}</view>
+              </view>
+              <view class="record-note">{{item.category}} · {{item.displayDate}}</view>
             </view>
-            <view class="record-note">{{item.category}} · {{item.date}} · {{item.views}} 次阅读</view>
+            <t-tag theme="primary" variant="light">{{item.category}}</t-tag>
           </view>
-          <view class="notice-card__status">
-            <view wx:if="{{item.important}}" class="notice-card__status-tag">
-              <t-tag theme="danger" variant="light">重点</t-tag>
-            </view>
+          <view class="notice-card__serial">发布单位：{{item.publisher}}</view>
+          <view class="notice-card__footer">
+            <view class="list-desc notice-card__body">{{item.preview}}</view>
           </view>
         </view>
-        <view class="notice-card__serial">发布单位：{{item.publisher}} · 公示编号：{{item.sourceNo}}</view>
-        <view class="notice-card__footer">
-          <view class="list-desc notice-card__body">{{item.content}}</view>
-          <view wx:if="{{!item.isRead}}" class="notice-card__dot" />
-        </view>
-      </view>
-    </view>
-
-    <view wx:if="{{!filteredAnnouncements.length}}" class="section">
-      <t-empty description="没有找到相关公告" />
+      </app-list>
     </view>
   </view>
-</view>

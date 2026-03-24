@@ -1,66 +1,72 @@
-﻿<view class="page-shell">
-  <app-navbar title="发起投票" />
+<app-navbar title="发起投票" />
 
-  <view class="page-body">
-    <view class="section card form-card">
-      <view class="field-block">
-        <text class="field-label">投票标题</text>
-        <t-input
-          t-class="td-input"
-          t-class-input="td-input__element"
-          borderless="{{true}}"
-          clearable="{{true}}"
-          placeholder="请输入投票主题"
-          value="{{title}}"
-          bind:change="handleTitleInput"
-        />
-      </view>
-
-      <view class="field-block">
-        <text class="field-label">投票类型</text>
-        <t-radio-group
-          options="{{voteTypeOptions}}"
-          value="{{selectedVoteType}}"
-          icon="line"
-          placement="right"
-          bind:change="handleTypeChange"
-        />
-      </view>
-
-      <view class="field-block">
-        <text class="field-label">截止日期</text>
-        <view class="picker-field" bindtap="openDatePicker">{{endDate || '请选择截止日期'}}</view>
-      </view>
-
-      <view class="field-block">
-        <text class="field-label">投票选项</text>
-        <t-input
-          wx:for="{{options}}"
-          wx:key="index"
-          t-class="td-input vote-create__option"
-          t-class-input="td-input__element"
-          borderless="{{true}}"
-          clearable="{{true}}"
-          data-index="{{index}}"
-          placeholder="请输入选项内容"
-          value="{{item}}"
-          bind:change="handleOptionInput"
-        />
-        <button class="secondary-button vote-create__add" bindtap="addOption">新增一个选项</button>
-      </view>
-
-      <button class="primary-button" bindtap="handleSubmit" disabled="{{!title || !endDate}}">提交草稿</button>
+<view class="page-body">
+  <view class="section card form-card">
+    <view class="field-block">
+      <text class="field-label">投票标题</text>
+      <t-input
+        t-class="td-input"
+        t-class-input="td-input__element"
+        borderless="{{true}}"
+        clearable="{{true}}"
+        placeholder="请输入投票主题"
+        value="{{title}}"
+        bind:change="handleTitleInput"
+      />
     </view>
-  </view>
 
-  <t-date-time-picker
-    visible="{{datePickerVisible}}"
-    title="选择截止日期"
-    mode="date"
-    format="YYYY-MM-DD"
-    value="{{endDate}}"
-    bind:confirm="handleDateConfirm"
-    bind:cancel="handleDateCancel"
-    bind:visible-change="handleDatePickerVisibleChange"
-  />
+    <view class="field-block">
+      <text class="field-label">投票类型</text>
+      <t-radio-group
+        options="{{voteTypeOptions}}"
+        value="{{selectedVoteType}}"
+        icon="line"
+        placement="right"
+        bind:change="handleTypeChange"
+      />
+    </view>
+
+    <view class="field-block">
+      <text class="field-label">截止日期</text>
+      <view class="picker-field" bindtap="openDatePicker">{{endDate || '可选，不设置则长期开放'}}</view>
+    </view>
+
+    <view class="field-block">
+      <text class="field-label">投票选项</text>
+      <t-input
+        wx:for="{{options}}"
+        wx:key="index"
+        t-class="td-input vote-create__option"
+        t-class-input="td-input__element"
+        borderless="{{true}}"
+        clearable="{{true}}"
+        data-index="{{index}}"
+        placeholder="请输入选项内容"
+        value="{{item}}"
+        bind:change="handleOptionInput"
+      />
+      <button class="secondary-button vote-create__add" bindtap="addOption">新增一个选项</button>
+      <view class="vote-create__note">默认面向当前小区范围发起。正式表决按业主统计，意见征集按住户统计。</view>
+    </view>
+
+    <button
+      class="primary-button"
+      bindtap="handleSubmit"
+      loading="{{submitting}}"
+      disabled="{{!title || submitting}}"
+    >
+      提交投票
+    </button>
+  </view>
 </view>
+
+<t-date-time-picker
+  visible="{{datePickerVisible}}"
+  title="选择截止日期"
+  mode="date"
+  format="YYYY-MM-DD"
+  value="{{endDate}}"
+  bind:confirm="handleDateConfirm"
+  bind:cancel="handleDateCancel"
+  bind:visible-change="handleDatePickerVisibleChange"
+/>

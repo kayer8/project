@@ -1,7 +1,3 @@
 .payment-card + .payment-card {
   margin-top: 16rpx;
 }
-
-.payment-trend + .payment-trend {
-  margin-top: 16rpx;
-}

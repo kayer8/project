@@ -151,3 +151,53 @@ export class CreateAdminVoteDto {
 }
 
 export class UpdateAdminVoteDto extends PartialType(CreateAdminVoteDto) {}
+
+export class UserVoteListQueryDto extends PaginationDto {
+  @ApiPropertyOptional({ description: 'Vote type' })
+  @IsOptional()
+  @IsString()
+  @IsIn(VOTE_TYPES)
+  type?: string;
+
+  @ApiPropertyOptional({ description: 'Vote status' })
+  @IsOptional()
+  @IsString()
+  @IsIn(VOTE_STATUSES)
+  status?: string;
+}
+
+export class CreateUserVoteDto {
+  @ApiProperty({ description: 'Vote title' })
+  @IsString()
+  @IsNotEmpty()
+  title!: string;
+
+  @ApiProperty({ description: 'Vote type' })
+  @IsString()
+  @IsNotEmpty()
+  @IsIn(VOTE_TYPES)
+  type!: string;
+
+  @ApiProperty({ description: 'Vote options', type: [VoteOptionInputDto] })
+  @Type(() => VoteOptionInputDto)
+  @ValidateNested({ each: true })
+  @ArrayMinSize(2)
+  options!: VoteOptionInputDto[];
+
+  @ApiPropertyOptional({ description: 'Description' })
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiPropertyOptional({ description: 'Deadline date' })
+  @IsOptional()
+  @IsDateString()
+  deadline?: string;
+}
+
+export class SubmitUserVoteDto {
+  @ApiProperty({ description: 'Selected vote option id' })
+  @IsString()
+  @IsNotEmpty()
+  optionId!: string;
+}

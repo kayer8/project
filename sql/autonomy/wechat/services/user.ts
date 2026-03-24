@@ -1,5 +1,23 @@
 import { request } from './request';
 
+export interface CurrentHouseProfile {
+  isVerified: boolean;
+  verificationStatus: 'VERIFIED' | 'UNVERIFIED';
+  communityName: string | null;
+  houseId: string | null;
+  houseDisplayName: string | null;
+  buildingId: string | null;
+  buildingName: string | null;
+  relationType: string | null;
+  relationStatus: string | null;
+  isPrimaryRole: boolean;
+  memberCount: number;
+  canViewBill: boolean;
+  canPayBill: boolean;
+  canJoinConsultation: boolean;
+  canBeVoteDelegate: boolean;
+}
+
 export interface CurrentUserDetail {
   id: string;
   realName: string | null;
@@ -20,6 +38,7 @@ export interface CurrentUserDetail {
     reviewNote: string | null;
     submittedAt: string;
   } | null;
+  currentHouseProfile: CurrentHouseProfile;
   houseRelations: Array<{
     id: string;
     houseId: string;

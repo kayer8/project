@@ -1,33 +1,42 @@
-<view class="page-shell">
-  <app-navbar title="停车缴费" />
+<app-navbar title="停车缴费" />
 
-  <view class="page-body">
-    <view class="summary-banner">
-      <view class="icon-title-row">
-        <t-icon name="time" size="48rpx" class="ui-icon ui-icon--primary" />
-        <view class="summary-title">停车缴费</view>
-      </view>
-      <view class="summary-desc">统一查看车位状态、月卡费用与临停记录，后续可接停车场账单能力。</view>
+<view class="page-body">
+  <view class="summary-banner">
+    <view class="icon-title-row">
+      <t-icon name="time" size="48rpx" class="ui-icon ui-icon--primary" />
+      <view class="summary-title">停车缴费</view>
     </view>
+    <view class="summary-desc">统一查看车位状态、月卡费用与临停记录，后续可接停车场账单能力。</view>
+  </view>
 
-    <view class="metric-grid">
-      <view class="metric-card">
-        <view class="metric-label">车位状态</view>
-        <view class="metric-value">1</view>
-        <view class="metric-note">已绑定车位</view>
-      </view>
-      <view class="metric-card">
-        <view class="metric-label">月卡费用</view>
-        <view class="metric-value">260</view>
-        <view class="metric-note">本月待缴</view>
-      </view>
-      <view class="metric-card">
-        <view class="metric-label">临停记录</view>
-        <view class="metric-value">3</view>
-        <view class="metric-note">本周进出</view>
-      </view>
+  <view class="metric-grid">
+    <view class="metric-card">
+      <view class="metric-label">车位状态</view>
+      <view class="metric-value">1</view>
+      <view class="metric-note">已绑定车位</view>
     </view>
-    <view class="section">
+    <view class="metric-card">
+      <view class="metric-label">月卡费用</view>
+      <view class="metric-value">260</view>
+      <view class="metric-note">本月待缴</view>
+    </view>
+    <view class="metric-card">
+      <view class="metric-label">临停记录</view>
+      <view class="metric-value">3</view>
+      <view class="metric-note">本周进出</view>
+    </view>
+  </view>
+
+  <view class="section section--fill">
+    <app-list
+      list="{{bills}}"
+      loading="{{loading}}"
+      showLoading="{{true}}"
+      isLoadMore="{{isLoadMore}}"
+      finished="{{finished}}"
+      bind:refresh="onListRefresh"
+      bind:loadMore="onListLoadMore"
+    >
       <view wx:for="{{bills}}" wx:key="title" class="record-card">
         <view class="icon-inline-row">
           <t-icon name="time" size="32rpx" class="ui-icon" />
@@ -35,6 +44,6 @@
         </view>
         <view class="record-note">{{item.note}}</view>
       </view>
-    </view>
+    </app-list>
   </view>
 </view>

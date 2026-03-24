@@ -1,4 +1,3 @@
-﻿<view class="page-shell">
   <app-navbar title="绑定房屋" left-arrow="{{true}}" />
 
   <view class="page-body">
@@ -70,4 +69,3 @@
   >
     <t-picker-item options="{{housePickerOptions}}" />
   </t-picker>
-</view>

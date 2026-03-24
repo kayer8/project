@@ -1,5 +1,33 @@
 .notice-search {
-  padding: 20rpx;
+  padding: 0;
+  --td-input-vertical-padding:20rpx;
+}
+
+.notice-search__input {
+  border-radius: 16rpx;
+  border: 2rpx solid #e5e9f0;
+  background: #ffffff;
+  box-shadow: 0 4rpx 12rpx rgba(31, 35, 41, 0.04);
+}
+
+.notice-search__input-element {
+  min-height: 92rpx;
+  padding: 0 32rpx 0 0;
+  font-size: 30rpx;
+  line-height: 1.5;
+  color: #1f2329;
+}
+
+.notice-search__icon {
+  margin-left: 32rpx;
+  margin-right: 18rpx;
+  color: #6f8fbe;
+  font-size: 34rpx;
+}
+
+.notice-search__clear {
+  margin-right: 24rpx;
+  color: #90a1b5;
 }
 
 .notice-card + .notice-card {

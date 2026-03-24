@@ -1,62 +1,38 @@
-﻿<view class="page-shell">
-  <app-navbar title="缴费情况" />
+<app-navbar title="收费公开" />
 
-  <view class="page-body">
-    <view class="metric-grid">
-      <view class="metric-card">
-        <view class="metric-label">整体缴费率</view>
-        <view class="metric-value">{{paymentStats.overallRate}}%</view>
-        <view class="metric-note">全区 3 月</view>
-      </view>
-      <view class="metric-card">
-        <view class="metric-label">应收总额</view>
-        <view class="metric-value">150.0w</view>
-        <view class="metric-note">本季度应收</view>
-      </view>
-      <view class="metric-card">
-        <view class="metric-label">欠缴总额</view>
-        <view class="metric-value">11.2w</view>
-        <view class="metric-note">待催缴</view>
-      </view>
+<view class="page-body">
+  <view class="section card info-card">
+    <view class="icon-title-row">
+      <t-icon name="time" size="40rpx" class="ui-icon ui-icon--primary" />
+      <view class="section-title">收费公开内容</view>
     </view>
+    <view class="list-desc">展示收费标准、账期说明与收费公示等公开内容。</view>
+  </view>
 
-    <view class="section card info-card">
-      <view class="icon-title-row">
-        <t-icon name="view-list" size="40rpx" class="ui-icon ui-icon--primary" />
-        <view class="section-title">我的账单</view>
-      </view>
-      <view wx:for="{{paymentStats.myBills}}" wx:key="title" class="record-card payment-card">
+  <view class="section section--fill">
+    <app-list
+      list="{{items}}"
+      loading="{{loading}}"
+      showLoading="{{true}}"
+      isLoadMore="{{isLoadMore}}"
+      finished="{{finished}}"
+      emptyDescription="{{errorMessage || '暂无收费公开内容'}}"
+      bind:refresh="onListRefresh"
+      bind:loadMore="onListLoadMore"
+    >
+      <view wx:for="{{items}}" wx:key="id" class="record-card payment-card" data-id="{{item.id}}" bindtap="openDetail">
         <view class="record-row">
           <view>
             <view class="icon-inline-row">
               <t-icon name="time" size="32rpx" class="ui-icon" />
               <view class="record-title">{{item.title}}</view>
             </view>
-            <view class="record-note">{{item.date}}</view>
+            <view class="record-note">{{item.displayDate}} · {{item.publisher}}</view>
           </view>
-          <view class="badge-row">
-            <t-tag theme="{{item.status === '待缴费' ? 'warning' : 'success'}}" variant="light">{{item.status}}</t-tag>
-          </view>
+          <t-tag theme="success" variant="light">{{item.category}}</t-tag>
         </view>
-        <view class="list-desc">账单金额 {{item.amount}} 元</view>
+        <view class="list-desc">{{item.preview}}</view>
       </view>
-      <view class="section">
-        <button class="primary-button">一键缴纳待缴费用</button>
-      </view>
-    </view>
-
-    <view class="section card info-card">
-      <view class="icon-title-row">
-        <t-icon name="calendar" size="40rpx" class="ui-icon ui-icon--primary" />
-        <view class="section-title">月度趋势</view>
-      </view>
-      <view wx:for="{{paymentStats.monthlyTrend}}" wx:key="month" class="record-row payment-trend">
-        <view class="icon-inline-row">
-          <t-icon name="calendar" size="32rpx" class="ui-icon" />
-          <view class="record-title">{{item.month}}</view>
-        </view>
-        <view class="record-note">{{item.rate}}%</view>
-      </view>
-    </view>
+    </app-list>
   </view>
 </view>

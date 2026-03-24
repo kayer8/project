@@ -1,7 +1,15 @@
-<view class="page-shell">
-  <app-navbar title="权限设置" />
+<app-navbar title="权限设置" />
 
-  <view class="page-body">
+<view class="page-body">
+  <app-list
+    list="{{items}}"
+    loading="{{loading}}"
+    showLoading="{{true}}"
+    isLoadMore="{{isLoadMore}}"
+    finished="{{finished}}"
+    bind:refresh="onListRefresh"
+    bind:loadMore="onListLoadMore"
+  >
     <view wx:for="{{items}}" wx:key="key" class="record-card permission-card">
       <view class="record-row">
         <view>
@@ -14,9 +22,9 @@
         <t-switch value="{{item.value}}" data-key="{{item.key}}" bind:change="handleSwitchChange" />
       </view>
     </view>
+  </app-list>
 
-    <view class="section page-note page-note--warning">
-      权限设置会影响这套房屋下对应角色成员的可见范围和可操作范围，建议由业主统一管理。
-    </view>
+  <view class="section page-note page-note--warning">
+    权限设置会影响这套房屋下对应角色成员的可见范围和可操作范围，建议由业主统一管理。
   </view>
 </view>

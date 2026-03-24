@@ -1,11 +1,13 @@
-<view class="page-shell">
-  <app-navbar title="公告详情" />
+  <app-navbar title="{{pageTitle}}" />
 
   <view class="page-body">
+    <view wx:if="{{loading}}" class="section">
+      <view class="record-note">正在加载公开详情...</view>
+    </view>
+
     <view wx:if="{{item}}" class="section notice-doc">
       <view class="notice-doc__tags">
         <t-tag theme="default" variant="light">{{item.category}}</t-tag>
-        <t-tag wx:if="{{item.important}}" theme="danger" variant="light">重点</t-tag>
       </view>
 
       <view class="notice-doc__title">{{item.title}}</view>
@@ -17,28 +19,28 @@
         </view>
         <view class="notice-doc__meta-item">
           <view class="notice-doc__meta-label">发布时间</view>
-          <view class="notice-doc__meta-value">{{item.date}}</view>
+          <view class="notice-doc__meta-value">{{item.displayDate}}</view>
         </view>
         <view class="notice-doc__meta-item">
-          <view class="notice-doc__meta-label">公示编号</view>
-          <view class="notice-doc__meta-value">{{item.sourceNo}}</view>
-        </view>
-        <view class="notice-doc__meta-item notice-doc__meta-item--minor">
-          <view class="notice-doc__meta-label">阅读</view>
-          <view class="notice-doc__meta-value">{{item.views}} 次</view>
+          <view class="notice-doc__meta-label">公开分类</view>
+          <view class="notice-doc__meta-value">{{item.category}}</view>
         </view>
       </view>
 
       <view class="notice-doc__divider" />
 
+      <view wx:if="{{item.summary}}" class="notice-doc__body">
+        <view class="notice-doc__body-title">内容摘要</view>
+        <view class="detail-content">{{item.summary}}</view>
+      </view>
+
       <view class="notice-doc__body">
-        <view class="notice-doc__body-title">公告正文</view>
+        <view class="notice-doc__body-title">正文内容</view>
         <view class="detail-content">{{item.content}}</view>
       </view>
     </view>
 
-    <view wx:if="{{!item}}" class="section">
-      <t-empty description="未找到对应公告" />
+    <view wx:if="{{!loading && !item}}" class="section">
+      <t-empty description="{{errorMessage || '未找到对应公开内容'}}" />
     </view>
   </view>
-</view>

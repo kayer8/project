@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const routes_1 = require("../../../constants/routes");
+const list_1 = require("../../../utils/list");
 const nav_1 = require("../../../utils/nav");
-const communities = ['锦绣花园', '阳光水岸', '翡翠公馆', '金地名都', '万科城', '保利香樾'];
+const communities = ['锦绣花园', '阳光水岸', '翡翠公馆', '金地名都', '万科城', '保利香槟'];
 const buildingOptions = ['1栋', '2栋', '3栋', '8栋'].map((item) => ({ label: item, value: item }));
 const unitOptions = ['1单元', '2单元'].map((item) => ({ label: item, value: item }));
 function getPickerValue(event) {
@@ -17,8 +18,12 @@ Page({
     data: {
         step: 1,
         keyword: '',
-        communities,
-        filteredCommunities: communities,
+        allCommunities: communities,
+        filteredCommunities: [],
+        loading: false,
+        isLoadMore: false,
+        finished: false,
+        pageSize: 10,
         bindData: {
             community: '',
             building: '',
@@ -39,12 +44,13 @@ Page({
         unitPickerValue: [],
         proofImage: '',
     },
+    onLoad() {
+        this.applyCommunityList(true);
+    },
     handleKeywordInput(event) {
         const keyword = (event.detail.value || '').trim();
-        this.setData({
-            keyword,
-            filteredCommunities: communities.filter((item) => item.includes(keyword)),
-        });
+        this.setData({ keyword });
+        this.applyCommunityList(true);
     },
     handleSelectCommunity(event) {
         const { community } = event.currentTarget.dataset;
@@ -147,5 +153,29 @@ Page({
         setTimeout(() => {
             (0, nav_1.redirectTo)(routes_1.ROUTES.profile.index);
         }, 300);
+    },
+    onListRefresh(event) {
+        this.applyCommunityList(true);
+        event?.detail?.done?.();
+    },
+    onListLoadMore() {
+        if (this.data.finished || this.data.isLoadMore) {
+            return;
+        }
+        this.setData({ isLoadMore: true });
+        this.applyCommunityList(false);
+        this.setData({ isLoadMore: false });
+    },
+    applyCommunityList(reset = true) {
+        const source = this.data.allCommunities.filter((item) => item.includes(this.data.keyword));
+        const result = reset
+            ? (0, list_1.getLocalListFirstPage)(source, this.data.pageSize)
+            : (0, list_1.getLocalListPage)(source, this.data.filteredCommunities.length, this.data.pageSize);
+        this.setData({
+            filteredCommunities: reset
+                ? result.items
+                : [...this.data.filteredCommunities, ...result.items],
+            finished: result.finished,
+        });
     },
 });

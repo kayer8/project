@@ -1,19 +1,27 @@
-<view class="page-shell">
-  <app-navbar title="邻里互动" />
+  <app-navbar title="閭婚噷浜掑姩" />
 
   <view class="page-body">
-    <view class="section">
-      <view wx:for="{{posts}}" wx:key="title" class="record-card">
-        <view class="icon-inline-row">
-          <t-icon name="notification" size="32rpx" class="ui-icon" />
-          <view class="record-title">{{item.title}}</view>
+    <view class="section section--fill">
+      <app-list
+        list="{{posts}}"
+        loading="{{loading}}"
+        showLoading="{{true}}"
+        isLoadMore="{{isLoadMore}}"
+        finished="{{finished}}"
+        bind:refresh="onListRefresh"
+        bind:loadMore="onListLoadMore"
+      >
+        <view wx:for="{{posts}}" wx:key="title" class="record-card">
+          <view class="icon-inline-row">
+            <t-icon name="notification" size="32rpx" class="ui-icon" />
+            <view class="record-title">{{item.title}}</view>
+          </view>
+          <view class="record-note">{{item.note}}</view>
         </view>
-        <view class="record-note">{{item.note}}</view>
-      </view>
+      </app-list>
     </view>
     <view class="section action-row">
-      <button class="primary-button">发布话题</button>
-      <button class="secondary-button">查看活动</button>
+      <button class="primary-button">鍙戝竷璇濋</button>
+      <button class="secondary-button">鏌ョ湅娲诲姩</button>
     </view>
   </view>
-</view>

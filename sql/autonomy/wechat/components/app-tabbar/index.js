@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const routes_1 = require("../../constants/routes");
 const tabs = [
-    { value: 'disclosure', label: '公开', url: routes_1.ROUTES.disclosure.index, icon: 'view-list' },
+    { value: 'disclosure', label: '首页', url: routes_1.ROUTES.disclosure.index, icon: 'view-list' },
     { value: 'voting', label: '投票', url: routes_1.ROUTES.voting.index, icon: 'check-circle' },
     { value: 'profile', label: '我的', url: routes_1.ROUTES.profile.index, icon: 'user' },
 ];

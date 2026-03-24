@@ -1,54 +1,116 @@
-﻿<app-navbar title="信息公开" left-arrow="{{false}}" />
+<app-navbar title="首页" left-arrow="{{false}}" />
 
-<view class="page-body page-body--with-tabbar">
-  <view class="section card info-card disclosure-section-block">
-    <view class="section-head disclosure-section-block__head">
-      <view>
-        <view class="icon-title-row">
-          <t-icon name="view-list" size="40rpx" class="ui-icon ui-icon--primary" />
-          <view class="section-title">公开栏目</view>
+<view class="page-body ">
+  <view class="card info-card home-profile-card">
+    <view class="home-profile-card__head">
+      <view class="home-profile-card__identity">
+        <view class="home-profile-card__house-side">
+          <view class="home-profile-card__house-icon">
+            <t-icon name="home" size="40rpx" />
+          </view>
+          <view class="home-profile-card__community">{{homeProfileCard.communityName}}</view>
+        </view>
+
+        <view class="home-profile-card__meta">
+          <view class="home-profile-card__name-row">
+            <view class="home-profile-card__name">{{homeProfileCard.houseName}}</view>
+            <t-tag wx:if="{{homeProfileCard.houseRole}}" theme="primary" variant="light">{{homeProfileCard.houseRole}}</t-tag>
+            <t-tag
+              wx:if="{{homeProfileCard.statusTag}}"
+              theme="{{homeProfileCard.statusTag === '已认证' ? 'success' : 'warning'}}"
+              variant="light"
+            >
+              {{homeProfileCard.statusTag}}
+            </t-tag>
+          </view>
+          <view class="home-profile-card__subtitle">{{homeProfileCard.subtitle}}</view>
         </view>
       </view>
+
+      <view class="home-profile-card__link" data-url="/pages/profile/index" bindtap="openCardAction">
+        <t-icon name="arrow-right" size="32rpx" />
+      </view>
     </view>
-    <view wx:for="{{sections}}" wx:key="title" class="record-card disclosure-section" data-url="{{item.url}}" bindtap="openSection">
-      <view class="record-row disclosure-section__row">
-        <view class="disclosure-section__main">
-          <view class="disclosure-section__icon">
-            <t-icon name="{{item.icon}}" size="40rpx" class="ui-icon ui-icon--primary" />
-          </view>
-          <view class="disclosure-section__content">
-            <view class="record-title">{{item.title}}</view>
-            <view class="record-note">{{item.desc}}</view>
-          </view>
-        </view>
-        <t-tag theme="{{item.tagTheme}}" variant="light">{{item.note}}</t-tag>
+
+    <view class="home-profile-card__stats">
+      <view wx:for="{{homeProfileCard.stats}}" wx:key="label" class="home-profile-card__stat">
+        <view class="home-profile-card__stat-label">{{item.label}}</view>
+        <view class="home-profile-card__stat-value">{{item.value}}</view>
+      </view>
+    </view>
+
+    <view class="home-profile-card__actions">
+      <view
+        wx:for="{{homeProfileCard.actions}}"
+        wx:key="title"
+        class="home-profile-card__action home-profile-card__action--{{item.theme}}"
+        data-url="{{item.url}}"
+        bindtap="openCardAction"
+      >
+        {{item.title}}
       </view>
     </view>
   </view>
 
-  <view class="section card info-card disclosure-latest-block">
+  <view class="section card info-card disclosure-section-block">
+    <view class="section-head disclosure-section-block__head">
+      <view class="icon-title-row">
+        <view class="section-title">公开栏目</view>
+      </view>
+    </view>
+
+    <view class="disclosure-section-grid">
+      <view
+        wx:for="{{sections}}"
+        wx:key="title"
+        class="disclosure-section-grid__item"
+        data-url="{{item.url}}"
+        bindtap="openSection"
+      >
+        <view
+          class="disclosure-section-grid__icon"
+          style="background: {{item.iconBackground}}; color: {{item.iconColor}};"
+        >
+          <t-icon name="{{item.icon}}" size="40rpx" />
+        </view>
+        <view class="disclosure-section-grid__title">{{item.title}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section section--fill card info-card disclosure-latest-block">
     <view class="section-head">
-      <view>
-        <view class="icon-title-row">
-          <t-icon name="notification" size="40rpx" class="ui-icon ui-icon--primary" />
-          <view class="section-title">最新公示</view>
-        </view>
+      <view class="icon-title-row">
+        <view class="section-title">最新公示</view>
       </view>
     </view>
-    <view wx:for="{{latestAnnouncements}}" wx:key="id" class="record-card disclosure-record" data-id="{{item.id}}" bindtap="openDetail">
-      <view class="record-row">
-        <view>
-          <view class="icon-inline-row">
-            <t-icon name="notification" size="32rpx" class="ui-icon" />
-            <view class="record-title">{{item.title}}</view>
+
+    <view wx:if="{{loadingLatest}}" class="disclosure-latest-block__loading">
+      <t-loading theme="circular" size="56rpx" />
+    </view>
+
+    <view wx:elif="{{!latestAnnouncements.length}}" class="empty-block">
+      暂无公开内容
+    </view>
+
+    <block wx:else>
+      <view
+        wx:for="{{latestAnnouncements}}"
+        wx:key="id"
+        class="record-card disclosure-record"
+        data-id="{{item.id}}"
+        bindtap="openDetail"
+      >
+        <view class="record-row">
+          <view>
+            <view class="icon-inline-row">
+              <view class="record-title">{{item.title}}</view>
+            </view>
+            <view class="record-note">{{item.category}} · {{item.displayDate}} · {{item.publisher}}</view>
           </view>
-          <view class="record-note">{{item.category}} · {{item.date}} · {{item.publisher}}</view>
-        </view>
-        <view class="badge-row">
-          <t-tag theme="{{item.important ? 'warning' : 'primary'}}" variant="light">{{item.important ? '重点公开' : '常规公开'}}</t-tag>
+          <t-tag theme="primary" variant="light">{{item.category}}</t-tag>
         </view>
       </view>
-      <view class="record-note disclosure-record__serial">公示编号：{{item.sourceNo}}</view>
-    </view>
+    </block>
   </view>
 </view>

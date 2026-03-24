@@ -1,74 +1,95 @@
-﻿<view class="page-shell">
-  <app-navbar title="投票详情" />
+<app-navbar title="投票详情" />
 
-  <view class="page-body">
-    <view wx:if="{{vote}}" class="section card info-card vote-detail__summary">
-      <view class="badge-row">
-        <t-tag theme="{{vote.status === '进行中' ? 'primary' : 'default'}}" variant="light">{{vote.status}}</t-tag>
-        <t-tag theme="warning" variant="light">{{vote.type}}</t-tag>
-        <t-tag theme="{{vote.voted ? 'success' : 'warning'}}" variant="light">{{vote.voted ? '已投票' : '未投票'}}</t-tag>
-      </view>
-      <view class="icon-title-row detail-title">
-        <t-icon name="check-circle" size="48rpx" class="ui-icon ui-icon--primary" />
-        <view class="summary-title">{{vote.title}}</view>
-      </view>
-      <view class="vote-meta-list">
-        <view class="vote-meta-list__item">
-          <view class="vote-meta-list__label">发起方</view>
-          <view class="vote-meta-list__value">{{vote.sponsor}}</view>
-        </view>
-        <view class="vote-meta-list__item">
-          <view class="vote-meta-list__label">参与范围</view>
-          <view class="vote-meta-list__value">{{vote.scope}}</view>
-        </view>
-        <view class="vote-meta-list__item">
-          <view class="vote-meta-list__label">截止时间</view>
-          <view class="vote-meta-list__value">{{vote.endTime}}</view>
-        </view>
-        <view class="vote-meta-list__item">
-          <view class="vote-meta-list__label">参与情况</view>
-          <view class="vote-meta-list__value">{{vote.participants}} / {{vote.total}}</view>
-        </view>
-      </view>
-      <view class="list-desc">{{vote.description}}</view>
+<view class="page-body">
+  <view wx:if="{{loading}}" class="section card info-card">
+    <view class="empty-block">正在加载投票详情，请稍候。</view>
+  </view>
+
+  <view wx:elif="{{vote}}" class="section card info-card vote-detail__summary">
+    <view class="badge-row">
+      <t-tag theme="{{vote.status === 'ONGOING' ? 'primary' : 'default'}}" variant="light">{{vote.statusLabel}}</t-tag>
+      <t-tag theme="warning" variant="light">{{vote.typeLabel}}</t-tag>
+      <t-tag theme="{{vote.voted ? 'success' : 'warning'}}" variant="light">{{vote.voted ? '已投票' : '未投票'}}</t-tag>
     </view>
 
-    <view wx:if="{{vote && vote.status === '进行中' && !submitted}}" class="section card info-card">
-      <view class="section-head">
-        <view>
-          <view class="section-title">参与表决</view>
-        </view>
+    <view class="icon-title-row detail-title">
+      <t-icon name="check-circle" size="48rpx" class="ui-icon ui-icon--primary" />
+      <view class="summary-title">{{vote.title}}</view>
+    </view>
+
+    <view class="vote-meta-list">
+      <view class="vote-meta-list__item">
+        <view class="vote-meta-list__label">发起方</view>
+        <view class="vote-meta-list__value">{{vote.sponsor}}</view>
       </view>
-      <view wx:for="{{vote.options}}" wx:key="*this" class="vote-option {{selectedOption === index ? 'vote-option--active' : ''}}" data-index="{{index}}" bindtap="handleSelectOption">
-        <view class="icon-inline-row">
-          <t-icon name="check-circle" size="32rpx" class="ui-icon {{selectedOption === index ? 'ui-icon--primary' : ''}}" />
-          <view>{{item}}</view>
-        </view>
+      <view class="vote-meta-list__item">
+        <view class="vote-meta-list__label">参与范围</view>
+        <view class="vote-meta-list__value">{{vote.scope}}</view>
       </view>
-      <view class="section">
-        <button class="primary-button" bindtap="handleSubmitVote" disabled="{{selectedOption < 0}}">提交投票</button>
+      <view class="vote-meta-list__item">
+        <view class="vote-meta-list__label">截止时间</view>
+        <view class="vote-meta-list__value">{{vote.deadlineLabel}}</view>
+      </view>
+      <view class="vote-meta-list__item">
+        <view class="vote-meta-list__label">参与情况</view>
+        <view class="vote-meta-list__value">{{vote.participantCount}} / {{vote.totalHouseholds}}</view>
       </view>
     </view>
 
-    <view wx:if="{{vote && (vote.status !== '进行中' || submitted)}}" class="section card info-card">
-      <view class="section-head">
-        <view>
-          <view class="section-title">{{submitted ? '你的投票已记录' : '投票结果'}}</view>
-        </view>
-      </view>
-      <view wx:for="{{vote.result}}" wx:key="label" class="result-block">
-        <view class="record-row">
-          <view class="record-note">{{item.label}}</view>
-          <view class="record-note">{{item.percent}}%</view>
-        </view>
-        <view class="result-bar">
-          <view class="result-bar__inner" style="width: {{item.percent}}%;"></view>
-        </view>
+    <view class="list-desc">{{vote.description || '暂无投票说明'}}</view>
+  </view>
+
+  <view wx:if="{{vote && vote.canVote && !submitted}}" class="section card info-card">
+    <view class="section-head">
+      <view class="section-title">参与表决</view>
+    </view>
+
+    <view
+      wx:for="{{vote.options}}"
+      wx:key="id"
+      class="vote-option {{selectedOptionId === item.id ? 'vote-option--active' : ''}}"
+      data-option-id="{{item.id}}"
+      bindtap="handleSelectOption"
+    >
+      <view class="icon-inline-row">
+        <t-icon
+          name="check-circle"
+          size="32rpx"
+          class="ui-icon {{selectedOptionId === item.id ? 'ui-icon--primary' : ''}}"
+        />
+        <view>{{item.optionText}}</view>
       </view>
     </view>
 
-    <view wx:if="{{!vote}}" class="section">
-      <t-empty description="未找到对应投票" />
+    <view class="section">
+      <button
+        class="primary-button"
+        bindtap="handleSubmitVote"
+        loading="{{submitting}}"
+        disabled="{{!selectedOptionId || submitting}}"
+      >
+        提交投票
+      </button>
     </view>
+  </view>
+
+  <view wx:if="{{vote && (!vote.canVote || submitted)}}" class="section card info-card">
+    <view class="section-head">
+      <view class="section-title">{{submitted ? '你的投票已记录' : '投票结果'}}</view>
+    </view>
+
+    <view wx:for="{{vote.options}}" wx:key="id" class="result-block">
+      <view class="record-row">
+        <view class="record-note">{{item.optionText}}</view>
+        <view class="record-note">{{item.percent}}%</view>
+      </view>
+      <view class="result-bar">
+        <view class="result-bar__inner" style="width: {{item.percent}}%;"></view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{!loading && !vote}}" class="section">
+    <t-empty description="{{errorMessage || '未找到对应投票'}}" />
   </view>
 </view>

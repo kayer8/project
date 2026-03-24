@@ -1,81 +1,38 @@
-﻿<view class="page-shell">
-  <app-navbar title="财务公开" />
+<app-navbar title="财务公开" />
 
-  <view class="page-body">
-    <view class="metric-grid">
-      <view class="metric-card">
-        <view class="metric-label">本季收入</view>
-        <view class="metric-value">125.0w</view>
-        <view class="metric-note">物业费与公共收益合计</view>
-      </view>
-      <view class="metric-card">
-        <view class="metric-label">本季支出</view>
-        <view class="metric-value">98.0w</view>
-        <view class="metric-note">人工、维保与能耗支出</view>
-      </view>
-      <view class="metric-card">
-        <view class="metric-label">本季结余</view>
-        <view class="metric-value">27.0w</view>
-        <view class="metric-note">用于后续预算安排</view>
-      </view>
+<view class="page-body">
+  <view class="section card info-card">
+    <view class="icon-title-row">
+      <t-icon name="view-list" size="40rpx" class="ui-icon ui-icon--primary" />
+      <view class="section-title">财务公开内容</view>
     </view>
+    <view class="list-desc">展示已发布的财务报告、预算执行和收支说明。</view>
+  </view>
 
-    <view class="section card info-card">
-      <t-tabs value="{{activeTab}}" theme="card" bind:change="handleTabChange">
-        <t-tab-panel value="reports" label="财务报告">
-          <view wx:for="{{reports}}" wx:key="id" class="record-card financial-card">
-            <view class="record-row">
-              <view>
-                <view class="icon-inline-row">
-                  <t-icon name="view-list" size="32rpx" class="ui-icon" />
-                  <view class="record-title">{{item.title}}</view>
-                </view>
-                <view class="record-note">{{item.period}} · {{item.date}}</view>
-              </view>
-              <t-tag theme="{{item.status === '公示中' ? 'primary' : 'success'}}" variant="light">{{item.status}}</t-tag>
+  <view class="section section--fill">
+    <app-list
+      list="{{items}}"
+      loading="{{loading}}"
+      showLoading="{{true}}"
+      isLoadMore="{{isLoadMore}}"
+      finished="{{finished}}"
+      emptyDescription="{{errorMessage || '暂无财务公开内容'}}"
+      bind:refresh="onListRefresh"
+      bind:loadMore="onListLoadMore"
+    >
+      <view wx:for="{{items}}" wx:key="id" class="record-card financial-card" data-id="{{item.id}}" bindtap="openDetail">
+        <view class="record-row">
+          <view>
+            <view class="icon-inline-row">
+              <t-icon name="view-list" size="32rpx" class="ui-icon" />
+              <view class="record-title">{{item.title}}</view>
             </view>
-            <view class="list-desc">收入 {{item.totalIncome}} 元，支出 {{item.totalExpense}} 元</view>
+            <view class="record-note">{{item.displayDate}} · {{item.publisher}}</view>
           </view>
-        </t-tab-panel>
-        <t-tab-panel value="transactions" label="收支流水">
-          <view class="status-row financial-filter">
-            <button class="secondary-button financial-filter__btn {{transactionFilter === 'all' ? 'financial-filter__btn--active' : ''}}" data-filter="all" bindtap="handleFilterChange">全部</button>
-            <button class="secondary-button financial-filter__btn {{transactionFilter === 'income' ? 'financial-filter__btn--active' : ''}}" data-filter="income" bindtap="handleFilterChange">收入</button>
-            <button class="secondary-button financial-filter__btn {{transactionFilter === 'expense' ? 'financial-filter__btn--active' : ''}}" data-filter="expense" bindtap="handleFilterChange">支出</button>
-          </view>
-          <view wx:for="{{transactions}}" wx:key="id" wx:if="{{transactionFilter === 'all' || transactionFilter === item.type}}" class="record-card financial-card">
-            <view class="record-row">
-              <view>
-                <view class="icon-inline-row">
-                  <t-icon name="{{item.type === 'income' ? 'check-circle' : 'error-circle'}}" size="32rpx" class="ui-icon {{item.type === 'income' ? 'ui-icon--success' : 'ui-icon--warning'}}" />
-                  <view class="record-title">{{item.title}}</view>
-                </view>
-                <view class="record-note">{{item.date}} · {{item.category}}</view>
-              </view>
-              <view class="record-title {{item.type === 'income' ? 'text-income' : 'text-expense'}}">
-                {{item.type === 'income' ? '+' : ''}}{{item.amount}}
-              </view>
-            </view>
-          </view>
-        </t-tab-panel>
-        <t-tab-panel value="budget" label="年度预算">
-          <view wx:for="{{budgets}}" wx:key="label" class="record-card financial-card">
-            <view class="record-row">
-              <view>
-                <view class="icon-inline-row">
-                  <t-icon name="time" size="32rpx" class="ui-icon" />
-                  <view class="record-title">{{item.label}}</view>
-                </view>
-                <view class="record-note">已执行 {{item.spent}} / {{item.budget}}</view>
-              </view>
-              <t-tag theme="warning" variant="light">预算中</t-tag>
-            </view>
-            <view class="result-bar">
-              <view class="result-bar__inner" style="width: {{item.spent / item.budget * 100}}%;"></view>
-            </view>
-          </view>
-        </t-tab-panel>
-      </t-tabs>
-    </view>
+          <t-tag theme="primary" variant="light">{{item.category}}</t-tag>
+        </view>
+        <view class="list-desc">{{item.preview}}</view>
+      </view>
+    </app-list>
   </view>
 </view>

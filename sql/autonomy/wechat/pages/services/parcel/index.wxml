@@ -1,8 +1,16 @@
-<view class="page-shell">
-  <app-navbar title="快递代收" />
+<app-navbar title="快递代收" />
 
-  <view class="page-body">
-    <view class="section">
+<view class="page-body">
+  <view class="section section--fill">
+    <app-list
+      list="{{parcels}}"
+      loading="{{loading}}"
+      showLoading="{{true}}"
+      isLoadMore="{{isLoadMore}}"
+      finished="{{finished}}"
+      bind:refresh="onListRefresh"
+      bind:loadMore="onListLoadMore"
+    >
       <view wx:for="{{parcels}}" wx:key="title" class="record-card">
         <view class="icon-inline-row">
           <t-icon name="mail" size="32rpx" class="ui-icon" />
@@ -10,7 +18,7 @@
         </view>
         <view class="record-note">{{item.note}}</view>
       </view>
-    </view>
-    <view class="section page-note">后面可以接入快递柜、前台入库和取件通知，这里先把居民侧查询页面拆出来。</view>
+    </app-list>
   </view>
+  <view class="section page-note">后面可以接入快递柜、前台入库和取件通知，这里先把居民侧查询页面拆出来。</view>
 </view>

@@ -1,39 +1,47 @@
-﻿<view class="page-shell">
-  <app-navbar title="身份认证" />
+<app-navbar title="身份认证" />
 
-  <view class="page-body">
+<view class="page-body">
+  <view wx:if="{{loading}}" class="section card info-card">
+    <view class="empty-block">正在加载个人信息，请稍候。</view>
+  </view>
+
+  <block wx:else>
     <view class="section card info-card">
       <view class="badge-row verification-status">
-        <t-tag wx:if="{{verification.status === 'verified'}}" theme="success" variant="light">已通过</t-tag>
-        <t-tag wx:elif="{{verification.status === 'pending'}}" theme="warning" variant="light">审核中</t-tag>
+        <t-tag wx:if="{{verificationStatus === 'verified'}}" theme="success" variant="light">已通过</t-tag>
+        <t-tag wx:elif="{{verificationStatus === 'pending'}}" theme="warning" variant="light">审核中</t-tag>
         <t-tag wx:else theme="danger" variant="light">待提交</t-tag>
         <t-tag theme="primary" variant="light">实名认证</t-tag>
       </view>
+
       <view class="icon-title-row">
         <t-icon name="view-list" size="40rpx" class="ui-icon ui-icon--primary" />
         <view class="section-title">认证流程</view>
       </view>
+
       <view class="verification-steps">
         <view class="verification-step">
           <view class="verification-step__index">1</view>
           <view class="verification-step__content">
             <view class="icon-inline-row">
               <t-icon name="user" size="32rpx" class="ui-icon" />
-              <view class="verification-step__title">提交真实资料</view>
+              <view class="verification-step__title">绑定微信与手机号</view>
             </view>
-            <view class="verification-step__desc">填写姓名、证件号码并上传证件照片，确保与物业备案资料一致。</view>
+            <view class="verification-step__desc">系统会用最近登录的微信号和手机号，匹配物业留存的住户资料。</view>
           </view>
         </view>
+
         <view class="verification-step">
           <view class="verification-step__index">2</view>
           <view class="verification-step__content">
             <view class="icon-inline-row">
-              <t-icon name="time" size="32rpx" class="ui-icon ui-icon--warning" />
-              <view class="verification-step__title">等待后台审核</view>
+              <t-icon name="home" size="32rpx" class="ui-icon ui-icon--warning" />
+              <view class="verification-step__title">确认房屋归属</view>
             </view>
-            <view class="verification-step__desc">物业或管理人员将结合房屋资料与身份材料进行人工复核。</view>
+            <view class="verification-step__desc">若未自动匹配，可补充楼栋和房屋信息，提交后台审核。</view>
           </view>
         </view>
+
         <view class="verification-step">
           <view class="verification-step__index">3</view>
           <view class="verification-step__content">
@@ -41,7 +49,7 @@
               <t-icon name="check-circle" size="32rpx" class="ui-icon ui-icon--success" />
               <view class="verification-step__title">查看认证结果</view>
             </view>
-            <view class="verification-step__desc">认证结果将以“已通过 / 审核中 / 未通过”的状态持续展示。</view>
+            <view class="verification-step__desc">认证通过后，首页和“我的”会显示当前绑定房屋和认证状态。</view>
           </view>
         </view>
       </view>
@@ -50,20 +58,33 @@
     <view class="section card info-card">
       <view class="icon-title-row">
         <t-icon name="view-list" size="40rpx" class="ui-icon ui-icon--primary" />
-        <view class="section-title">当前认证档案</view>
+        <view class="section-title">当前认证信息</view>
+      </view>
+
+      <view class="info-row">
+        <view class="info-label">认证状态</view>
+        <view class="info-value">{{statusText}}</view>
       </view>
       <view class="info-row">
         <view class="info-label">姓名</view>
-        <view class="info-value">{{verification.name}}</view>
+        <view class="info-value">{{currentUser && currentUser.realName ? currentUser.realName : '未填写'}}</view>
       </view>
       <view class="info-row">
-        <view class="info-label">证件号码</view>
-        <view class="info-value">{{verification.idNo}}</view>
+        <view class="info-label">手机号</view>
+        <view class="info-value">{{currentUser && currentUser.mobile ? currentUser.mobile : '未绑定'}}</view>
       </view>
       <view class="info-row">
-        <view class="info-label">认证时间</view>
-        <view class="info-value">{{verification.verifiedAt}}</view>
+        <view class="info-label">当前房屋</view>
+        <view class="info-value">{{currentUser && currentUser.currentHouseProfile.houseDisplayName ? currentUser.currentHouseProfile.houseDisplayName : '未绑定房屋'}}</view>
       </view>
+      <view class="info-row">
+        <view class="info-label">最近申请</view>
+        <view class="info-value">{{currentUser && currentUser.latestRegistrationRequest ? currentUser.latestRegistrationRequest.status : '暂无申请记录'}}</view>
+      </view>
+    </view>
+
+    <view wx:if="{{errorMessage}}" class="section page-note page-note--warning">
+      {{errorMessage}}
     </view>
 
     <view wx:if="{{!editing}}" class="section">
@@ -83,6 +104,7 @@
           bind:change="handleNameInput"
         />
       </view>
+
       <view class="field-block">
         <text class="field-label">身份证号</text>
         <t-input
@@ -90,11 +112,12 @@
           t-class-input="td-input__element"
           borderless="{{true}}"
           maxlength="{{18}}"
-          placeholder="请输入 18 位证件号"
+          placeholder="请输入 18 位身份证号"
           value="{{idNo}}"
           bind:change="handleIdInput"
         />
       </view>
+
       <view class="field-block">
         <text class="field-label">证件照片</text>
         <view class="action-row">
@@ -102,11 +125,22 @@
           <button class="secondary-button" data-field="backImage" bindtap="chooseImage">上传国徽面</button>
         </view>
         <view class="status-row section">
-          <t-tag theme="{{frontImage ? 'success' : 'default'}}" variant="light">{{frontImage ? '人像面已上传' : '人像面未上传'}}</t-tag>
-          <t-tag theme="{{backImage ? 'success' : 'default'}}" variant="light">{{backImage ? '国徽面已上传' : '国徽面未上传'}}</t-tag>
+          <t-tag theme="{{frontImage ? 'success' : 'default'}}" variant="light">
+            {{frontImage ? '人像面已上传' : '人像面未上传'}}
+          </t-tag>
+          <t-tag theme="{{backImage ? 'success' : 'default'}}" variant="light">
+            {{backImage ? '国徽面已上传' : '国徽面未上传'}}
+          </t-tag>
         </view>
       </view>
-      <button class="primary-button" bindtap="handleSubmit" disabled="{{!realName || idNo.length < 18 || !frontImage || !backImage}}">提交认证</button>
+
+      <button
+        class="primary-button"
+        bindtap="handleSubmit"
+        disabled="{{!realName || idNo.length < 18 || !frontImage || !backImage}}"
+      >
+        提交认证
+      </button>
     </view>
-  </view>
+  </block>
 </view>

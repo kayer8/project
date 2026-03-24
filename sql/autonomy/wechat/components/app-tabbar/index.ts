@@ -1,7 +1,7 @@
 import { ROUTES } from '../../constants/routes';
 
 const tabs = [
-  { value: 'disclosure', label: '公开', url: ROUTES.disclosure.index, icon: 'view-list' },
+  { value: 'disclosure', label: '首页', url: ROUTES.disclosure.index, icon: 'view-list' },
   { value: 'voting', label: '投票', url: ROUTES.voting.index, icon: 'check-circle' },
   { value: 'profile', label: '我的', url: ROUTES.profile.index, icon: 'user' },
 ] as const;

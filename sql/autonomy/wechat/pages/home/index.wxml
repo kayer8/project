@@ -1,13 +1,16 @@
-<view class="page-shell home-shell">
-  <view hidden="{{activeTab !== 'disclosure'}}">
-    <disclosure-panel />
-  </view>
-  <view hidden="{{activeTab !== 'voting'}}">
-    <voting-panel />
-  </view>
-  <view hidden="{{activeTab !== 'profile'}}">
-    <profile-panel active="{{activeTab === 'profile'}}" />
-  </view>
+<view class="home-page">
+  <view class="home-panels">
+    <view hidden="{{activeTab !== 'disclosure'}}" class="home-panel">
+      <disclosure-panel class="home-panel" />
+    </view>
+    <view hidden="{{activeTab !== 'voting'}}" class="home-panel">
+      <voting-panel class="home-panel" />
+    </view>
+    <view hidden="{{activeTab !== 'profile'}}" class="home-panel">
+      <profile-panel active="{{activeTab === 'profile'}}" class="home-panel" />
+    </view>
+  </view> 
+  
 
   <app-tabbar value="{{activeTab}}" mode="switch" bindtabchange="handleTabChange" />
 </view>

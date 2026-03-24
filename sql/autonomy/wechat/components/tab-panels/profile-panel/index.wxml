@@ -1,6 +1,6 @@
 ﻿<app-navbar title="我的" left-arrow="{{false}}" />
 
-<view class="page-body page-body--with-tabbar">
+<view class="page-body ">
   <view wx:if="{{checking}}" class="section card info-card">
     <view class="empty-block">正在校验账户状态，请稍候。</view>
   </view>
@@ -15,20 +15,26 @@
           </view>
           <view class="section-subtitle">{{sessionUser.mobile || '未绑定手机号'}}</view>
         </view>
-        <t-tag theme="success" variant="light">账户已匹配</t-tag>
+        <t-tag theme="{{currentUser && currentUser.currentHouseProfile.isVerified ? 'success' : 'warning'}}" variant="light">
+          {{currentUser && currentUser.currentHouseProfile.isVerified ? '已认证' : '未认证'}}
+        </t-tag>
       </view>
 
       <view class="info-row">
         <view class="info-label">账户状态</view>
-        <view class="info-value">已完成微信账户匹配</view>
+        <view class="info-value">{{currentUser ? '已完成微信账户匹配' : '已登录，资料加载失败'}}</view>
       </view>
       <view class="info-row">
         <view class="info-label">实名认证</view>
-        <view class="info-value">{{verification.status === 'verified' ? '已通过' : verification.status === 'pending' ? '审核中' : '待提交'}}</view>
+        <view class="info-value">{{verificationText}}</view>
       </view>
       <view class="info-row">
         <view class="info-label">手机号</view>
         <view class="info-value">{{sessionUser.mobile || '未绑定'}}</view>
+      </view>
+      <view class="info-row">
+        <view class="info-label">当前房屋</view>
+        <view class="info-value">{{currentUser && currentUser.currentHouseProfile.houseDisplayName ? currentUser.currentHouseProfile.houseDisplayName : '未绑定房屋'}}</view>
       </view>
     </view>
 
@@ -45,7 +51,7 @@
         <t-cell
           title="实名认证"
           description="查看认证状态并提交或补充认证材料"
-          note="{{verification.status === 'verified' ? '已通过' : verification.status === 'pending' ? '审核中' : '待提交'}}"
+          note="{{verificationText}}"
           arrow="{{true}}"
           url="/pages/profile/verification/index"
           jump-type="navigateTo"
@@ -59,6 +65,10 @@
           jump-type="navigateTo"
         />
       </t-cell-group>
+    </view>
+
+    <view wx:if="{{errorMessage}}" class="section page-note page-note--warning">
+      {{errorMessage}}
     </view>
   </block>
 

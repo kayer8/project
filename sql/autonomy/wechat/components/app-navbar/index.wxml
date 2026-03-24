@@ -1,3 +1,1 @@
-<view class="app-navbar-shell">
-  <t-navbar title="{{title}}" left-arrow="{{leftArrow}}" fixed="{{false}}" />
-</view>
+<t-navbar title="{{title}}" left-arrow="{{leftArrow}}" fixed="{{false}}" />

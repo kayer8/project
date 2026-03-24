@@ -1,111 +1,120 @@
-<view class="page-shell">
-  <app-navbar title="绑定新房" />
+<app-navbar title="绑定新房" />
 
-  <view class="page-body">
-    <view class="status-row">
-      <t-tag theme="{{step >= 1 ? 'primary' : 'default'}}" variant="light">1 选择小区</t-tag>
-      <t-tag theme="{{step >= 2 ? 'primary' : 'default'}}" variant="light">2 填写房屋</t-tag>
-      <t-tag theme="{{step >= 3 ? 'primary' : 'default'}}" variant="light">3 提交材料</t-tag>
+<view class="page-body">
+  <view class="status-row">
+    <t-tag theme="{{step >= 1 ? 'primary' : 'default'}}" variant="light">1 选择小区</t-tag>
+    <t-tag theme="{{step >= 2 ? 'primary' : 'default'}}" variant="light">2 填写房屋</t-tag>
+    <t-tag theme="{{step >= 3 ? 'primary' : 'default'}}" variant="light">3 提交材料</t-tag>
+  </view>
+
+  <view wx:if="{{step === 1}}" class="section section--fill card form-card">
+    <view class="icon-title-row">
+      <t-icon name="home" size="40rpx" class="ui-icon ui-icon--primary" />
+      <view class="section-title">选择小区</view>
     </view>
-
-    <view wx:if="{{step === 1}}" class="section card form-card">
-      <view class="icon-title-row">
-        <t-icon name="home" size="40rpx" class="ui-icon ui-icon--primary" />
-        <view class="section-title">选择小区</view>
-      </view>
-      <view class="field-block">
-        <text class="field-label">搜索小区</text>
-        <t-input
-          t-class="td-input"
-          t-class-input="td-input__element"
-          borderless="{{true}}"
-          clearable="{{true}}"
-          placeholder="请输入小区名称"
-          value="{{keyword}}"
-          bind:change="handleKeywordInput"
-        />
-      </view>
+    <view class="field-block">
+      <text class="field-label">搜索小区</text>
+      <t-input
+        t-class="td-input"
+        t-class-input="td-input__element"
+        borderless="{{true}}"
+        clearable="{{true}}"
+        placeholder="请输入小区名称"
+        value="{{keyword}}"
+        bind:change="handleKeywordInput"
+      />
+    </view>
+    <app-list
+      list="{{filteredCommunities}}"
+      loading="{{loading}}"
+      showLoading="{{true}}"
+      isLoadMore="{{isLoadMore}}"
+      finished="{{finished}}"
+      emptyDescription="暂无匹配小区"
+      bind:refresh="onListRefresh"
+      bind:loadMore="onListLoadMore"
+    >
       <view wx:for="{{filteredCommunities}}" wx:key="*this" class="record-card bind-record" data-community="{{item}}" bindtap="handleSelectCommunity">
         <view class="record-title">{{item}}</view>
         <view class="record-note">点击选择并进入下一步</view>
       </view>
-    </view>
-
-    <view wx:if="{{step === 2}}" class="section card form-card">
-      <view class="icon-title-row">
-        <t-icon name="home" size="40rpx" class="ui-icon ui-icon--primary" />
-        <view class="section-title">填写房屋</view>
-      </view>
-      <view class="field-block">
-        <text class="field-label">已选小区</text>
-        <view class="picker-field">{{bindData.community}}</view>
-      </view>
-      <view class="field-block">
-        <text class="field-label">楼栋</text>
-        <view class="picker-field" bindtap="openBuildingPicker">{{bindData.building || '请选择楼栋'}}</view>
-      </view>
-      <view class="field-block">
-        <text class="field-label">单元</text>
-        <view class="picker-field" bindtap="openUnitPicker">{{bindData.unit || '请选择单元'}}</view>
-      </view>
-      <view class="field-block">
-        <text class="field-label">房号</text>
-        <t-input
-          t-class="td-input"
-          t-class-input="td-input__element"
-          borderless="{{true}}"
-          placeholder="例如 1202"
-          value="{{bindData.room}}"
-          bind:change="handleRoomInput"
-        />
-      </view>
-      <button class="primary-button" bindtap="nextStep" disabled="{{!bindData.building || !bindData.room}}">下一步</button>
-    </view>
-
-    <view wx:if="{{step === 3}}" class="section card form-card">
-      <view class="icon-title-row">
-        <t-icon name="check-circle" size="40rpx" class="ui-icon ui-icon--primary" />
-        <view class="section-title">提交材料</view>
-      </view>
-      <view class="field-block">
-        <text class="field-label">你的身份</text>
-        <t-radio-group
-          options="{{roleOptions}}"
-          value="{{bindData.role}}"
-          icon="line"
-          placement="right"
-          bind:change="handleRoleChange"
-        />
-      </view>
-      <view class="field-block">
-        <text class="field-label">证明材料</text>
-        <view class="page-note">可上传房产证、购房合同、租赁协议或物业要求的其他材料。</view>
-        <button class="secondary-button section" bindtap="chooseProof">{{proofImage ? '重新选择图片' : '上传证明图片'}}</button>
-        <image wx:if="{{proofImage}}" class="proof-image" src="{{proofImage}}" mode="aspectFill" />
-      </view>
-      <button class="primary-button" bindtap="handleSubmit" disabled="{{!proofImage}}">提交申请</button>
-    </view>
+    </app-list>
   </view>
 
-  <t-picker
-    visible="{{buildingPickerVisible}}"
-    title="选择楼栋"
-    value="{{buildingPickerValue}}"
-    bind:confirm="handleBuildingConfirm"
-    bind:cancel="closeBuildingPicker"
-    bind:visible-change="handleBuildingPickerVisibleChange"
-  >
-    <t-picker-item options="{{buildingOptions}}" />
-  </t-picker>
+  <view wx:if="{{step === 2}}" class="section card form-card">
+    <view class="icon-title-row">
+      <t-icon name="home" size="40rpx" class="ui-icon ui-icon--primary" />
+      <view class="section-title">填写房屋</view>
+    </view>
+    <view class="field-block">
+      <text class="field-label">已选小区</text>
+      <view class="picker-field">{{bindData.community}}</view>
+    </view>
+    <view class="field-block">
+      <text class="field-label">楼栋</text>
+      <view class="picker-field" bindtap="openBuildingPicker">{{bindData.building || '请选择楼栋'}}</view>
+    </view>
+    <view class="field-block">
+      <text class="field-label">单元</text>
+      <view class="picker-field" bindtap="openUnitPicker">{{bindData.unit || '请选择单元'}}</view>
+    </view>
+    <view class="field-block">
+      <text class="field-label">房号</text>
+      <t-input
+        t-class="td-input"
+        t-class-input="td-input__element"
+        borderless="{{true}}"
+        placeholder="例如 1202"
+        value="{{bindData.room}}"
+        bind:change="handleRoomInput"
+      />
+    </view>
+    <button class="primary-button" bindtap="nextStep" disabled="{{!bindData.building || !bindData.room}}">下一步</button>
+  </view>
 
-  <t-picker
-    visible="{{unitPickerVisible}}"
-    title="选择单元"
-    value="{{unitPickerValue}}"
-    bind:confirm="handleUnitConfirm"
-    bind:cancel="closeUnitPicker"
-    bind:visible-change="handleUnitPickerVisibleChange"
-  >
-    <t-picker-item options="{{unitOptions}}" />
-  </t-picker>
+  <view wx:if="{{step === 3}}" class="section card form-card">
+    <view class="icon-title-row">
+      <t-icon name="check-circle" size="40rpx" class="ui-icon ui-icon--primary" />
+      <view class="section-title">提交材料</view>
+    </view>
+    <view class="field-block">
+      <text class="field-label">你的身份</text>
+      <t-radio-group
+        options="{{roleOptions}}"
+        value="{{bindData.role}}"
+        icon="line"
+        placement="right"
+        bind:change="handleRoleChange"
+      />
+    </view>
+    <view class="field-block">
+      <text class="field-label">证明材料</text>
+      <view class="page-note">可上传房产证、购房合同、租赁协议或物业要求的其他材料。</view>
+      <button class="secondary-button section" bindtap="chooseProof">{{proofImage ? '重新选择图片' : '上传证明图片'}}</button>
+      <image wx:if="{{proofImage}}" class="proof-image" src="{{proofImage}}" mode="aspectFill" />
+    </view>
+    <button class="primary-button" bindtap="handleSubmit" disabled="{{!proofImage}}">提交申请</button>
+  </view>
 </view>
+
+<t-picker
+  visible="{{buildingPickerVisible}}"
+  title="选择楼栋"
+  value="{{buildingPickerValue}}"
+  bind:confirm="handleBuildingConfirm"
+  bind:cancel="closeBuildingPicker"
+  bind:visible-change="handleBuildingPickerVisibleChange"
+>
+  <t-picker-item options="{{buildingOptions}}" />
+</t-picker>
+
+<t-picker
+  visible="{{unitPickerVisible}}"
+  title="选择单元"
+  value="{{unitPickerValue}}"
+  bind:confirm="handleUnitConfirm"
+  bind:cancel="closeUnitPicker"
+  bind:visible-change="handleUnitPickerVisibleChange"
+>
+  <t-picker-item options="{{unitOptions}}" />
+</t-picker>

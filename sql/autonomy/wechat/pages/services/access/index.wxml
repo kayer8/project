@@ -1,22 +1,21 @@
-<view class="page-shell">
-  <app-navbar title="智能门禁" />
+<app-navbar title="智能门禁" />
 
-  <view class="page-body">
-    <view class="summary-banner">
-      <view class="icon-title-row">
-        <t-icon name="setting" size="48rpx" class="ui-icon ui-icon--primary" />
-        <view class="summary-title">智能门禁</view>
-      </view>
-      <view class="summary-desc">门禁能力适合后面接蓝牙、二维码或设备厂商接口，当前保留授权、记录和异常提醒入口。</view>
+<view class="page-body">
+  <view class="summary-banner">
+    <view class="icon-title-row">
+      <t-icon name="setting" size="48rpx" class="ui-icon ui-icon--primary" />
+      <view class="summary-title">智能门禁</view>
     </view>
+    <view class="summary-desc">门禁能力适合后面接蓝牙、二维码或设备厂商接口，当前保留授权、记录和异常提醒入口。</view>
+  </view>
 
-    <view class="page-note">门禁能力适合后面接蓝牙、二维码或设备厂商接口。当前先保留授权、记录和异常提醒这三个入口。</view>
-    <view class="section">
-      <t-cell-group>
-        <t-cell title="门禁授权" description="查看当前房屋门禁授权状态" arrow="{{true}}" />
-        <t-cell title="开门记录" description="查看最近 7 天门禁开门日志" arrow="{{true}}" />
-        <t-cell title="异常提醒" description="门禁失效、设备离线或权限变更提醒" arrow="{{true}}" />
-      </t-cell-group>
-    </view>
+  <view class="page-note">门禁能力适合后面接蓝牙、二维码或设备厂商接口。当前先保留授权、记录和异常提醒这三个入口。</view>
+
+  <view class="section">
+    <t-cell-group>
+      <t-cell title="门禁授权" description="查看当前房屋门禁授权状态" arrow="{{true}}" />
+      <t-cell title="开门记录" description="查看最近 7 天门禁开门日志" arrow="{{true}}" />
+      <t-cell title="异常提醒" description="门禁失效、设备离线或权限变更提醒" arrow="{{true}}" />
+    </t-cell-group>
   </view>
 </view>

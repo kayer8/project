@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { AuditLogModule } from '../audit-log/audit-log.module';
+import { VoteController } from './vote.controller';
 import { VoteService } from './vote.service';
 
 @Module({
   imports: [AuditLogModule],
+  controllers: [VoteController],
   providers: [VoteService],
   exports: [VoteService],
 })

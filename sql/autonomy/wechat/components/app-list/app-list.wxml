@@ -1,0 +1,39 @@
+<t-pull-down-refresh
+  class="km-list class"
+  style="{{style}}"
+  disabled="{{!enableRefresh}}"
+  enable-passive="{{true}}"
+  lower-threshold="{{lowerThreshold}}"
+  loadingProps="{{PULL_DOWN_LOADING_PROPS}}"
+  value="{{isRefreshing}}"
+  bind:refresh="onRefresh"
+  bind:scroll="onScroll"
+  bind:scrolltolower="onScrollToLower"
+>
+  <view class="km-list__content content-class">
+    <slot />
+  </view>
+
+  <block wx:if="{{isLoadMore}}">
+    <view class="km-list-load-more">
+      <t-loading theme="dots" size="80rpx" text="{{loadingText}}" class="wrapper" />
+    </view>
+  </block>
+
+  <block wx:if="{{list.length === 0 && showLoading && loading && !isLoadMore && !isRefreshing}}">
+    <view class="km-list__loading" slot="header">
+      <t-loading theme="circular" size="60rpx" />
+    </view>
+  </block>
+
+  <block wx:if="{{!loading && list.length === 0}}">
+    <slot wx:if="{{useEmptySlot}}" name="empty"></slot>
+    <view wx:else class="km-list-empty">
+      <t-empty description="{{emptyDescription}}" />
+    </view>
+  </block>
+
+  <block wx:if="{{finished && list.length > 0}}">
+    <view class="km-list-finished">{{finishedText}}</view>
+  </block>
+</t-pull-down-refresh>

@@ -1,7 +1,15 @@
-﻿<view class="page-shell">
-  <app-navbar title="维保记录" />
+<app-navbar title="维保记录" />
 
-  <view class="page-body">
+<view class="page-body">
+  <app-list
+    list="{{records}}"
+    loading="{{loading}}"
+    showLoading="{{true}}"
+    isLoadMore="{{isLoadMore}}"
+    finished="{{finished}}"
+    bind:refresh="onListRefresh"
+    bind:loadMore="onListLoadMore"
+  >
     <view wx:for="{{records}}" wx:key="id" class="record-card">
       <view class="record-row">
         <view>
@@ -15,5 +23,5 @@
       </view>
       <view class="list-desc">检测结果：{{item.result}}</view>
     </view>
-  </view>
+  </app-list>
 </view>

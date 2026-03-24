@@ -146,6 +146,7 @@ model User {
   memberChangeRequestsAsOp   MemberChangeRequest[] @relation("MemberChangeOperator")
   memberChangeRequestsTarget MemberChangeRequest[] @relation("MemberChangeTarget")
   createdVoteRepresentatives VoteRepresentative[]  @relation("VoteRepresentativeCreatorUser")
+  voteBallots                VoteBallot[]
   auditLogs                  AuditLog[]            @relation("AuditActorUser")
   matchedResidentArchives    ResidentArchive[]     @relation("ResidentArchiveMatchedUser")
   registrationRequests       RegistrationRequest[] @relation("UserRegistrationRequests")
@@ -238,6 +239,7 @@ model House {
   identityApplications IdentityApplication[]
   memberChangeRequests MemberChangeRequest[]
   voteRepresentatives  VoteRepresentative[]
+  voteBallots          VoteBallot[]
   residentArchives     ResidentArchive[]
   registrationRequests RegistrationRequest[]
   managementFeeRecords ManagementFeeRecord[]
@@ -495,6 +497,7 @@ model Vote {
   updatedAt        DateTime @updatedAt @map("updated_at")
 
   options VoteOption[]
+  ballots VoteBallot[]
 
   @@index([status, type])
   @@index([deadline])
@@ -512,8 +515,29 @@ model VoteOption {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
+  ballots VoteBallot[]
+
   @@index([voteId, sortNo])
   @@map("vote_options")
+}
+
+model VoteBallot {
+  id        String     @id @default(uuid())
+  voteId     String    @map("vote_id")
+  vote       Vote      @relation(fields: [voteId], references: [id], onDelete: Cascade)
+  optionId   String    @map("option_id")
+  option     VoteOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  userId     String    @map("user_id")
+  user       User      @relation(fields: [userId], references: [id])
+  houseId    String    @map("house_id")
+  house      House     @relation(fields: [houseId], references: [id])
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@unique([voteId, houseId])
+  @@index([voteId, userId])
+  @@index([optionId])
+  @@map("vote_ballots")
 }
 
 model AuditLog {

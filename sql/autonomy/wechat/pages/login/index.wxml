@@ -1,4 +1,3 @@
-﻿<view class="page-shell">
   <app-navbar title="登录" left-arrow="{{true}}" />
 
   <view class="page-body">
@@ -13,4 +12,3 @@
       </view>
     </view>
   </view>
-</view>

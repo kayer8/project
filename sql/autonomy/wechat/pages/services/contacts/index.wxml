@@ -1,7 +1,15 @@
-<view class="page-shell">
-  <app-navbar title="常用电话" />
+<app-navbar title="常用电话" />
 
-  <view class="page-body">
+<view class="page-body">
+  <app-list
+    list="{{contacts}}"
+    loading="{{loading}}"
+    showLoading="{{true}}"
+    isLoadMore="{{isLoadMore}}"
+    finished="{{finished}}"
+    bind:refresh="onListRefresh"
+    bind:loadMore="onListLoadMore"
+  >
     <view wx:for="{{contacts}}" wx:key="title" class="record-card">
       <view class="record-row">
         <view>
@@ -14,5 +22,5 @@
         <view class="record-title">{{item.phone}}</view>
       </view>
     </view>
-  </view>
+  </app-list>
 </view>

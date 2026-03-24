@@ -78,6 +78,7 @@ export class UserService {
         identityApplications: {
           include: {
             house: true,
+            community: true,
           },
           orderBy: {
             createdAt: 'desc',
@@ -463,7 +464,7 @@ export class UserService {
     };
   }
 
-  private mapUserDetail(user: any) {
+  private async mapUserDetail(user: any) {
     const listItem = this.mapUserListItem(user);
     const latestRegistrationRequest = user.registrationRequests?.[0] ?? null;
     const residentStatus = user.memberRelations.some((item: any) => item.status === 'ACTIVE')
@@ -472,7 +473,8 @@ export class UserService {
         ? 'UNVERIFIED'
         : latestRegistrationRequest?.status === 'REJECTED'
           ? 'REJECTED'
-        : 'REGISTERED';
+          : 'REGISTERED';
+    const currentHouseProfile = await this.buildCurrentHouseProfile(user, residentStatus);
 
     return {
       ...listItem,
@@ -519,6 +521,7 @@ export class UserService {
         reviewedAt: item.reviewedAt,
         rejectReason: item.rejectReason,
       })),
+      currentHouseProfile,
       residentStatus,
       latestRegistrationRequest: latestRegistrationRequest
         ? {
@@ -534,6 +537,84 @@ export class UserService {
           }
         : null,
     };
+  }
+
+  private async buildCurrentHouseProfile(user: any, residentStatus: string) {
+    const activeRelations = [...(user.memberRelations ?? [])]
+      .filter((item: any) => item.status === 'ACTIVE')
+      .sort((left: any, right: any) => {
+        if (left.isPrimaryRole !== right.isPrimaryRole) {
+          return left.isPrimaryRole ? -1 : 1;
+        }
+
+        return (
+          new Date(right.updatedAt).getTime() -
+          new Date(left.updatedAt).getTime()
+        );
+      });
+    const currentRelation = activeRelations[0] ?? null;
+    const communityName = this.resolveCurrentCommunityName(user);
+
+    if (!currentRelation) {
+      return {
+        isVerified: false,
+        verificationStatus: residentStatus === 'SYNCED' ? 'VERIFIED' : 'UNVERIFIED',
+        communityName,
+        houseId: null,
+        houseDisplayName: null,
+        buildingId: null,
+        buildingName: null,
+        relationType: null,
+        relationStatus: null,
+        isPrimaryRole: false,
+        memberCount: 0,
+        canViewBill: false,
+        canPayBill: false,
+        canJoinConsultation: false,
+        canBeVoteDelegate: false,
+      };
+    }
+
+    const memberCount = await this.prisma.houseMemberRelation.count({
+      where: {
+        houseId: currentRelation.houseId,
+        status: 'ACTIVE',
+      },
+    });
+
+    return {
+      isVerified: true,
+      verificationStatus: 'VERIFIED',
+      communityName,
+      houseId: currentRelation.houseId,
+      houseDisplayName: currentRelation.house.displayName,
+      buildingId: currentRelation.house.buildingId,
+      buildingName: currentRelation.house.building.buildingName,
+      relationType: currentRelation.relationType,
+      relationStatus: currentRelation.status,
+      isPrimaryRole: currentRelation.isPrimaryRole,
+      memberCount,
+      canViewBill: currentRelation.canViewBill,
+      canPayBill: currentRelation.canPayBill,
+      canJoinConsultation: currentRelation.canJoinConsultation,
+      canBeVoteDelegate: currentRelation.canBeVoteDelegate,
+    };
+  }
+
+  private resolveCurrentCommunityName(user: any) {
+    const activeCommunityRole = (user.communityRoles ?? []).find(
+      (item: any) => item.status === 'ACTIVE' && item.community?.name,
+    );
+
+    if (activeCommunityRole?.community?.name) {
+      return activeCommunityRole.community.name;
+    }
+
+    const latestIdentityCommunity = (user.identityApplications ?? []).find(
+      (item: any) => item.community?.name,
+    );
+
+    return latestIdentityCommunity?.community?.name ?? null;
   }
 
   private mapOwnerListItem(relation: any) {

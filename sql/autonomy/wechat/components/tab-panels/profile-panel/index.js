@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const routes_1 = require("../../../constants/routes");
-const community_1 = require("../../../mock/community");
-const auth_1 = require("../../../services/auth");
+const session_1 = require("../../../services/session");
+const user_1 = require("../../../services/user");
 const app_1 = require("../../../store/app");
 const nav_1 = require("../../../utils/nav");
 function resolveErrorMessage(error) {
@@ -11,9 +11,22 @@ function resolveErrorMessage(error) {
     }
     return '状态获取失败，请稍后重试';
 }
+function resolveVerificationText(user) {
+    if (user?.currentHouseProfile?.isVerified) {
+        return '已通过';
+    }
+    if (user?.latestRegistrationRequest?.status === 'PENDING') {
+        return '审核中';
+    }
+    if (user?.residentStatus === 'REJECTED') {
+        return '未通过';
+    }
+    return '待提交';
+}
 Component({
     options: {
         addGlobalClass: true,
+        virtualHost: true
     },
     properties: {
         active: {
@@ -31,7 +44,8 @@ Component({
         hasAccount: false,
         errorMessage: '',
         sessionUser: null,
-        verification: community_1.verificationRecord,
+        currentUser: null,
+        verificationText: '待提交',
     },
     lifetimes: {
         attached() {
@@ -42,45 +56,49 @@ Component({
     },
     methods: {
         async bootstrap() {
+            const cachedUser = app_1.appStore.getSessionUser();
             this.setData({
                 checking: true,
                 errorMessage: '',
             });
             try {
-                const cachedUser = app_1.appStore.getSessionUser();
-                if (app_1.appStore.hasAccessToken() && cachedUser) {
-                    this.setData({
-                        checking: false,
-                        hasAccount: true,
-                        sessionUser: cachedUser,
-                    });
-                    return;
-                }
-                const code = await (0, auth_1.getWechatLoginCode)();
-                const result = await (0, auth_1.loginWithWechat)({ code });
-                if (result.needRegister || !result.accessToken || !result.user) {
+                const hasSession = await (0, session_1.bootstrapWechatSession)();
+                if (!hasSession || !app_1.appStore.hasAccessToken()) {
                     app_1.appStore.clearSession();
                     this.setData({
                         checking: false,
                         hasAccount: false,
                         sessionUser: null,
+                        currentUser: null,
+                        verificationText: '待提交',
                     });
                     return;
                 }
-                app_1.appStore.setAccessToken(result.accessToken);
-                app_1.appStore.setSessionUser(result.user);
+                const currentUser = await (0, user_1.fetchCurrentUser)();
+                const sessionUser = {
+                    id: currentUser.id,
+                    nickname: currentUser.nickname || '',
+                    avatarUrl: currentUser.avatarUrl,
+                    mobile: currentUser.mobile,
+                    realName: currentUser.realName,
+                };
+                app_1.appStore.setSessionUser(sessionUser);
                 this.setData({
                     checking: false,
                     hasAccount: true,
-                    sessionUser: result.user,
+                    sessionUser,
+                    currentUser,
+                    verificationText: resolveVerificationText(currentUser),
                 });
             }
             catch (error) {
-                app_1.appStore.clearSession();
+                const fallbackUser = cachedUser ?? null;
                 this.setData({
                     checking: false,
-                    hasAccount: false,
-                    sessionUser: null,
+                    hasAccount: Boolean(fallbackUser),
+                    sessionUser: fallbackUser,
+                    currentUser: null,
+                    verificationText: '待提交',
                     errorMessage: resolveErrorMessage(error),
                 });
             }

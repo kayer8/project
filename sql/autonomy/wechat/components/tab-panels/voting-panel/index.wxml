@@ -1,32 +1,55 @@
-﻿<app-navbar title="社区投票" left-arrow="{{false}}" />
+<app-navbar title="社区投票" left-arrow="{{false}}" />
 
-<view class="page-body page-body--with-tabbar">
-  <view class="section action-row">
-    <button class="primary-button" bindtap="openCreateVote">发起正式投票</button>
-    <button class="secondary-button" bindtap="openCreateVote">发起意见征集</button>
+<view class="page-body">
+  <view class="section action-row" style="padding: 0 24rpx;">
+    <button class="primary-button" data-type="FORMAL" bindtap="openCreateVote">发起正式表决</button>
+    <button class="secondary-button" data-type="CONSULTATION" bindtap="openCreateVote">发起意见征集</button>
   </view>
 
-  <view class="section">
-    <view wx:for="{{votes}}" wx:key="id" class="record-card vote-record" data-id="{{item.id}}" bindtap="openVoteDetail">
-      <view class="record-row">
-        <view>
-          <view class="icon-inline-row">
-            <t-icon name="check-circle" size="32rpx" class="ui-icon" />
-            <view class="record-title">{{item.title}}</view>
+  <view class="section section--fill">
+    <app-list
+      list="{{votes}}"
+      loading="{{loading}}"
+      showLoading="{{true}}"
+      isLoadMore="{{isLoadMore}}"
+      finished="{{finished}}"
+      content-class="list-content"
+      bind:refresh="onListRefresh"
+      bind:loadMore="onListLoadMore"
+    >
+      <view wx:if="{{errorMessage}}" class="section page-note page-note--warning">{{errorMessage}}</view>
+
+      <view
+        wx:for="{{votes}}"
+        wx:key="id"
+        class="record-card vote-record"
+        data-id="{{item.id}}"
+        bindtap="openVoteDetail"
+      >
+        <view class="record-row">
+          <view>
+            <view class="icon-inline-row">
+              <view class="record-title">{{item.title}}</view>
+            </view>
+            <view class="record-note">发起方：{{item.sponsor}} · 截止 {{item.deadlineLabel}}</view>
           </view>
-          <view class="record-note">发起方：{{item.sponsor}} · 截止 {{item.endTime}}</view>
+          <view class="badge-row">
+            <t-tag theme="{{item.status === 'ONGOING' ? 'primary' : 'default'}}" variant="light">
+              {{item.statusLabel}}
+            </t-tag>
+            <t-tag theme="warning" variant="light">{{item.typeLabel}}</t-tag>
+            <t-tag theme="{{item.voted ? 'success' : 'warning'}}" variant="light">
+              {{item.voted ? '已投票' : '未投票'}}
+            </t-tag>
+          </view>
         </view>
-        <view class="badge-row">
-          <t-tag theme="{{item.status === '进行中' ? 'primary' : 'default'}}" variant="light">{{item.status}}</t-tag>
-          <t-tag theme="warning" variant="light">{{item.type}}</t-tag>
-          <t-tag theme="{{item.voted ? 'success' : 'warning'}}" variant="light">{{item.voted ? '已投票' : '未投票'}}</t-tag>
+
+        <view class="vote-record__meta">
+          <view class="vote-record__meta-item">参与范围：{{item.scope}}</view>
+          <view class="vote-record__meta-item">参与情况：{{item.participantCount}} / {{item.totalHouseholds}}</view>
         </view>
+        <view class="list-desc">{{item.description || '暂无投票说明'}}</view>
       </view>
-      <view class="vote-record__meta">
-        <view class="vote-record__meta-item">参与范围：{{item.scope}}</view>
-        <view class="vote-record__meta-item">参与情况：{{item.participants}} / {{item.total}}</view>
-      </view>
-      <view class="list-desc">{{item.description}}</view>
-    </view>
+    </app-list>
   </view>
 </view>
