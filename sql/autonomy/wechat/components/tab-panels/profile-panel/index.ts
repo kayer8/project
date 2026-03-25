@@ -1,4 +1,5 @@
 import { ROUTES } from '../../../constants/routes';
+import { getWechatLoginCode, manualBindWechatPhone } from '../../../services/auth';
 import { bootstrapWechatSession } from '../../../services/session';
 import { CurrentUserDetail, fetchCurrentUser } from '../../../services/user';
 import { appStore } from '../../../store/app';
@@ -9,7 +10,6 @@ type SessionUser = ReturnType<typeof appStore.getSessionUser>;
 type ActionItem = {
   key: string;
   label: string;
-  desc?: string;
   icon: string;
   url: string;
   requiresHouse: boolean;
@@ -27,7 +27,6 @@ const PERSONAL_MENUS: ActionItem[] = [
   {
     key: 'vote-record',
     label: '我的投票记录',
-    desc: '查看参与过的投票和表决进度',
     icon: 'check-circle',
     url: ROUTES.voting.index,
     requiresHouse: true,
@@ -35,7 +34,6 @@ const PERSONAL_MENUS: ActionItem[] = [
   {
     key: 'repair-record',
     label: '我的报修',
-    desc: '查看报修、投诉与处理状态',
     icon: 'tools',
     url: ROUTES.services.repair,
     requiresHouse: true,
@@ -43,7 +41,6 @@ const PERSONAL_MENUS: ActionItem[] = [
   {
     key: 'feedback',
     label: '我的反馈',
-    desc: '进入邻里议事与意见反馈入口',
     icon: 'notification',
     url: ROUTES.services.neighbor,
     requiresHouse: true,
@@ -51,7 +48,6 @@ const PERSONAL_MENUS: ActionItem[] = [
   {
     key: 'settings',
     label: '设置',
-    desc: '消息提醒、隐私与账号设置',
     icon: 'setting',
     url: ROUTES.profile.settings,
     requiresHouse: false,
@@ -59,7 +55,6 @@ const PERSONAL_MENUS: ActionItem[] = [
   {
     key: 'contact',
     label: '联系物业',
-    desc: '查看常用电话与服务联系人',
     icon: 'mail',
     url: ROUTES.services.contacts,
     requiresHouse: false,
@@ -161,6 +156,14 @@ function buildHouseList(user: CurrentUserDetail | null) {
   return Array.from(deduped.values());
 }
 
+function normalizeMobile(value: string) {
+  return value.replace(/\s+/g, '').trim();
+}
+
+function isMainlandMobile(value: string) {
+  return /^1\d{10}$/.test(value);
+}
+
 Component({
   options: {
     addGlobalClass: true,
@@ -181,8 +184,10 @@ Component({
 
   data: {
     checking: true,
+    oneClickBinding: false,
     hasAccount: false,
     hasBoundHouse: false,
+    showAutoBindGuide: true,
     errorMessage: '',
     sessionUser: null as SessionUser,
     currentUser: null as CurrentUserDetail | null,
@@ -208,7 +213,12 @@ Component({
   },
 
   methods: {
-    syncProfileView(sessionUser: SessionUser, currentUser: CurrentUserDetail | null, hasAccount: boolean, errorMessage = '') {
+    syncProfileView(
+      sessionUser: SessionUser,
+      currentUser: CurrentUserDetail | null,
+      hasAccount: boolean,
+      errorMessage = '',
+    ) {
       const availableHouses = buildHouseList(currentUser);
       const hasBoundHouse = availableHouses.length > 0;
       const activeHouseIndex = Math.max(0, availableHouses.findIndex((item) => item.isCurrent));
@@ -221,17 +231,24 @@ Component({
         '微信用户';
       const displayInitial = displayName.slice(0, 1).toUpperCase();
       const verificationText = resolveVerificationText(currentUser);
-      const identityLabel = activeHouse?.relationLabel || resolveRelationLabel(currentUser?.currentHouseProfile.relationType);
-      const houseSummary = activeHouse?.fullLabel || composeHouseLabel(currentUser?.currentHouseProfile.communityName, null);
+      const identityLabel =
+        activeHouse?.relationLabel ||
+        resolveRelationLabel(currentUser?.currentHouseProfile.relationType);
+      const houseSummary =
+        activeHouse?.fullLabel ||
+        composeHouseLabel(currentUser?.currentHouseProfile.communityName, null);
       const authStatusText = hasBoundHouse ? verificationText : '未认证';
       const houseMetaText = hasBoundHouse
         ? `已绑定 ${availableHouses.length} 套房屋，可切换查看当前房屋信息。`
-        : '暂未绑定房屋，可先添加房屋。';
+        : '如物业已登记手机号，可尝试一键绑定。';
+
+      const showAutoBindGuide = !currentUser?.currentHouseProfile?.isVerified;
 
       this.setData({
         checking: false,
         hasAccount,
         hasBoundHouse,
+        showAutoBindGuide,
         errorMessage,
         sessionUser,
         currentUser,
@@ -301,8 +318,82 @@ Component({
       }
     },
 
+    async handleManualBindTap() {
+      const result = await new Promise<WechatMiniprogram.ShowModalSuccessCallbackResult>((resolve) => {
+        wx.showModal({
+          title: '输入登记手机号',
+          editable: true,
+          placeholderText: '请输入物业登记的手机号',
+          confirmText: '确认校验',
+          cancelText: '取消',
+          success: resolve,
+          fail: () =>
+            resolve({ confirm: false, cancel: true, content: '', errMsg: 'showModal:fail' }),
+        });
+      });
+
+      if (!result.confirm) {
+        return;
+      }
+
+      const mobile = normalizeMobile(result.content || '');
+      if (!isMainlandMobile(mobile)) {
+        wx.showToast({
+          title: '请输入 11 位手机号',
+          icon: 'none',
+        });
+        return;
+      }
+
+      this.setData({ oneClickBinding: true });
+
+      try {
+        const code = await getWechatLoginCode();
+        const bindResult = await manualBindWechatPhone({
+          code,
+          mobile,
+        });
+
+        appStore.setAccessToken(bindResult.accessToken);
+        appStore.setSessionUser(bindResult.user);
+
+        await this.bootstrap();
+
+        if (bindResult.matched) {
+          wx.showModal({
+            title: '一键绑定成功',
+            content: '已根据物业登记手机号自动绑定房屋。',
+            showCancel: false,
+          });
+          return;
+        }
+
+        wx.showModal({
+          title: '未匹配到登记信息',
+          content: '该手机号暂未匹配到物业登记房屋，请核对手机号或继续手动绑定房屋。',
+          confirmText: '去手动绑定',
+          cancelText: '稍后再说',
+          success: (res) => {
+            if (res.confirm) {
+              this.goBindHouse();
+            }
+          },
+        });
+      } catch (error) {
+        wx.showToast({
+          title: resolveErrorMessage(error),
+          icon: 'none',
+        });
+      } finally {
+        this.setData({ oneClickBinding: false });
+      }
+    },
+
     handleMenuTap(event: WechatMiniprogram.BaseEvent) {
-      const { url, requiresHouse } = event.currentTarget.dataset as { url?: string; requiresHouse?: boolean };
+      const { url, requiresHouse } = event.currentTarget.dataset as {
+        url?: string;
+        requiresHouse?: boolean;
+      };
 
       if (requiresHouse && !this.data.hasBoundHouse) {
         this.showBindToast();
@@ -337,7 +428,9 @@ Component({
         activeHouseIndex: nextIndex,
         activeHouseLabel: activeHouse.label,
         houseSummary: activeHouse.fullLabel,
-        identityLabel: activeHouse.relationLabel || resolveRelationLabel(currentUser?.currentHouseProfile.relationType),
+        identityLabel:
+          activeHouse.relationLabel ||
+          resolveRelationLabel(currentUser?.currentHouseProfile.relationType),
       });
 
       wx.showToast({

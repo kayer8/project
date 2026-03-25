@@ -95,6 +95,15 @@ export function syncWechatPhone(payload: { code: string; phoneCode: string }) {
   });
 }
 
+export function manualBindWechatPhone(payload: { code: string; mobile: string }) {
+  return request<PhoneSyncResult>({
+    url: '/auth/wechat/manual-bind',
+    method: 'POST',
+    data: payload,
+    auth: false,
+  });
+}
+
 export function listRegisterBuildings() {
   return request<RegisterBuildingOption[]>({
     url: '/auth/register/buildings',

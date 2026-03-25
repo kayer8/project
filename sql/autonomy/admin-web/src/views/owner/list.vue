@@ -65,6 +65,12 @@
           <template #updatedAt="{ row }">
             {{ formatDateTime(row.updatedAt) }}
           </template>
+
+          <template #actions="{ row }">
+            <div class="action-link-group">
+              <t-button variant="text" @click="openEdit(row.userId)">编辑</t-button>
+            </div>
+          </template>
         </t-table>
 
         <div class="table-pagination">
@@ -79,6 +85,13 @@
         </div>
       </div>
     </section>
+
+    <UserFormDialog
+      v-model:visible="formDialogVisible"
+      :mode="dialogMode"
+      :initial-value="editingUser"
+      @success="handleDialogSuccess"
+    />
   </PageContainer>
 </template>
 
@@ -95,9 +108,15 @@ import {
   type OwnerListItem,
   type VoteQualification,
 } from '@/modules/owner/types';
+import { fetchUserDetail } from '@/modules/user/api';
+import type { UserDetail } from '@/modules/user/types';
 import { formatDateTime } from '@/utils/format';
+import UserFormDialog from '@/views/user/components/UserFormDialog.vue';
 
 const owners = ref<OwnerListItem[]>([]);
+const editingUser = ref<UserDetail | null>(null);
+const formDialogVisible = ref(false);
+const dialogMode = ref<'create' | 'edit'>('edit');
 const filterVisible = ref(false);
 const buildingOptions = ref([{ label: '全部楼栋', value: 'ALL' }]);
 const filters = reactive({
@@ -119,6 +138,7 @@ const columns = [
   { colKey: 'authStatus', title: '认证状态', width: 120 },
   { colKey: 'voteQualification', title: '投票资格', width: 120 },
   { colKey: 'updatedAt', title: '最近更新', width: 180 },
+  { colKey: 'actions', title: '操作', width: 100, fixed: 'right' },
 ];
 
 const { quickKeyword, setQuickKeyword, commitQuickKeyword, clearQuickKeywordTimer } =
@@ -185,6 +205,16 @@ function handlePageChange(pageInfo: { current: number; pageSize: number }) {
   pagination.page = pageInfo.current;
   pagination.pageSize = pageInfo.pageSize;
   void loadList();
+}
+
+async function openEdit(userId: string) {
+  editingUser.value = await fetchUserDetail(userId);
+  formDialogVisible.value = true;
+}
+
+async function handleDialogSuccess() {
+  editingUser.value = null;
+  await loadList();
 }
 
 onMounted(async () => {

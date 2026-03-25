@@ -6,7 +6,9 @@ import { AdminJwtAuthGuard } from '../../common/guards/admin-jwt-auth.guard';
 import { HouseService } from '../house/house.service';
 import {
   AdminHouseListQueryDto,
+  CreateAdminHouseArchiveDto,
   CreateAdminHouseDto,
+  UpdateAdminHouseArchiveDto,
   UpdateAdminHouseDto,
 } from '../house/dto/house.dto';
 import { AdminAuthUser } from './interfaces/admin-auth-user.interface';
@@ -36,6 +38,42 @@ export class AdminHousesController {
   @Get(':id')
   detail(@Param('id') id: string) {
     return this.houseService.getAdminDetail(id);
+  }
+
+  @Get(':id/archives')
+  listArchives(@Param('id') id: string) {
+    return this.houseService.listArchivesAdmin(id);
+  }
+
+  @Post(':id/archives')
+  createArchive(
+    @Param('id') id: string,
+    @Body() dto: CreateAdminHouseArchiveDto,
+    @Admin() admin: AdminAuthUser,
+    @Req() request: Request,
+  ) {
+    return this.houseService.createArchiveAdmin(id, dto, buildAuditContext(admin, request));
+  }
+
+  @Patch(':id/archives/:archiveId')
+  updateArchive(
+    @Param('id') id: string,
+    @Param('archiveId') archiveId: string,
+    @Body() dto: UpdateAdminHouseArchiveDto,
+    @Admin() admin: AdminAuthUser,
+    @Req() request: Request,
+  ) {
+    return this.houseService.updateArchiveAdmin(id, archiveId, dto, buildAuditContext(admin, request));
+  }
+
+  @Delete(':id/archives/:archiveId')
+  removeArchive(
+    @Param('id') id: string,
+    @Param('archiveId') archiveId: string,
+    @Admin() admin: AdminAuthUser,
+    @Req() request: Request,
+  ) {
+    return this.houseService.removeArchiveAdmin(id, archiveId, buildAuditContext(admin, request));
   }
 
   @Post()

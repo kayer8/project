@@ -3,6 +3,7 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { Request } from 'express';
@@ -10,6 +11,8 @@ import { AppErrorCode } from '../exceptions/app-error-code';
 import { BusinessException } from '../exceptions/business.exception';
 
 export class AllExceptionsFilter implements ExceptionFilter {
+  private readonly logger = new Logger(AllExceptionsFilter.name);
+
   constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
 
   catch(exception: unknown, host: ArgumentsHost) {
@@ -41,6 +44,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
         }
       }
     }
+
+    const stack =
+      exception instanceof Error ? exception.stack : JSON.stringify(exception);
+    this.logger.error(
+      `${request?.method ?? 'UNKNOWN'} ${request?.url ?? ''} -> ${status} ${code}: ${message}`,
+      stack,
+    );
 
     httpAdapter.reply(
       ctx.getResponse(),

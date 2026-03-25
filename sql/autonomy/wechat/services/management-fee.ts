@@ -88,6 +88,9 @@ export interface ManagementFeeDisclosureTreeResult {
 export interface ManagementFeeDisclosureQuery {
   periodKey?: string;
   periodMonth?: string;
+  buildingId?: string;
+  keyword?: string;
+  paymentStatus?: ManagementFeePaymentStatus;
 }
 
 export function fetchManagementFeeDisclosureTree(query: ManagementFeeDisclosureQuery = {}) {

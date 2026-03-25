@@ -2,136 +2,46 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const management_fee_1 = require("../../../services/management-fee");
 const ALL_FILTER = 'ALL';
+const DETAIL_PAGE = '/pages/disclosure/payment/detail/index';
 function formatCurrency(value) {
     return `¥${value.toFixed(2)}`;
 }
 function formatRate(value) {
     return `${Number.isInteger(value) ? value.toFixed(0) : value.toFixed(1)}%`;
 }
-function getStatusTone(status) {
-    if (status === 'PAID') {
-        return 'paid';
+function getRateTone(rate) {
+    if (rate > 80) {
+        return 'high';
     }
-    if (status === 'PARTIAL') {
-        return 'partial';
+    if (rate >= 30) {
+        return 'medium';
     }
-    return 'unpaid';
+    return 'low';
 }
-function getStatusText(status) {
-    if (status === 'PAID') {
-        return '已缴';
+function getRateLabel(rate) {
+    if (rate > 80) {
+        return '缴费率高';
     }
-    if (status === 'PARTIAL') {
-        return '部分缴纳';
+    if (rate >= 30) {
+        return '缴费推进中';
     }
-    return '未缴';
+    return '缴费率低';
 }
 function summarizeHouses(houses) {
     return houses.reduce((result, item) => {
         result.houseCount += 1;
         result.receivableAmount += item.receivableAmount;
         result.paidAmount += item.paidAmount;
-        result.outstandingAmount += item.outstandingAmount;
         if (item.paymentStatus === 'PAID') {
             result.paidHouseholds += 1;
         }
-        else if (item.paymentStatus === 'PARTIAL') {
-            result.partialHouseholds += 1;
-        }
-        else if (item.paymentStatus === 'OVERDUE') {
-            result.overdueHouseholds += 1;
-        }
         return result;
     }, {
         houseCount: 0,
         receivableAmount: 0,
         paidAmount: 0,
-        outstandingAmount: 0,
         paidHouseholds: 0,
-        partialHouseholds: 0,
-        overdueHouseholds: 0,
     });
-}
-function mapHouseView(item) {
-    const houseLabel = item.displayName || [item.unitNo, item.roomNo].filter(Boolean).join('-') || item.houseId;
-    const houseCode = item.displayName || item.roomNo || item.houseId;
-    return {
-        ...item,
-        houseLabel,
-        secondaryText: `房屋编号 ${houseCode} · 建筑面积 ${item.grossArea.toFixed(2)}㎡`,
-        receivableText: formatCurrency(item.receivableAmount),
-        paidText: formatCurrency(item.paidAmount),
-        paidAtText: (0, management_fee_1.formatManagementFeeDateTime)(item.lastPaidAt) || '暂无记录',
-        paymentStatusText: getStatusText(item.paymentStatus),
-        statusTone: getStatusTone(item.paymentStatus),
-    };
-}
-function mapBuildingView(building, houses) {
-    const summary = summarizeHouses(houses);
-    const paymentRate = summary.receivableAmount > 0 ? (summary.paidAmount / summary.receivableAmount) * 100 : 0;
-    const unpaidHouseholds = Math.max(summary.houseCount - summary.paidHouseholds, 0);
-    return {
-        buildingId: building.buildingId,
-        buildingName: building.buildingName,
-        houseCount: summary.houseCount,
-        receivableAmount: Number(summary.receivableAmount.toFixed(2)),
-        paidAmount: Number(summary.paidAmount.toFixed(2)),
-        outstandingAmount: Number(summary.outstandingAmount.toFixed(2)),
-        paidHouseholds: summary.paidHouseholds,
-        partialHouseholds: summary.partialHouseholds,
-        overdueHouseholds: summary.overdueHouseholds,
-        unpaidHouseholds,
-        paymentRate: Number(paymentRate.toFixed(2)),
-        receivableText: formatCurrency(summary.receivableAmount),
-        paidText: formatCurrency(summary.paidAmount),
-        paymentRateText: formatRate(paymentRate),
-        paidHouseholdsText: `${summary.paidHouseholds} 户已缴`,
-        unpaidHouseholdsText: `${unpaidHouseholds} 户未结清`,
-        houses: houses.map(mapHouseView),
-    };
-}
-function mapPeriodView(period, buildings) {
-    const summary = buildings.reduce((result, item) => {
-        result.houseCount += item.houseCount;
-        result.receivableAmount += item.receivableAmount;
-        result.paidAmount += item.paidAmount;
-        result.outstandingAmount += item.outstandingAmount;
-        result.paidHouseholds += item.paidHouseholds;
-        result.partialHouseholds += item.partialHouseholds;
-        result.overdueHouseholds += item.overdueHouseholds;
-        return result;
-    }, {
-        houseCount: 0,
-        receivableAmount: 0,
-        paidAmount: 0,
-        outstandingAmount: 0,
-        paidHouseholds: 0,
-        partialHouseholds: 0,
-        overdueHouseholds: 0,
-    });
-    const paymentRate = summary.receivableAmount > 0 ? (summary.paidAmount / summary.receivableAmount) * 100 : 0;
-    const unpaidHouseholds = Math.max(summary.houseCount - summary.paidHouseholds, 0);
-    return {
-        periodKey: period.periodKey,
-        periodMonth: period.periodMonth,
-        rangeText: period.rangeLabel,
-        dueDateText: period.dueDate ? `截止 ${(0, management_fee_1.formatManagementFeeDate)(period.dueDate)}` : '未设置截止时间',
-        buildingCountText: `${buildings.length} 栋`,
-        houseCount: summary.houseCount,
-        receivableAmount: Number(summary.receivableAmount.toFixed(2)),
-        paidAmount: Number(summary.paidAmount.toFixed(2)),
-        outstandingAmount: Number(summary.outstandingAmount.toFixed(2)),
-        paidHouseholds: summary.paidHouseholds,
-        partialHouseholds: summary.partialHouseholds,
-        overdueHouseholds: summary.overdueHouseholds,
-        unpaidHouseholds,
-        paymentRate: Number(paymentRate.toFixed(2)),
-        receivableText: formatCurrency(summary.receivableAmount),
-        paidText: formatCurrency(summary.paidAmount),
-        paymentRateText: formatRate(paymentRate),
-        unpaidHouseholdsText: `${unpaidHouseholds} 户未结清`,
-        buildings,
-    };
 }
 function buildPeriodOptions(periods) {
     return [
@@ -149,111 +59,120 @@ function buildBuildingOptions(periods, selectedPeriodKey) {
         .map((item) => [item.buildingId, { label: item.buildingName, value: item.buildingId }])).values()).sort((a, b) => a.label.localeCompare(b.label, 'zh-CN'));
     return [{ label: '全部楼栋', value: ALL_FILTER }, ...options];
 }
-function buildVisiblePeriods(periods, selectedPeriodKey, selectedBuildingId, keyword) {
-    const normalizedKeyword = keyword.trim().toLowerCase();
-    const scopedPeriods = selectedPeriodKey === ALL_FILTER ? periods : periods.filter((item) => item.periodKey === selectedPeriodKey);
-    return scopedPeriods
-        .map((period) => {
-        const buildings = period.buildings
-            .filter((item) => selectedBuildingId === ALL_FILTER || item.buildingId === selectedBuildingId)
-            .map((building) => {
-            if (!normalizedKeyword) {
-                return mapBuildingView(building, building.houses);
-            }
-            const buildingMatched = building.buildingName.toLowerCase().includes(normalizedKeyword);
-            const houses = buildingMatched
-                ? building.houses
-                : building.houses.filter((house) => [house.displayName, house.roomNo, house.unitNo, building.buildingName]
-                    .filter(Boolean)
-                    .some((text) => text.toLowerCase().includes(normalizedKeyword)));
-            if (!buildingMatched && !houses.length) {
-                return null;
-            }
-            return mapBuildingView(building, houses);
-        })
-            .filter((item) => !!item);
-        if (!buildings.length) {
-            return null;
-        }
-        return mapPeriodView(period, buildings);
-    })
-        .filter((item) => !!item);
+function filterBuildings(buildings, selectedBuildingId) {
+    return buildings.filter((item) => selectedBuildingId === ALL_FILTER || item.buildingId === selectedBuildingId);
 }
-function buildOverview(periods) {
-    const summary = periods.reduce((result, item) => {
-        result.periodCount += 1;
-        result.houseCount += item.houseCount;
-        result.receivableAmount += item.receivableAmount;
-        result.paidAmount += item.paidAmount;
-        result.unpaidHouseholds += item.unpaidHouseholds;
+function mapPeriodCard(period, buildings, updatedAtText) {
+    const summary = buildings.reduce((result, building) => {
+        const buildingSummary = summarizeHouses(building.houses);
+        result.houseCount += buildingSummary.houseCount;
+        result.receivableAmount += buildingSummary.receivableAmount;
+        result.paidAmount += buildingSummary.paidAmount;
+        result.paidHouseholds += buildingSummary.paidHouseholds;
         return result;
     }, {
-        periodCount: 0,
         houseCount: 0,
         receivableAmount: 0,
         paidAmount: 0,
-        unpaidHouseholds: 0,
+        paidHouseholds: 0,
     });
     const paymentRate = summary.receivableAmount > 0 ? (summary.paidAmount / summary.receivableAmount) * 100 : 0;
+    const unpaidHouseholds = Math.max(summary.houseCount - summary.paidHouseholds, 0);
     return {
+        periodKey: period.periodKey,
+        periodMonth: period.periodMonth,
+        rangeText: period.rangeLabel,
+        updatedAtText,
+        receivableAmount: Number(summary.receivableAmount.toFixed(2)),
+        paidAmount: Number(summary.paidAmount.toFixed(2)),
+        unpaidHouseholds,
+        paymentRate: Number(paymentRate.toFixed(2)),
         receivableText: formatCurrency(summary.receivableAmount),
         paidText: formatCurrency(summary.paidAmount),
         paymentRateText: formatRate(paymentRate),
-        houseCountText: `${summary.houseCount} 户`,
-        unpaidHouseholdsText: `${summary.unpaidHouseholds} 户`,
-        periodCountText: `${summary.periodCount} 个账期`,
+        unpaidHouseholdsText: `未缴 ${unpaidHouseholds} 户`,
+        statusTone: getRateTone(paymentRate),
+        statusLabel: getRateLabel(paymentRate),
+    };
+}
+function buildPeriodCards(periods, selectedPeriodKey, selectedBuildingId, updatedAtText) {
+    return periods
+        .slice()
+        .sort((a, b) => b.periodKey.localeCompare(a.periodKey))
+        .filter((item) => selectedPeriodKey === ALL_FILTER || item.periodKey === selectedPeriodKey)
+        .map((period) => {
+        const buildings = filterBuildings(period.buildings, selectedBuildingId);
+        if (!buildings.length) {
+            return null;
+        }
+        return mapPeriodCard(period, buildings, updatedAtText);
+    })
+        .filter((item) => !!item);
+}
+function buildSummary(cards) {
+    const aggregated = cards.reduce((result, item) => {
+        result.periodCount += 1;
+        result.receivableAmount += item.receivableAmount;
+        result.paidAmount += item.paidAmount;
+        return result;
+    }, {
+        periodCount: 0,
+        receivableAmount: 0,
+        paidAmount: 0,
+    });
+    const paymentRate = aggregated.receivableAmount > 0 ? (aggregated.paidAmount / aggregated.receivableAmount) * 100 : 0;
+    return {
+        periodCountText: `${aggregated.periodCount} 个账期`,
+        receivableText: formatCurrency(aggregated.receivableAmount),
+        paidText: formatCurrency(aggregated.paidAmount),
+        paymentRateText: formatRate(paymentRate),
     };
 }
 function findOptionIndex(options, value) {
     const index = options.findIndex((item) => item.value === value);
     return index >= 0 ? index : 0;
 }
-function resolveExpandedKeys(periods, expandedPeriodKey, expandedBuildingKey) {
-    if (!periods.length) {
-        return {
-            expandedPeriodKey: '',
-            expandedBuildingKey: '',
-        };
-    }
-    const currentPeriod = periods.find((item) => item.periodKey === expandedPeriodKey) ?? periods[0];
-    const currentBuilding = currentPeriod.buildings.find((item) => item.buildingId === expandedBuildingKey) ?? currentPeriod.buildings[0];
+function getPickerResult(event) {
+    const values = Array.isArray(event.detail.value) ? event.detail.value : [];
+    const labels = Array.isArray(event.detail.label) ? event.detail.label : [];
     return {
-        expandedPeriodKey: currentPeriod.periodKey,
-        expandedBuildingKey: currentBuilding?.buildingId || '',
+        value: values[0] || '',
+        label: labels[0] || '',
     };
 }
 Page({
     data: {
-        disclosureTitle: '收费公开',
+        disclosureTitle: '收费公示',
         disclosureNote: '',
         publisherText: '',
         updatedAtText: '',
         allPeriods: [],
-        periods: [],
-        overview: {
+        periodCards: [],
+        summary: {
+            periodCountText: '0 个账期',
             receivableText: '¥0.00',
             paidText: '¥0.00',
             paymentRateText: '0%',
-            houseCountText: '0 户',
-            unpaidHouseholdsText: '0 户',
-            periodCountText: '0 个账期',
         },
         loading: false,
         isLoadMore: false,
         finished: false,
         errorMessage: '',
-        emptyDescription: '暂无收费公开数据',
-        keyword: '',
+        emptyDescription: '暂无收费公示数据',
         periodOptions: [{ label: '全部账期', value: ALL_FILTER }],
         buildingOptions: [{ label: '全部楼栋', value: ALL_FILTER }],
+        periodPickerOptions: [{ label: '全部账期', value: ALL_FILTER }],
+        buildingPickerOptions: [{ label: '全部楼栋', value: ALL_FILTER }],
+        periodPickerVisible: false,
+        buildingPickerVisible: false,
+        periodPickerValue: [ALL_FILTER],
+        buildingPickerValue: [ALL_FILTER],
         periodIndex: 0,
         buildingIndex: 0,
         currentPeriodLabel: '全部账期',
         currentBuildingLabel: '全部楼栋',
         selectedPeriodKey: ALL_FILTER,
         selectedBuildingId: ALL_FILTER,
-        expandedPeriodKey: '',
-        expandedBuildingKey: '',
     },
     onLoad() {
         void this.loadDisclosure();
@@ -265,42 +184,42 @@ Page({
         });
         try {
             const result = await (0, management_fee_1.fetchManagementFeeDisclosureTree)();
+            const updatedAtText = (0, management_fee_1.formatManagementFeeDateTime)(result.updatedAt);
             const periodOptions = buildPeriodOptions(result.periods);
             const buildingOptions = buildBuildingOptions(result.periods, ALL_FILTER);
-            const periods = buildVisiblePeriods(result.periods, ALL_FILTER, ALL_FILTER, '');
-            const expanded = resolveExpandedKeys(periods, '', '');
+            const periodCards = buildPeriodCards(result.periods, ALL_FILTER, ALL_FILTER, updatedAtText);
             this.setData({
-                disclosureTitle: '收费公开',
-                disclosureNote: '按账期、楼栋、房屋三级展示收费数据，便于查看各层级收费汇总与明细情况。',
-                publisherText: '物业财务与信息公开组',
-                updatedAtText: (0, management_fee_1.formatManagementFeeDateTime)(result.updatedAt),
+                disclosureTitle: result.title || '收费公示',
+                disclosureNote: result.note || '',
+                publisherText: result.publisher || '',
+                updatedAtText,
                 allPeriods: result.periods,
-                periods,
-                overview: buildOverview(periods),
+                periodCards,
+                summary: buildSummary(periodCards),
                 periodOptions,
                 buildingOptions,
+                periodPickerOptions: periodOptions,
+                buildingPickerOptions: buildingOptions,
+                periodPickerValue: [ALL_FILTER],
+                buildingPickerValue: [ALL_FILTER],
                 periodIndex: 0,
                 buildingIndex: 0,
                 currentPeriodLabel: periodOptions[0]?.label || '全部账期',
                 currentBuildingLabel: buildingOptions[0]?.label || '全部楼栋',
                 selectedPeriodKey: ALL_FILTER,
                 selectedBuildingId: ALL_FILTER,
-                expandedPeriodKey: expanded.expandedPeriodKey,
-                expandedBuildingKey: expanded.expandedBuildingKey,
-                emptyDescription: '暂无收费公开数据',
+                emptyDescription: '暂无收费公示数据',
             });
         }
         catch (error) {
             console.error('load management fee disclosure tree failed', error);
-            const message = error instanceof Error ? error.message : '收费公开加载失败';
+            const message = error instanceof Error ? error.message : '收费公示加载失败';
             this.setData({
                 allPeriods: [],
-                periods: [],
-                overview: buildOverview([]),
+                periodCards: [],
+                summary: buildSummary([]),
                 errorMessage: message,
                 emptyDescription: message,
-                expandedPeriodKey: '',
-                expandedBuildingKey: '',
             });
         }
         finally {
@@ -317,56 +236,67 @@ Page({
             event?.detail?.done?.();
         });
     },
-    handleKeywordInput(event) {
-        this.applyFilters({
-            keyword: event.detail.value || '',
+    openPeriodPicker() {
+        if (!this.data.periodPickerOptions.length) {
+            return;
+        }
+        this.setData({
+            periodPickerVisible: true,
+            periodPickerValue: [this.data.selectedPeriodKey || this.data.periodPickerOptions[0].value],
         });
     },
-    handlePeriodChange(event) {
-        const index = Number(event.detail.value ?? 0);
-        const option = this.data.periodOptions[index] || this.data.periodOptions[0];
+    handlePeriodPickerVisibleChange(event) {
+        this.setData({ periodPickerVisible: !!event.detail.visible });
+    },
+    closePeriodPicker() {
+        this.setData({ periodPickerVisible: false });
+    },
+    handlePeriodConfirm(event) {
+        const selected = getPickerResult(event);
         this.applyFilters({
-            selectedPeriodKey: option?.value || ALL_FILTER,
+            selectedPeriodKey: selected.value || ALL_FILTER,
             selectedBuildingId: ALL_FILTER,
         });
-    },
-    handleBuildingChange(event) {
-        const index = Number(event.detail.value ?? 0);
-        const option = this.data.buildingOptions[index] || this.data.buildingOptions[0];
-        this.applyFilters({
-            selectedBuildingId: option?.value || ALL_FILTER,
+        this.setData({
+            periodPickerVisible: false,
+            periodPickerValue: [selected.value || ALL_FILTER],
         });
     },
-    togglePeriod(event) {
+    openBuildingPicker() {
+        if (!this.data.buildingPickerOptions.length) {
+            return;
+        }
+        this.setData({
+            buildingPickerVisible: true,
+            buildingPickerValue: [this.data.selectedBuildingId || this.data.buildingPickerOptions[0].value],
+        });
+    },
+    handleBuildingPickerVisibleChange(event) {
+        this.setData({ buildingPickerVisible: !!event.detail.visible });
+    },
+    closeBuildingPicker() {
+        this.setData({ buildingPickerVisible: false });
+    },
+    handleBuildingConfirm(event) {
+        const selected = getPickerResult(event);
+        this.applyFilters({
+            selectedBuildingId: selected.value || ALL_FILTER,
+        });
+        this.setData({
+            buildingPickerVisible: false,
+            buildingPickerValue: [selected.value || ALL_FILTER],
+        });
+    },
+    openDetail(event) {
         const { key } = event.currentTarget.dataset;
         if (!key) {
             return;
         }
-        if (this.data.expandedPeriodKey === key) {
-            this.setData({
-                expandedPeriodKey: '',
-                expandedBuildingKey: '',
-            });
-            return;
-        }
-        const period = this.data.periods.find((item) => item.periodKey === key);
-        this.setData({
-            expandedPeriodKey: key,
-            expandedBuildingKey: period?.buildings[0]?.buildingId || '',
-        });
-    },
-    toggleBuilding(event) {
-        const { periodKey, buildingId } = event.currentTarget.dataset;
-        if (!periodKey || !buildingId) {
-            return;
-        }
-        this.setData({
-            expandedPeriodKey: periodKey,
-            expandedBuildingKey: this.data.expandedBuildingKey === buildingId ? '' : buildingId,
+        wx.navigateTo({
+            url: `${DETAIL_PAGE}?periodKey=${encodeURIComponent(key)}`,
         });
     },
     applyFilters(next) {
-        const keyword = next.keyword ?? this.data.keyword;
         const selectedPeriodKey = next.selectedPeriodKey ?? this.data.selectedPeriodKey;
         const periodOptions = this.data.periodOptions;
         const buildingOptions = buildBuildingOptions(this.data.allPeriods, selectedPeriodKey);
@@ -374,28 +304,24 @@ Page({
         const selectedBuildingId = buildingOptions.some((item) => item.value === preferredBuildingId)
             ? preferredBuildingId
             : ALL_FILTER;
-        const periods = buildVisiblePeriods(this.data.allPeriods, selectedPeriodKey, selectedBuildingId, keyword);
-        const expanded = resolveExpandedKeys(periods, this.data.expandedPeriodKey, this.data.expandedBuildingKey);
+        const periodCards = buildPeriodCards(this.data.allPeriods, selectedPeriodKey, selectedBuildingId, this.data.updatedAtText);
         const periodIndex = findOptionIndex(periodOptions, selectedPeriodKey);
         const buildingIndex = findOptionIndex(buildingOptions, selectedBuildingId);
-        const emptyDescription = this.data.errorMessage ||
-            (keyword.trim() || selectedPeriodKey !== ALL_FILTER || selectedBuildingId !== ALL_FILTER
-                ? '当前筛选条件下暂无收费数据'
-                : '暂无收费公开数据');
+        const hasFilters = selectedPeriodKey !== ALL_FILTER || selectedBuildingId !== ALL_FILTER;
         this.setData({
-            keyword,
             selectedPeriodKey,
             selectedBuildingId,
-            periods,
-            overview: buildOverview(periods),
+            periodCards,
+            summary: buildSummary(periodCards),
             buildingOptions,
+            buildingPickerOptions: buildingOptions,
             periodIndex,
             buildingIndex,
+            periodPickerValue: [selectedPeriodKey],
+            buildingPickerValue: [selectedBuildingId],
             currentPeriodLabel: periodOptions[periodIndex]?.label || '全部账期',
             currentBuildingLabel: buildingOptions[buildingIndex]?.label || '全部楼栋',
-            expandedPeriodKey: expanded.expandedPeriodKey,
-            expandedBuildingKey: expanded.expandedBuildingKey,
-            emptyDescription,
+            emptyDescription: hasFilters ? '当前筛选条件下暂无收费公示数据' : '暂无收费公示数据',
         });
     },
 });

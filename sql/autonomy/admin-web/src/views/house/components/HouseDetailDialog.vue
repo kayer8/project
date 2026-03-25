@@ -8,7 +8,9 @@
   >
     <div class="dialog-body">
       <div class="dialog-toolbar">
-        <div class="dialog-desc">查看房屋基础档案、住户组、成员关系和当前生效的投票代表。</div>
+        <div class="dialog-desc">
+          查看房屋基础信息、住户组、成员关系，以及该房屋的预绑定手机号配置。
+        </div>
         <div class="dialog-actions">
           <t-button v-if="house" variant="outline" theme="primary" @click="openEdit">编辑房屋</t-button>
           <t-button v-if="house" variant="outline" theme="danger" @click="handleDelete">删除房屋</t-button>
@@ -81,6 +83,12 @@
           </t-col>
         </t-row>
 
+        <HouseArchivePanel
+          :house-id="house.id"
+          :archives="residentArchives"
+          @success="handleArchiveSuccess"
+        />
+
         <t-card title="成员关系">
           <t-table :data="house.members" :columns="memberColumns" row-key="id" size="small">
             <template #status="{ row }">
@@ -95,7 +103,7 @@
                 <t-tag v-if="row.canViewBill" variant="light">可看账单</t-tag>
                 <t-tag v-if="row.canPayBill" variant="light">可缴费</t-tag>
                 <t-tag v-if="row.canActAsAgent" variant="light">可代办</t-tag>
-                <t-tag v-if="row.canJoinConsultation" variant="light">可征集意见</t-tag>
+                <t-tag v-if="row.canJoinConsultation" variant="light">可参与征询</t-tag>
                 <t-tag v-if="row.canBeVoteDelegate" variant="light">可做投票代表</t-tag>
               </div>
             </template>
@@ -107,7 +115,9 @@
         </t-card>
 
         <t-card title="投票代表">
-          <div v-if="house.activeVoteRepresentatives.length === 0" class="empty-text">当前没有生效中的投票代表。</div>
+          <div v-if="house.activeVoteRepresentatives.length === 0" class="empty-text">
+            当前没有生效中的投票代表。
+          </div>
           <t-table
             v-else
             :data="house.activeVoteRepresentatives"
@@ -139,10 +149,11 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { MessagePlugin } from 'tdesign-vue-next';
-import { fetchHouseDetail, removeHouse } from '@/modules/house/api';
-import type { HouseDetail } from '@/modules/house/types';
+import { fetchHouseArchives, fetchHouseDetail, removeHouse } from '@/modules/house/api';
+import type { HouseDetail, HouseResidentArchiveItem } from '@/modules/house/types';
 import { houseStatusLabelMap } from '@/modules/house/types';
 import { formatArea, formatDateTime, formatText } from '@/utils/format';
+import HouseArchivePanel from './HouseArchivePanel.vue';
 import HouseFormDialog from './HouseFormDialog.vue';
 
 const props = defineProps<{
@@ -156,6 +167,7 @@ const emit = defineEmits<{
 }>();
 
 const house = ref<HouseDetail | null>(null);
+const residentArchives = ref<HouseResidentArchiveItem[]>([]);
 const loading = ref(false);
 const loadError = ref('');
 const formDialogVisible = ref(false);
@@ -224,9 +236,19 @@ function handleVisibleChange(value: boolean) {
   emit('update:visible', value);
 }
 
+async function loadArchives() {
+  if (!props.detailId) {
+    residentArchives.value = [];
+    return;
+  }
+
+  residentArchives.value = await fetchHouseArchives(props.detailId);
+}
+
 async function loadDetail() {
   if (!props.detailId) {
     house.value = null;
+    residentArchives.value = [];
     loadError.value = '';
     return;
   }
@@ -234,9 +256,15 @@ async function loadDetail() {
   loading.value = true;
   loadError.value = '';
   try {
-    house.value = await fetchHouseDetail(props.detailId);
+    const [detail, archives] = await Promise.all([
+      fetchHouseDetail(props.detailId),
+      fetchHouseArchives(props.detailId),
+    ]);
+    house.value = detail;
+    residentArchives.value = archives;
   } catch (error) {
     house.value = null;
+    residentArchives.value = [];
     loadError.value = resolveErrorMessage(error);
   } finally {
     loading.value = false;
@@ -261,6 +289,10 @@ async function handleDelete() {
 async function handleFormSuccess() {
   await loadDetail();
   emit('success');
+}
+
+async function handleArchiveSuccess() {
+  await loadArchives();
 }
 
 watch(

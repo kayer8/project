@@ -14,7 +14,9 @@
         <view class="home-profile-card__meta">
           <view class="home-profile-card__name-row">
             <view class="home-profile-card__name">{{homeProfileCard.houseName}}</view>
-            <t-tag wx:if="{{homeProfileCard.houseRole}}" theme="primary" variant="light">{{homeProfileCard.houseRole}}</t-tag>
+            <t-tag wx:if="{{homeProfileCard.houseRole}}" theme="primary" variant="light">
+              {{homeProfileCard.houseRole}}
+            </t-tag>
             <t-tag
               wx:if="{{homeProfileCard.statusTag}}"
               theme="{{homeProfileCard.statusTag === '已认证' ? 'success' : 'warning'}}"
@@ -27,8 +29,8 @@
         </view>
       </view>
 
-      <view class="home-profile-card__link" data-url="/pages/profile/index" bindtap="openCardAction">
-        <t-icon name="arrow-right" size="32rpx" />
+      <view class="home-profile-card__link" bindtap="openHouseSwitcher">
+        <t-icon name="swap" size="32rpx" />
       </view>
     </view>
 
@@ -80,6 +82,9 @@
   </view>
 
   <view class="section card info-card vote-guide-card">
+    <view style="position:absolute;width: 100%;height: 100%;left: 0; z-index: -1;">
+      <image style="width:100%;height:100% ;border-radius: 20rpx;" src="./banner_bg.png" mode="aspectFill" />
+    </view>
     <view class="vote-guide-card__content">
       <view class="vote-guide-card__eyebrow">投票提醒</view>
       <view class="vote-guide-card__title">{{voteGuideCard.title}}</view>
@@ -125,3 +130,59 @@
     </block>
   </view>
 </view>
+
+<t-popup
+  visible="{{houseSwitcherVisible}}"
+  placement="bottom"
+  bind:visible-change="handleHouseSwitcherVisibleChange"
+>
+  <view class="house-switcher-popup">
+    <view class="house-switcher-popup__header">
+      <view class="house-switcher-popup__title">切换房屋</view>
+      <view class="house-switcher-popup__close" bindtap="closeHouseSwitcher">
+        <t-icon name="close" size="30rpx" />
+      </view>
+    </view>
+
+    <scroll-view class="house-switcher-popup__scroll" scroll-y>
+      <view wx:if="{{boundHouses.length}}">
+        <view
+          wx:for="{{boundHouses}}"
+          wx:key="id"
+          class="house-switcher-item {{selectedHouseId === item.id ? 'house-switcher-item--active' : ''}}"
+          data-id="{{item.id}}"
+          bindtap="handleSelectHouse"
+        >
+          <view class="house-switcher-item__content">
+            <view class="house-switcher-item__title-row">
+              <view class="house-switcher-item__title">{{item.houseName}}</view>
+              <t-tag wx:if="{{item.roleLabel}}" theme="primary" variant="light">{{item.roleLabel}}</t-tag>
+              <t-tag
+                wx:if="{{item.statusTag}}"
+                theme="{{item.statusTag === '已认证' ? 'success' : 'warning'}}"
+                variant="light"
+              >
+                {{item.statusTag}}
+              </t-tag>
+            </view>
+            <view class="house-switcher-item__subtitle">{{item.subtitle}}</view>
+          </view>
+
+          <view wx:if="{{selectedHouseId === item.id}}" class="house-switcher-item__check">
+            <t-icon name="check-circle-filled" size="34rpx" />
+          </view>
+        </view>
+      </view>
+
+      <view wx:else class="house-switcher-popup__empty">
+        当前还没有已绑定房屋
+      </view>
+    </scroll-view>
+
+    <view class="house-switcher-popup__footer">
+      <t-button theme="primary" size="large" shape="round" block bindtap="handleBindNewHouse">
+        绑定新房屋
+      </t-button>
+    </view>
+  </view>
+</t-popup>

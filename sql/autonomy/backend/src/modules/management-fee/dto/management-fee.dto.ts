@@ -13,6 +13,22 @@ export class ManagementFeePeriodQueryDto {
   @IsOptional()
   @IsString()
   periodMonth?: string;
+
+  @ApiPropertyOptional({ description: '楼栋 ID' })
+  @IsOptional()
+  @IsString()
+  buildingId?: string;
+
+  @ApiPropertyOptional({ description: '搜索楼栋、房屋名称或房号' })
+  @IsOptional()
+  @IsString()
+  keyword?: string;
+
+  @ApiPropertyOptional({ description: '缴费状态', enum: ['PAID', 'PARTIAL', 'PENDING', 'OVERDUE'] })
+  @IsOptional()
+  @IsString()
+  @IsIn(['PAID', 'PARTIAL', 'PENDING', 'OVERDUE'])
+  paymentStatus?: 'PAID' | 'PARTIAL' | 'PENDING' | 'OVERDUE';
 }
 
 export class AdminManagementFeeHouseQueryDto extends PaginationDto {

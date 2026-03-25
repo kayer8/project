@@ -57,6 +57,21 @@ export interface HouseDetail extends HouseListItem {
   }>;
 }
 
+export interface HouseResidentArchiveItem {
+  id: string;
+  mobile: string;
+  realName: string | null;
+  relationType: string | null;
+  relationLabel: string | null;
+  status: string;
+  remark: string | null;
+  matchedUserId: string | null;
+  matchedUserName: string | null;
+  matchedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface PaginatedHouseList {
   items: HouseListItem[];
   total: number;
@@ -97,6 +112,16 @@ export interface CreateAdminHousePayload {
 }
 
 export type UpdateAdminHousePayload = Partial<CreateAdminHousePayload>;
+
+export interface CreateHouseResidentArchivePayload {
+  mobile: string;
+  realName?: string;
+  relationType?: string;
+  relationLabel?: string;
+  remark?: string;
+}
+
+export type UpdateHouseResidentArchivePayload = Partial<CreateHouseResidentArchivePayload>;
 
 export const houseStatusLabelMap: Record<HouseStatus, string> = {
   SELF_OCCUPIED: '自住',

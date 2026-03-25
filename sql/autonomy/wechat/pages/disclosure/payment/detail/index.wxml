@@ -1,0 +1,144 @@
+<app-navbar title="{{navbarTitle}}" />
+
+<view class="page-body">
+  <view wx:if="{{errorMessage && !rawBuildings.length}}" class="state-card">
+    <view class="state-card__title">加载失败</view>
+    <view class="state-card__desc">{{errorMessage}}</view>
+  </view>
+
+  <block wx:else>
+    <view class="detail-hero">
+      <view class="detail-hero__eyebrow">账期明细</view>
+      <view class="detail-hero__title">{{periodTitle}}</view>
+      <view class="detail-hero__meta">
+        <text>{{periodMeta}}</text>
+        <text wx:if="{{publisherText || updatedAtText}}"> · </text>
+        <text wx:if="{{publisherText}}">{{publisherText}}</text>
+        <text wx:if="{{publisherText && updatedAtText}}"> · </text>
+        <text wx:if="{{updatedAtText}}">更新于 {{updatedAtText}}</text>
+      </view>
+    </view>
+
+    <view class="detail-summary detail-summary--{{summary.rateTone}}">
+      <view class="detail-summary__main">
+        <view class="detail-summary__label">账期缴费率</view>
+        <view class="detail-summary__rate">{{summary.paymentRateText}}</view>
+      </view>
+      <view class="detail-summary__grid">
+        <view class="detail-summary__item">
+          <view class="detail-summary__item-label">总应收</view>
+          <view class="detail-summary__item-value">{{summary.receivableText}}</view>
+        </view>
+        <view class="detail-summary__item">
+          <view class="detail-summary__item-label">总实收</view>
+          <view class="detail-summary__item-value">{{summary.paidText}}</view>
+        </view>
+        <view class="detail-summary__item">
+          <view class="detail-summary__item-label">未缴户数</view>
+          <view class="detail-summary__item-value">{{summary.unpaidText}}</view>
+        </view>
+        <view class="detail-summary__item">
+          <view class="detail-summary__item-label">楼栋数量</view>
+          <view class="detail-summary__item-value">{{summary.buildingCountText}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="detail-search">
+      <t-input
+        t-class="search-field__input"
+        t-class-input="search-field__input-element"
+        t-class-prefix-icon="search-field__icon"
+        t-class-clearable="search-field__clear"
+        borderless="{{true}}"
+        clearable="{{true}}"
+        prefix-icon="search"
+        placeholder-style="color: #6f7e90; font-size: 28rpx;"
+        placeholder="搜索当前楼栋房号"
+        value="{{keyword}}"
+        bind:change="handleKeywordInput"
+      />
+    </view>
+
+    <view wx:if="{{!rawBuildings.length}}" class="state-card">
+      <view class="state-card__title">暂无明细</view>
+      <view class="state-card__desc">{{emptyDescription}}</view>
+    </view>
+
+    <view wx:else class="detail-layout">
+      <view class="detail-layout__sidebar">
+        <t-side-bar value="{{activeBuildingId}}" bind:change="handleSideBarChange">
+          <t-side-bar-item
+            wx:for="{{buildingTabs}}"
+            wx:key="value"
+            label="{{item.label}}"
+            value="{{item.value}}"
+          />
+        </t-side-bar>
+      </view>
+
+      <view class="detail-layout__content">
+        <view wx:if="{{activeBuilding}}" class="building-panel">
+          <view class="building-panel__head">
+            <view>
+              <view class="building-panel__title">{{activeBuilding.buildingName}}</view>
+              <view class="building-panel__subtitle">
+                {{activeBuilding.houseCount}} 户 · 未缴 {{activeBuilding.unpaidHouseholds}} 户
+              </view>
+            </view>
+          </view>
+
+          <view class="building-panel__summary">
+            <view class="building-panel__metric">
+              <view class="building-panel__metric-label">应收</view>
+              <view class="building-panel__metric-value">{{activeBuilding.receivableText}}</view>
+            </view>
+            <view class="building-panel__metric">
+              <view class="building-panel__metric-label">实收</view>
+              <view class="building-panel__metric-value">{{activeBuilding.paidText}}</view>
+            </view>
+            <view class="building-panel__metric">
+              <view class="building-panel__metric-label">缴费率</view>
+              <view class="building-panel__metric-value">{{activeBuilding.paymentRateText}}</view>
+            </view>
+          </view>
+
+          <view wx:if="{{!activeBuilding.houses.length}}" class="state-card state-card--inner">
+            <view class="state-card__title">暂无房屋明细</view>
+            <view class="state-card__desc">{{emptyDescription}}</view>
+          </view>
+
+          <view wx:else class="house-list">
+            <view wx:for="{{activeBuilding.houses}}" wx:key="id" wx:for-item="house" class="house-card">
+              <view class="house-card__row">
+                <view class="house-card__title">{{house.houseLabel}}</view>
+                <t-tag
+                  t-class="house-card__status house-card__status--{{house.statusTone}}"
+                  theme="default"
+                  variant="light"
+                >
+                  {{house.paymentStatusText}}
+                </t-tag>
+              </view>
+              <view class="house-card__meta">建筑面积 {{house.areaText}}</view>
+              <view class="house-card__finance">
+                <view class="house-card__finance-item">
+                  <view class="house-card__finance-label">应收</view>
+                  <view class="house-card__finance-value">{{house.receivableText}}</view>
+                </view>
+                <view class="house-card__finance-item">
+                  <view class="house-card__finance-label">实收</view>
+                  <view class="house-card__finance-value">{{house.paidText}}</view>
+                </view>
+                <view class="house-card__finance-item">
+                  <view class="house-card__finance-label">最近缴费</view>
+                  <view class="house-card__finance-value house-card__finance-value--muted">{{house.paidAtText}}</view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </block>
+</view>

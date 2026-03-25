@@ -11,6 +11,7 @@
     "pages/disclosure/detail/index",
     "pages/disclosure/financial/index",
     "pages/disclosure/payment/index",
+    "pages/disclosure/payment/detail/index",
     "pages/disclosure/management/index",
     "pages/disclosure/maintenance/index",
     "pages/profile/bind/index",

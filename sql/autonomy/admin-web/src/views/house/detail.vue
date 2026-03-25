@@ -60,6 +60,8 @@
         </t-col>
       </t-row>
 
+      <HouseArchivePanel :house-id="house.id" :archives="residentArchives" @success="loadArchives" />
+
       <t-card title="成员关系">
         <t-table :data="house.members" :columns="memberColumns" row-key="id" size="small">
           <template #status="{ row }">
@@ -74,7 +76,7 @@
               <t-tag v-if="row.canViewBill" variant="light">可看账单</t-tag>
               <t-tag v-if="row.canPayBill" variant="light">可缴费</t-tag>
               <t-tag v-if="row.canActAsAgent" variant="light">可代办</t-tag>
-              <t-tag v-if="row.canJoinConsultation" variant="light">可征集意见</t-tag>
+              <t-tag v-if="row.canJoinConsultation" variant="light">可参与征集</t-tag>
               <t-tag v-if="row.canBeVoteDelegate" variant="light">可做投票代表</t-tag>
             </div>
           </template>
@@ -95,7 +97,9 @@
       </t-card>
 
       <t-card title="投票代表">
-        <div v-if="house.activeVoteRepresentatives.length === 0" class="empty-text">当前没有生效中的投票代表。</div>
+        <div v-if="house.activeVoteRepresentatives.length === 0" class="empty-text">
+          当前没有生效中的投票代表。
+        </div>
         <t-table
           v-else
           :data="house.activeVoteRepresentatives"
@@ -127,15 +131,17 @@
 import { onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import PageContainer from '@/components/PageContainer/index.vue';
-import { fetchHouseDetail, removeHouse } from '@/modules/house/api';
-import type { HouseDetail } from '@/modules/house/types';
+import { fetchHouseArchives, fetchHouseDetail, removeHouse } from '@/modules/house/api';
+import type { HouseDetail, HouseResidentArchiveItem } from '@/modules/house/types';
 import { houseStatusLabelMap } from '@/modules/house/types';
 import { formatArea, formatDateTime, formatText } from '@/utils/format';
+import HouseArchivePanel from './components/HouseArchivePanel.vue';
 import HouseFormDialog from './components/HouseFormDialog.vue';
 
 const route = useRoute();
 const router = useRouter();
 const house = ref<HouseDetail | null>(null);
+const residentArchives = ref<HouseResidentArchiveItem[]>([]);
 const dialogVisible = ref(false);
 
 const groupColumns = [
@@ -166,39 +172,40 @@ const voteColumns = [
 ];
 
 function getHouseStatusTheme(status: HouseDetail['houseStatus']) {
-  if (status === 'SELF_OCCUPIED') {
-    return 'success';
-  }
-  if (status === 'RENTED') {
-    return 'warning';
-  }
-  if (status === 'VACANT') {
-    return 'default';
-  }
+  if (status === 'SELF_OCCUPIED') return 'success';
+  if (status === 'RENTED') return 'warning';
+  if (status === 'VACANT') return 'default';
   return 'primary';
 }
 
 function getMemberStatusTheme(status: string) {
-  if (status === 'ACTIVE') {
-    return 'success';
-  }
-  if (status === 'PENDING') {
-    return 'warning';
-  }
-  if (status === 'REMOVED' || status === 'REJECTED') {
-    return 'danger';
-  }
+  if (status === 'ACTIVE') return 'success';
+  if (status === 'PENDING') return 'warning';
+  if (status === 'REMOVED' || status === 'REJECTED') return 'danger';
   return 'default';
+}
+
+async function loadArchives() {
+  const id = String(route.params.id || '');
+  if (!id) {
+    residentArchives.value = [];
+    return;
+  }
+
+  residentArchives.value = await fetchHouseArchives(id);
 }
 
 async function loadDetail() {
   const id = String(route.params.id || '');
   if (!id) {
     house.value = null;
+    residentArchives.value = [];
     return;
   }
 
-  house.value = await fetchHouseDetail(id);
+  const [detail, archives] = await Promise.all([fetchHouseDetail(id), fetchHouseArchives(id)]);
+  house.value = detail;
+  residentArchives.value = archives;
 }
 
 function openEdit() {

@@ -14,6 +14,7 @@ import { AuthService } from './auth.service';
 import { RegisterHouseOptionsQueryDto } from './dto/register-house-options.dto';
 import { SubmitRegistrationRequestDto } from './dto/submit-registration-request.dto';
 import { WechatLoginDto } from './dto/wechat-login.dto';
+import { WechatManualBindDto } from './dto/wechat-manual-bind.dto';
 import { WechatPhoneSyncDto } from './dto/wechat-phone-sync.dto';
 import { WechatRegisterDto } from './dto/wechat-register.dto';
 
@@ -32,6 +33,12 @@ export class AuthController {
   @ApiBody({ type: WechatPhoneSyncDto })
   syncPhone(@Body() dto: WechatPhoneSyncDto) {
     return this.authService.syncPhoneWithWeChat(dto);
+  }
+
+  @Post('wechat/manual-bind')
+  @ApiBody({ type: WechatManualBindDto })
+  manualBind(@Body() dto: WechatManualBindDto) {
+    return this.authService.manualBindWithMobile(dto);
   }
 
   @Post('wechat/register')

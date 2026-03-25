@@ -371,9 +371,9 @@ export class ManagementFeeService {
 
   async getDisclosure(query: ManagementFeePeriodQueryDto) {
     const period = await this.resolvePeriod(query);
-    const records = await this.loadHouseRecords(period);
+    const records = this.filterDisclosureRecords(await this.loadHouseRecords(period), query);
     const summary = this.buildSummary(records, period);
-    const buildings = await this.getAdminBuildingStats({ periodKey: period.periodKey });
+    const buildingStats = this.buildDisclosureBuildings(records).map(({ houses, ...item }) => item);
 
     return {
       periodKey: period.periodKey,
@@ -382,7 +382,7 @@ export class ManagementFeeService {
       publisher: '物业财务与信息公开组',
       calculationRule: this.getCalculationRule(period),
       summary,
-      buildingStats: buildings.items,
+      buildingStats,
       publishedAt: new Date().toISOString(),
       note: '当前公开数据来自管理时段配置和房屋账目快照，用于公开展示与缴费统计。',
     };
@@ -450,14 +450,17 @@ export class ManagementFeeService {
 
     for (const item of matchedPeriods) {
       const period = await this.resolvePeriod({ periodKey: item.periodKey });
-      const records = await this.loadHouseRecords(period);
+      const records = this.filterDisclosureRecords(await this.loadHouseRecords(period), query);
+      if (!records.length) {
+        continue;
+      }
       const summary = this.buildSummary(records, period);
       const buildings = this.buildDisclosureBuildings(records);
 
       periods.push({
         periodKey: period.periodKey,
         periodMonth: period.periodMonth,
-        title: `${this.getRangeLabel(period.chargeStartDate, period.chargeEndDate, period.periodMonth)} 绠＄悊璐圭即绾冲叕寮€`,
+        title: `${this.getRangeLabel(period.chargeStartDate, period.chargeEndDate, period.periodMonth)} 管理费缴纳公开`,
         rangeLabel: this.getRangeLabel(period.chargeStartDate, period.chargeEndDate, period.periodMonth),
         chargeStartDate: period.chargeStartDate ? period.chargeStartDate.toISOString() : null,
         chargeEndDate: period.chargeEndDate ? period.chargeEndDate.toISOString() : null,
@@ -481,9 +484,9 @@ export class ManagementFeeService {
     ).sort((a, b) => a.buildingName.localeCompare(b.buildingName, 'zh-CN'));
 
     return {
-      title: '鏀惰垂鍏紑',
-      publisher: '鐗╀笟璐㈠姟涓庝俊鎭叕寮€缁?',
-      note: '褰撳墠鍏紑鏁版嵁鎸夎处鏈熴€佹ゼ鏍嬩笌鎴垮眿缁撴瀯灞曠ず锛岀敤浜庡叕绀鸿处鍗曟墽琛屼笌缂寸撼鎯呭喌銆?',
+      title: '收费公示',
+      publisher: '物业财务与信息公开组',
+      note: '',
       summary,
       buildingOptions,
       periods,
@@ -692,6 +695,37 @@ export class ManagementFeeService {
       partialHouseholds,
       overdueHouseholds,
     };
+  }
+
+  private filterDisclosureRecords(
+    records: ManagementFeeHouseRecord[],
+    query?: Pick<ManagementFeePeriodQueryDto, 'buildingId' | 'keyword' | 'paymentStatus'>,
+  ) {
+    const buildingId = query?.buildingId?.trim();
+    const keyword = query?.keyword?.trim().toLowerCase();
+    const paymentStatus = query?.paymentStatus?.trim().toUpperCase() as PaymentStatus | undefined;
+
+    return records.filter((item) => {
+      if (buildingId && item.buildingId !== buildingId) {
+        return false;
+      }
+
+      if (
+        paymentStatus &&
+        ['PAID', 'PARTIAL', 'PENDING', 'OVERDUE'].includes(paymentStatus) &&
+        item.paymentStatus !== paymentStatus
+      ) {
+        return false;
+      }
+
+      if (!keyword) {
+        return true;
+      }
+
+      return [item.buildingName, item.displayName, item.roomNo, item.unitNo]
+        .filter(Boolean)
+        .some((text) => text.toLowerCase().includes(keyword));
+    });
   }
 
   private buildDisclosureBuildings(records: ManagementFeeHouseRecord[]) {

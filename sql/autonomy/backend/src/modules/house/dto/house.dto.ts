@@ -57,3 +57,31 @@ export class CreateAdminHouseDto {
 }
 
 export class UpdateAdminHouseDto extends PartialType(CreateAdminHouseDto) {}
+
+export class CreateAdminHouseArchiveDto {
+  @ApiProperty({ description: '预绑定手机号' })
+  @IsString()
+  mobile!: string;
+
+  @ApiPropertyOptional({ description: '业主姓名' })
+  @IsOptional()
+  @IsString()
+  realName?: string;
+
+  @ApiPropertyOptional({ description: '关系类型', default: 'MAIN_OWNER' })
+  @IsOptional()
+  @IsString()
+  relationType?: string;
+
+  @ApiPropertyOptional({ description: '关系标签' })
+  @IsOptional()
+  @IsString()
+  relationLabel?: string;
+
+  @ApiPropertyOptional({ description: '备注' })
+  @IsOptional()
+  @IsString()
+  remark?: string;
+}
+
+export class UpdateAdminHouseArchiveDto extends PartialType(CreateAdminHouseArchiveDto) {}

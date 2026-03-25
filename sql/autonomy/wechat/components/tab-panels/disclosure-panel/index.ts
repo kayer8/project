@@ -5,9 +5,9 @@ import {
   getDisclosureDisplayDate,
   PublicDisclosureContentItem,
 } from '../../../services/disclosure';
-import { fetchVotes } from '../../../services/vote';
-import { CurrentHouseProfile, fetchCurrentUser } from '../../../services/user';
 import { bootstrapWechatSession } from '../../../services/session';
+import { CurrentHouseProfile, CurrentUserDetail, fetchCurrentUser } from '../../../services/user';
+import { fetchVotes } from '../../../services/vote';
 import { appStore } from '../../../store/app';
 import { navigateTo } from '../../../utils/nav';
 
@@ -51,12 +51,30 @@ interface HomeProfileCard {
   actions: HomeProfileCardAction[];
 }
 
+interface BoundHouseOption {
+  id: string;
+  houseName: string;
+  fullName: string;
+  buildingName: string;
+  roleLabel: string;
+  statusTag: string | null;
+  subtitle: string;
+  isCurrent: boolean;
+}
+
 const relationTypeLabelMap: Record<string, string> = {
   MAIN_OWNER: '业主',
   FAMILY_MEMBER: '家属',
   MAIN_TENANT: '租户',
   CO_RESIDENT: '同住成员',
   AGENT: '代理人',
+};
+
+const memberStatusLabelMap: Record<string, string> = {
+  ACTIVE: '已绑定',
+  PENDING: '待审核',
+  REJECTED: '未通过',
+  REMOVED: '已移除',
 };
 
 const sections: DisclosureSectionItem[] = [
@@ -151,7 +169,7 @@ function createDefaultVoteGuideCard(): VoteGuideCard {
 function createVoteGuideCard(count: number): VoteGuideCard {
   if (count > 0) {
     return {
-      title: `当前有${count}个投票进行中`,
+      title: `当前有 ${count} 个投票进行中`,
       buttonText: '去参与',
     };
   }
@@ -178,22 +196,72 @@ function createDefaultHomeProfileCard(): HomeProfileCard {
   };
 }
 
-function mapHomeProfileCard(profile: CurrentHouseProfile | null | undefined): HomeProfileCard {
-  if (!profile?.isVerified || !profile.houseDisplayName) {
+function createDefaultBoundHouseOption(): BoundHouseOption[] {
+  return [];
+}
+
+function buildBoundHouseOptions(user: CurrentUserDetail): BoundHouseOption[] {
+  const currentHouseId = user.currentHouseProfile.houseId || '';
+  const communityName = user.currentHouseProfile.communityName || '已绑定房屋';
+
+  return user.houseRelations.map((item) => {
+    const roleLabel =
+      relationTypeLabelMap[item.relationLabel?.toUpperCase?.() || ''] ||
+      item.relationLabel ||
+      '住户';
+    const isCurrent = Boolean(currentHouseId) && currentHouseId === item.houseId;
+    const statusTag = isCurrent && user.currentHouseProfile.isVerified
+      ? '已认证'
+      : memberStatusLabelMap[item.status] || '已绑定';
+
+    return {
+      id: item.houseId || item.id,
+      houseName: item.houseDisplayName || '未命名房屋',
+      fullName: `${communityName}·${item.houseDisplayName || '未命名房屋'}`,
+      buildingName: item.buildingName || '当前楼栋',
+      roleLabel,
+      statusTag,
+      subtitle: `${item.buildingName || '当前楼栋'} · ${statusTag}`,
+      isCurrent,
+    };
+  });
+}
+
+function buildCardStats(profile: CurrentHouseProfile | null | undefined, selectedHouse: BoundHouseOption | null) {
+  if (selectedHouse?.isCurrent && profile?.houseDisplayName) {
+    return [
+      { label: '房屋成员', value: String(profile.memberCount || 0) },
+      { label: '缴费权限', value: profile.canPayBill ? '已开通' : '未开通' },
+      { label: '参与咨询', value: profile.canJoinConsultation ? '可参与' : '未开通' },
+    ];
+  }
+
+  if (selectedHouse) {
+    return [
+      { label: '所在楼栋', value: selectedHouse.buildingName || '--' },
+      { label: '绑定状态', value: selectedHouse.statusTag || '已绑定' },
+      { label: '身份角色', value: selectedHouse.roleLabel || '住户' },
+    ];
+  }
+
+  return createDefaultHomeProfileCard().stats;
+}
+
+function mapHomeProfileCard(
+  profile: CurrentHouseProfile | null | undefined,
+  selectedHouse: BoundHouseOption | null,
+): HomeProfileCard {
+  if (!selectedHouse) {
     return createDefaultHomeProfileCard();
   }
 
   return {
-    houseName: profile.houseDisplayName,
-    houseRole: relationTypeLabelMap[profile.relationType || ''] || '住户',
-    statusTag: '已认证',
-    communityName: profile.communityName || '已绑定房屋',
-    subtitle: `${profile.buildingName || '当前楼栋'} · 微信号已绑定房屋`,
-    stats: [
-      { label: '房屋成员', value: String(profile.memberCount || 0) },
-      { label: '缴费权限', value: profile.canPayBill ? '已开通' : '未开通' },
-      { label: '参与咨询', value: profile.canJoinConsultation ? '可参与' : '未开通' },
-    ],
+    houseName: selectedHouse.houseName,
+    houseRole: selectedHouse.roleLabel,
+    statusTag: selectedHouse.statusTag,
+    communityName: profile?.communityName || '已绑定房屋',
+    subtitle: selectedHouse.subtitle,
+    stats: buildCardStats(profile, selectedHouse),
     actions: [
       { title: '房屋成员', url: ROUTES.profile.members, theme: 'secondary' },
       { title: '个人中心', url: ROUTES.profile.index, theme: 'primary' },
@@ -212,6 +280,9 @@ Component({
     voteGuideCard: createDefaultVoteGuideCard(),
     latestAnnouncements: [] as LatestAnnouncementItem[],
     hasBoundHouse: false,
+    houseSwitcherVisible: false,
+    selectedHouseId: '',
+    boundHouses: createDefaultBoundHouseOption(),
     loadingVoteGuide: false,
     loadingLatest: false,
   },
@@ -232,21 +303,29 @@ Component({
         if (!hasSession || !appStore.hasAccessToken()) {
           this.setData({
             homeProfileCard: createDefaultHomeProfileCard(),
+            boundHouses: createDefaultBoundHouseOption(),
+            selectedHouseId: '',
             hasBoundHouse: false,
           });
           return;
         }
 
         const user = await fetchCurrentUser();
+        const boundHouses = buildBoundHouseOptions(user);
+        const selectedHouse = boundHouses.find((item) => item.isCurrent) || boundHouses[0] || null;
 
         this.setData({
-          homeProfileCard: mapHomeProfileCard(user.currentHouseProfile),
-          hasBoundHouse: Boolean(user.currentHouseProfile?.houseDisplayName),
+          homeProfileCard: mapHomeProfileCard(user.currentHouseProfile, selectedHouse),
+          boundHouses,
+          selectedHouseId: selectedHouse?.id || '',
+          hasBoundHouse: boundHouses.length > 0,
         });
       } catch (error) {
         console.error('load current user profile failed', error);
         this.setData({
           homeProfileCard: createDefaultHomeProfileCard(),
+          boundHouses: createDefaultBoundHouseOption(),
+          selectedHouseId: '',
           hasBoundHouse: false,
         });
       }
@@ -316,7 +395,10 @@ Component({
     },
 
     openSection(event: WechatMiniprogram.BaseEvent) {
-      const { url, requiresHouse } = event.currentTarget.dataset as { url?: string; requiresHouse?: boolean };
+      const { url, requiresHouse } = event.currentTarget.dataset as {
+        url?: string;
+        requiresHouse?: boolean;
+      };
 
       if (!url) {
         return;
@@ -341,6 +423,69 @@ Component({
       }
 
       navigateTo(url);
+    },
+
+    openHouseSwitcher() {
+      this.setData({
+        houseSwitcherVisible: true,
+      });
+    },
+
+    handleHouseSwitcherVisibleChange(event: WechatMiniprogram.CustomEvent<{ visible?: boolean }>) {
+      this.setData({
+        houseSwitcherVisible: !!event.detail.visible,
+      });
+    },
+
+    closeHouseSwitcher() {
+      this.setData({
+        houseSwitcherVisible: false,
+      });
+    },
+
+    async handleSelectHouse(event: WechatMiniprogram.BaseEvent) {
+      const { id } = event.currentTarget.dataset as { id?: string };
+      if (!id) {
+        return;
+      }
+
+      const { boundHouses, selectedHouseId } = this.data;
+      if (selectedHouseId === id) {
+        this.setData({ houseSwitcherVisible: false });
+        return;
+      }
+
+      const selectedHouse = boundHouses.find((item) => item.id === id) || null;
+      if (!selectedHouse) {
+        return;
+      }
+
+      try {
+        const hasSession = await bootstrapWechatSession();
+        if (!hasSession || !appStore.hasAccessToken()) {
+          this.setData({
+            houseSwitcherVisible: false,
+          });
+          return;
+        }
+
+        const user = await fetchCurrentUser();
+
+        this.setData({
+          selectedHouseId: id,
+          homeProfileCard: mapHomeProfileCard(user.currentHouseProfile, selectedHouse),
+          houseSwitcherVisible: false,
+        });
+      } catch (error) {
+        console.error('switch home card house failed', error);
+      }
+    },
+
+    handleBindNewHouse() {
+      this.setData({
+        houseSwitcherVisible: false,
+      });
+      navigateTo(ROUTES.register);
     },
 
     openVoteGuide() {

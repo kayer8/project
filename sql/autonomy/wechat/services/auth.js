@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getWechatLoginCode = getWechatLoginCode;
 exports.loginWithWechat = loginWithWechat;
 exports.syncWechatPhone = syncWechatPhone;
+exports.manualBindWechatPhone = manualBindWechatPhone;
 exports.listRegisterBuildings = listRegisterBuildings;
 exports.listRegisterHouses = listRegisterHouses;
 exports.submitRegistrationRequest = submitRegistrationRequest;
@@ -32,6 +33,14 @@ function loginWithWechat(payload) {
 function syncWechatPhone(payload) {
     return (0, request_1.request)({
         url: '/auth/wechat/phone-sync',
+        method: 'POST',
+        data: payload,
+        auth: false,
+    });
+}
+function manualBindWechatPhone(payload) {
+    return (0, request_1.request)({
+        url: '/auth/wechat/manual-bind',
         method: 'POST',
         data: payload,
         auth: false,

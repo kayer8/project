@@ -1,8 +1,8 @@
-<app-navbar title="收费公开" />
+<app-navbar title="{{disclosureTitle || '收费公示'}}" />
 
 <view class="page-body">
   <app-list
-    list="{{periods}}"
+    list="{{periodCards}}"
     loading="{{loading}}"
     showLoading="{{true}}"
     isLoadMore="{{isLoadMore}}"
@@ -12,191 +12,115 @@
     emptyDescription="{{emptyDescription}}"
     bind:refresh="onListRefresh"
   >
-    <view class="payment-hero">
-      <view class="payment-hero__eyebrow">收费公开</view>
-      <view class="payment-hero__title">{{disclosureTitle}}</view>
-      <view wx:if="{{disclosureNote}}" class="payment-hero__desc">{{disclosureNote}}</view>
-      <view class="payment-hero__meta">
-        <text wx:if="{{publisherText}}">{{publisherText}}</text>
-        <text wx:if="{{publisherText && updatedAtText}}"> · </text>
-        <text wx:if="{{updatedAtText}}">更新于 {{updatedAtText}}</text>
+    <view class="payment-summary">
+      <view class="payment-summary__card">
+        <view class="payment-summary__label">账期总数</view>
+        <view class="payment-summary__value">{{summary.periodCountText}}</view>
       </view>
-    </view>
-
-    <view class="payment-overview">
-      <view class="payment-overview__item">
-        <view class="payment-overview__label">总应收</view>
-        <view class="payment-overview__value">{{overview.receivableText}}</view>
+      <view class="payment-summary__card">
+        <view class="payment-summary__label">总应收</view>
+        <view class="payment-summary__value">{{summary.receivableText}}</view>
       </view>
-      <view class="payment-overview__item">
-        <view class="payment-overview__label">总实收</view>
-        <view class="payment-overview__value">{{overview.paidText}}</view>
+      <view class="payment-summary__card">
+        <view class="payment-summary__label">总实收</view>
+        <view class="payment-summary__value">{{summary.paidText}}</view>
       </view>
-      <view class="payment-overview__item">
-        <view class="payment-overview__label">总体缴费率</view>
-        <view class="payment-overview__value">{{overview.paymentRateText}}</view>
-      </view>
-      <view class="payment-overview__item payment-overview__item--minor">
-        <view class="payment-overview__label">公开账期</view>
-        <view class="payment-overview__meta">{{overview.periodCountText}}</view>
-      </view>
-      <view class="payment-overview__item payment-overview__item--minor">
-        <view class="payment-overview__label">房屋总数</view>
-        <view class="payment-overview__meta">{{overview.houseCountText}}</view>
-      </view>
-      <view class="payment-overview__item payment-overview__item--minor">
-        <view class="payment-overview__label">未结清户数</view>
-        <view class="payment-overview__meta">{{overview.unpaidHouseholdsText}}</view>
+      <view class="payment-summary__card payment-summary__card--accent">
+        <view class="payment-summary__label">综合缴费率</view>
+        <view class="payment-summary__value">{{summary.paymentRateText}}</view>
       </view>
     </view>
 
     <view class="payment-filters">
       <view class="payment-filters__row">
-        <picker
-          class="payment-filter"
-          range="{{periodOptions}}"
-          range-key="label"
-          value="{{periodIndex}}"
-          bindchange="handlePeriodChange"
-        >
+        <view class="payment-filter" bindtap="openPeriodPicker">
           <view class="payment-filter__field">
-            <view class="payment-filter__content">
-              <view class="payment-filter__label">时间段</view>
-              <view class="payment-filter__value">{{currentPeriodLabel}}</view>
-            </view>
+            <view class="payment-filter__label">账期</view>
+            <view class="payment-filter__value">{{currentPeriodLabel}}</view>
             <view class="payment-filter__arrow"></view>
           </view>
-        </picker>
+        </view>
 
-        <picker
-          class="payment-filter"
-          range="{{buildingOptions}}"
-          range-key="label"
-          value="{{buildingIndex}}"
-          bindchange="handleBuildingChange"
-        >
+        <view class="payment-filter" bindtap="openBuildingPicker">
           <view class="payment-filter__field">
-            <view class="payment-filter__content">
-              <view class="payment-filter__label">楼栋</view>
-              <view class="payment-filter__value">{{currentBuildingLabel}}</view>
-            </view>
+            <view class="payment-filter__label">楼栋</view>
+            <view class="payment-filter__value">{{currentBuildingLabel}}</view>
             <view class="payment-filter__arrow"></view>
           </view>
-        </picker>
-      </view>
-
-      <view class="search-field payment-search">
-        <t-input
-          t-class="search-field__input"
-          t-class-input="search-field__input-element"
-          t-class-prefix-icon="search-field__icon"
-          t-class-clearable="search-field__clear"
-          borderless="{{true}}"
-          clearable="{{true}}"
-          prefix-icon="search"
-          placeholder-style="color: #66758a; font-size: 30rpx;"
-          placeholder="搜索房号、房屋编号、楼栋"
-          value="{{keyword}}"
-          bind:change="handleKeywordInput"
-        />
+        </view>
       </view>
     </view>
 
     <view class="payment-periods">
-      <view wx:for="{{periods}}" wx:key="periodKey" wx:for-item="period" class="payment-period">
-        <view class="payment-period__head" data-key="{{period.periodKey}}" bindtap="togglePeriod">
-          <view class="payment-period__title-wrap">
-            <view class="payment-period__title">{{period.rangeText}}</view>
-            <view class="payment-period__subtitle">{{period.dueDateText}} · {{period.buildingCountText}}</view>
+      <view
+        wx:for="{{periodCards}}"
+        wx:key="periodKey"
+        wx:for-item="period"
+        class="payment-card payment-card--{{period.statusTone}}"
+        data-key="{{period.periodKey}}"
+        bindtap="openDetail"
+      >
+        <view class="payment-card__top">
+          <view class="payment-card__heading">
+            <view class="payment-card__title">{{period.rangeText}}</view>
+            <view class="payment-card__meta">更新于 {{period.updatedAtText}}</view>
           </view>
-          <view class="payment-period__arrow {{expandedPeriodKey === period.periodKey ? 'is-open' : ''}}"></view>
-        </view>
-
-        <view class="payment-period__summary">
-          <view class="payment-period__metric">
-            <view class="payment-period__metric-label">应收总额</view>
-            <view class="payment-period__metric-value">{{period.receivableText}}</view>
-          </view>
-          <view class="payment-period__metric">
-            <view class="payment-period__metric-label">实收总额</view>
-            <view class="payment-period__metric-value">{{period.paidText}}</view>
-          </view>
-          <view class="payment-period__metric">
-            <view class="payment-period__metric-label">缴费率</view>
-            <view class="payment-period__metric-value">{{period.paymentRateText}}</view>
-          </view>
-          <view class="payment-period__metric payment-period__metric--minor">
-            <view class="payment-period__metric-label">未结清户数</view>
-            <view class="payment-period__metric-meta">{{period.unpaidHouseholdsText}}</view>
+          <view class="payment-card__status payment-card__status--{{period.statusTone}}">
+            {{period.statusLabel}}
           </view>
         </view>
 
-        <view wx:if="{{expandedPeriodKey === period.periodKey}}" class="payment-building-list">
-          <view wx:for="{{period.buildings}}" wx:key="buildingId" wx:for-item="building" class="payment-building">
-            <view
-              class="payment-building__head"
-              data-period-key="{{period.periodKey}}"
-              data-building-id="{{building.buildingId}}"
-              catchtap="toggleBuilding"
-            >
-              <view class="payment-building__title-wrap">
-                <view class="payment-building__title">{{building.buildingName}}</view>
-                <view class="payment-building__subtitle">{{building.houseCount}} 户 · {{building.paidHouseholdsText}}</view>
-              </view>
-              <view class="payment-building__arrow {{expandedBuildingKey === building.buildingId ? 'is-open' : ''}}"></view>
+        <view class="payment-card__metrics">
+          <view class="payment-card__metric">
+            <view class="payment-card__metric-label">总应收金额</view>
+            <view class="payment-card__metric-value">{{period.receivableText}}</view>
+          </view>
+          <view class="payment-card__metric">
+            <view class="payment-card__metric-label">总实收金额</view>
+            <view class="payment-card__metric-value">{{period.paidText}}</view>
+          </view>
+          <view class="payment-card__metric payment-card__metric--rate">
+            <view class="payment-card__metric-label">缴费率</view>
+            <view class="payment-card__metric-value payment-card__metric-value--{{period.statusTone}}">
+              {{period.paymentRateText}}
             </view>
+          </view>
+        </view>
 
-            <view class="payment-building__summary">
-              <view class="payment-building__metric">
-                <view class="payment-building__metric-label">应收</view>
-                <view class="payment-building__metric-value">{{building.receivableText}}</view>
-              </view>
-              <view class="payment-building__metric">
-                <view class="payment-building__metric-label">实收</view>
-                <view class="payment-building__metric-value">{{building.paidText}}</view>
-              </view>
-              <view class="payment-building__metric">
-                <view class="payment-building__metric-label">缴费率</view>
-                <view class="payment-building__metric-value">{{building.paymentRateText}}</view>
-              </view>
-              <view class="payment-building__metric payment-building__metric--minor">
-                <view class="payment-building__metric-label">未结清</view>
-                <view class="payment-building__metric-meta">{{building.unpaidHouseholdsText}}</view>
-              </view>
-            </view>
-
-            <view wx:if="{{expandedBuildingKey === building.buildingId}}" class="payment-house-list">
-              <view wx:for="{{building.houses}}" wx:key="id" wx:for-item="house" class="payment-house">
-                <view class="payment-house__row">
-                  <view class="payment-house__title">{{house.houseLabel}}</view>
-                  <t-tag
-                    t-class="payment-house__status payment-house__status--{{house.statusTone}}"
-                    theme="default"
-                    variant="light"
-                  >
-                    {{house.paymentStatusText}}
-                  </t-tag>
-                </view>
-                <view class="payment-house__meta">{{house.secondaryText}}</view>
-                <view class="payment-house__finance">
-                  <view class="payment-house__finance-item">
-                    <view class="payment-house__finance-label">应缴</view>
-                    <view class="payment-house__finance-value">{{house.receivableText}}</view>
-                  </view>
-                  <view class="payment-house__finance-item">
-                    <view class="payment-house__finance-label">实缴</view>
-                    <view class="payment-house__finance-value">{{house.paidText}}</view>
-                  </view>
-                  <view class="payment-house__finance-item">
-                    <view class="payment-house__finance-label">缴费时间</view>
-                    <view class="payment-house__finance-value payment-house__finance-value--muted">{{house.paidAtText}}</view>
-                  </view>
-                </view>
-              </view>
+        <view class="payment-card__bottom">
+          <view class="payment-card__extra">
+            <text>{{period.unpaidHouseholdsText}}</text>
+          </view>
+          <view class="payment-card__action">
+            <view class="payment-card__detail">
+              <text>查看详情</text>
+              <view class="payment-card__arrow"></view>
             </view>
           </view>
         </view>
       </view>
     </view>
   </app-list>
+
+  <t-picker
+    visible="{{periodPickerVisible}}"
+    title="选择账期"
+    value="{{periodPickerValue}}"
+    bind:confirm="handlePeriodConfirm"
+    bind:cancel="closePeriodPicker"
+    bind:visible-change="handlePeriodPickerVisibleChange"
+  >
+    <t-picker-item options="{{periodPickerOptions}}" />
+  </t-picker>
+
+  <t-picker
+    visible="{{buildingPickerVisible}}"
+    title="选择楼栋"
+    value="{{buildingPickerValue}}"
+    bind:confirm="handleBuildingConfirm"
+    bind:cancel="closeBuildingPicker"
+    bind:visible-change="handleBuildingPickerVisibleChange"
+  >
+    <t-picker-item options="{{buildingPickerOptions}}" />
+  </t-picker>
 </view>

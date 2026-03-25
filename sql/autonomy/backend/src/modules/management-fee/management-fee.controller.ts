@@ -4,7 +4,7 @@ import { ManagementFeeService } from './management-fee.service';
 import { ManagementFeePeriodQueryDto } from './dto/management-fee.dto';
 
 @ApiTags('management-fees')
-@Controller('v1/management-fees')
+@Controller('management-fees')
 export class ManagementFeeController {
   constructor(private readonly managementFeeService: ManagementFeeService) {}
 

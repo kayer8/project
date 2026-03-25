@@ -6,7 +6,9 @@ import { AuditLogService } from '../audit-log/audit-log.service';
 import { AdminAuditContext } from '../audit-log/audit-log.types';
 import {
   AdminHouseListQueryDto,
+  CreateAdminHouseArchiveDto,
   CreateAdminHouseDto,
+  UpdateAdminHouseArchiveDto,
   UpdateAdminHouseDto,
 } from './dto/house.dto';
 
@@ -211,6 +213,12 @@ export class HouseService {
       where: { id: houseId },
       include: {
         building: true,
+        residentArchives: {
+          include: {
+            matchedUser: true,
+          },
+          orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
+        },
         householdGroups: {
           include: {
             memberRelations: {
@@ -259,6 +267,248 @@ export class HouseService {
     }
 
     return this.mapHouseDetail(house);
+  }
+
+  async listArchivesAdmin(houseId: string) {
+    await this.ensureHouseExists(houseId);
+
+    const items = await this.prisma.residentArchive.findMany({
+      where: {
+        houseId,
+      },
+      include: {
+        matchedUser: true,
+      },
+      orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
+    });
+
+    return items.map((item) => this.mapResidentArchiveItem(item));
+  }
+
+  async createArchiveAdmin(
+    houseId: string,
+    dto: CreateAdminHouseArchiveDto,
+    context?: AdminAuditContext,
+  ) {
+    const house = await this.prisma.house.findUnique({
+      where: { id: houseId },
+      include: {
+        building: true,
+      },
+    });
+
+    if (!house) {
+      throw new BusinessException(
+        AppErrorCode.HOUSE_NOT_FOUND,
+        'House not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const mobile = dto.mobile.trim();
+    if (!mobile) {
+      throw new BusinessException(
+        AppErrorCode.INVALID_OPERATION,
+        'Mobile number is required',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const duplicate = await this.prisma.residentArchive.findFirst({
+      where: {
+        houseId,
+        mobile,
+        status: {
+          in: ['ACTIVE', 'SYNCED'],
+        },
+      },
+      select: { id: true },
+    });
+
+    if (duplicate) {
+      throw new BusinessException(
+        AppErrorCode.INVALID_OPERATION,
+        'This mobile number is already configured for the current house',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const archive = await this.prisma.residentArchive.create({
+      data: {
+        mobile,
+        realName: dto.realName?.trim() || null,
+        buildingId: house.buildingId,
+        houseId,
+        relationType: (dto.relationType?.trim() || 'MAIN_OWNER') as any,
+        relationLabel: dto.relationLabel?.trim() || null,
+        status: 'ACTIVE',
+        remark: dto.remark?.trim() || null,
+      },
+      include: {
+        matchedUser: true,
+      },
+    });
+
+    await this.auditLogService.recordAdminAction({
+      context,
+      action: 'CREATE',
+      resourceType: 'HOUSE_ARCHIVE',
+      resourceId: archive.id,
+      resourceName: `${house.displayName} / ${mobile}`,
+      snapshot: {
+        after: this.mapResidentArchiveItem(archive),
+      },
+    });
+
+    return this.mapResidentArchiveItem(archive);
+  }
+
+  async updateArchiveAdmin(
+    houseId: string,
+    archiveId: string,
+    dto: UpdateAdminHouseArchiveDto,
+    context?: AdminAuditContext,
+  ) {
+    const before = await this.prisma.residentArchive.findFirst({
+      where: {
+        id: archiveId,
+        houseId,
+      },
+      include: {
+        matchedUser: true,
+        house: true,
+      },
+    });
+
+    if (!before) {
+      throw new BusinessException(
+        AppErrorCode.INVALID_OPERATION,
+        'Archive record not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const nextMobile = dto.mobile?.trim() ?? before.mobile;
+    if (!nextMobile) {
+      throw new BusinessException(
+        AppErrorCode.INVALID_OPERATION,
+        'Mobile number is required',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const duplicate = await this.prisma.residentArchive.findFirst({
+      where: {
+        id: { not: archiveId },
+        houseId,
+        mobile: nextMobile,
+        status: {
+          in: ['ACTIVE', 'SYNCED'],
+        },
+      },
+      select: { id: true },
+    });
+
+    if (duplicate) {
+      throw new BusinessException(
+        AppErrorCode.INVALID_OPERATION,
+        'This mobile number is already configured for the current house',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const shouldResetMatch =
+      (dto.mobile !== undefined && dto.mobile.trim() !== before.mobile) ||
+      dto.realName !== undefined ||
+      dto.relationType !== undefined ||
+      dto.relationLabel !== undefined;
+
+    const updated = await this.prisma.residentArchive.update({
+      where: { id: archiveId },
+      data: {
+        ...(dto.mobile !== undefined ? { mobile: nextMobile } : {}),
+        ...(dto.realName !== undefined ? { realName: dto.realName?.trim() || null } : {}),
+        ...(dto.relationType !== undefined
+          ? { relationType: (dto.relationType?.trim() || 'MAIN_OWNER') as any }
+          : {}),
+        ...(dto.relationLabel !== undefined
+          ? { relationLabel: dto.relationLabel?.trim() || null }
+          : {}),
+        ...(dto.remark !== undefined ? { remark: dto.remark?.trim() || null } : {}),
+        ...(shouldResetMatch
+          ? {
+              matchedUserId: null,
+              matchedAt: null,
+              status: 'ACTIVE',
+            }
+          : {}),
+      },
+      include: {
+        matchedUser: true,
+      },
+    });
+
+    await this.auditLogService.recordAdminAction({
+      context,
+      action: 'UPDATE',
+      resourceType: 'HOUSE_ARCHIVE',
+      resourceId: archiveId,
+      resourceName: `${before.house?.displayName ?? before.mobile} / ${updated.mobile}`,
+      snapshot: {
+        before: this.mapResidentArchiveItem(before),
+        after: this.mapResidentArchiveItem(updated),
+      },
+    });
+
+    return this.mapResidentArchiveItem(updated);
+  }
+
+  async removeArchiveAdmin(houseId: string, archiveId: string, context?: AdminAuditContext) {
+    const before = await this.prisma.residentArchive.findFirst({
+      where: {
+        id: archiveId,
+        houseId,
+      },
+      include: {
+        matchedUser: true,
+        house: true,
+      },
+    });
+
+    if (!before) {
+      throw new BusinessException(
+        AppErrorCode.INVALID_OPERATION,
+        'Archive record not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const updated = await this.prisma.residentArchive.update({
+      where: { id: archiveId },
+      data: {
+        status: 'DISABLED',
+      },
+      include: {
+        matchedUser: true,
+      },
+    });
+
+    await this.auditLogService.recordAdminAction({
+      context,
+      action: 'DELETE',
+      resourceType: 'HOUSE_ARCHIVE',
+      resourceId: archiveId,
+      resourceName: `${before.house?.displayName ?? before.mobile} / ${before.mobile}`,
+      snapshot: {
+        before: this.mapResidentArchiveItem(before),
+        after: this.mapResidentArchiveItem(updated),
+      },
+    });
+
+    return {
+      id: archiveId,
+      removed: true,
+    };
   }
 
   async listCommunities() {
@@ -389,13 +639,21 @@ export class HouseService {
   async removeAdmin(id: string, context?: AdminAuditContext) {
     const before = await this.getAdminDetail(id);
 
-    const [memberCount, identityCount, voteCount] = await this.prisma.$transaction([
+    const [memberCount, identityCount, voteCount, archiveCount] = await this.prisma.$transaction([
       this.prisma.houseMemberRelation.count({ where: { houseId: id } }),
       this.prisma.identityApplication.count({ where: { houseId: id } }),
       this.prisma.voteRepresentative.count({ where: { houseId: id } }),
+      this.prisma.residentArchive.count({
+        where: {
+          houseId: id,
+          status: {
+            in: ['ACTIVE', 'SYNCED'],
+          },
+        },
+      }),
     ]);
 
-    if (memberCount > 0 || identityCount > 0 || voteCount > 0) {
+    if (memberCount > 0 || identityCount > 0 || voteCount > 0 || archiveCount > 0) {
       throw new BusinessException(
         AppErrorCode.INVALID_OPERATION,
         'House has related data and cannot be deleted',
@@ -445,6 +703,27 @@ export class HouseService {
       memberCount: house.memberRelations.length,
       primaryRoleName: primaryRelation?.user?.realName ?? primaryRelation?.user?.nickname ?? null,
       createdAt: house.createdAt,
+    };
+  }
+
+  private mapResidentArchiveItem(archive: any) {
+    return {
+      id: archive.id,
+      mobile: archive.mobile,
+      realName: archive.realName,
+      relationType: archive.relationType,
+      relationLabel: archive.relationLabel,
+      status: archive.status,
+      remark: archive.remark,
+      matchedUserId: archive.matchedUserId ?? null,
+      matchedUserName:
+        archive.matchedUser?.realName ??
+        archive.matchedUser?.nickname ??
+        archive.matchedUser?.mobile ??
+        null,
+      matchedAt: archive.matchedAt ?? null,
+      createdAt: archive.createdAt,
+      updatedAt: archive.updatedAt,
     };
   }
 

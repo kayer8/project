@@ -1,15 +1,16 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../../prisma/prisma.service';
 import { BusinessException } from '../../common/exceptions/business.exception';
 import { AppErrorCode } from '../../common/exceptions/app-error-code';
+import { PrismaService } from '../../prisma/prisma.service';
 import { HouseService } from '../house/house.service';
-import { WechatLoginDto } from './dto/wechat-login.dto';
-import { WechatRegisterDto } from './dto/wechat-register.dto';
-import { WechatPhoneSyncDto } from './dto/wechat-phone-sync.dto';
-import { SubmitRegistrationRequestDto } from './dto/submit-registration-request.dto';
-import { WechatService } from './wechat.service';
 import { UserService } from '../user/user.service';
+import { SubmitRegistrationRequestDto } from './dto/submit-registration-request.dto';
+import { WechatLoginDto } from './dto/wechat-login.dto';
+import { WechatManualBindDto } from './dto/wechat-manual-bind.dto';
+import { WechatPhoneSyncDto } from './dto/wechat-phone-sync.dto';
+import { WechatRegisterDto } from './dto/wechat-register.dto';
+import { WechatService } from './wechat.service';
 
 @Injectable()
 export class AuthService {
@@ -53,61 +54,12 @@ export class AuthService {
   async syncPhoneWithWeChat(dto: WechatPhoneSyncDto) {
     const session = await this.wechatService.codeToSession(dto.code);
     const phoneInfo = await this.wechatService.getPhoneNumber(dto.phoneCode);
-    const mobile = phoneInfo.purePhoneNumber;
-    const archiveRecords = await this.prisma.residentArchive.findMany({
-      where: {
-        mobile,
-        status: 'ACTIVE',
-      },
-      include: {
-        house: {
-          include: {
-            householdGroups: {
-              where: {
-                status: 'ACTIVE',
-              },
-              orderBy: {
-                startedAt: 'desc',
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'asc',
-      },
-    });
+    return this.bindByMobile(session.openid, session.unionid, phoneInfo.purePhoneNumber);
+  }
 
-    let user = await this.resolveWeChatUser({
-      openid: session.openid,
-      unionid: session.unionid,
-      mobile,
-      realName: archiveRecords[0]?.realName ?? null,
-    });
-
-    if (archiveRecords.length > 0) {
-      await this.syncArchivesToUser(user.id, archiveRecords);
-      user = await this.prisma.user.findUniqueOrThrow({
-        where: { id: user.id },
-      });
-
-      return {
-        matched: true,
-        needRegistrationRequest: false,
-        message: '您的号码已在物业留存数据已同步',
-        accessToken: this.signUserToken(user.id, user.wechatOpenid),
-        user: this.mapAuthUser(user),
-      };
-    }
-
-    return {
-      matched: false,
-      needRegistrationRequest: true,
-      message: '后台未检测到该手机号，请补充楼栋信息后提交',
-      accessToken: this.signUserToken(user.id, user.wechatOpenid),
-      user: this.mapAuthUser(user),
-      mobile,
-    };
+  async manualBindWithMobile(dto: WechatManualBindDto) {
+    const session = await this.wechatService.codeToSession(dto.code);
+    return this.bindByMobile(session.openid, session.unionid, dto.mobile.trim());
   }
 
   async registerWithWeChat(dto: WechatRegisterDto) {
@@ -249,6 +201,63 @@ export class AuthService {
     return this.houseService.listRegistrationHouses(buildingId);
   }
 
+  private async bindByMobile(openid: string, unionid: string | undefined, mobile: string) {
+    const archiveRecords = await this.prisma.residentArchive.findMany({
+      where: {
+        mobile,
+        status: 'ACTIVE',
+      },
+      include: {
+        house: {
+          include: {
+            householdGroups: {
+              where: {
+                status: 'ACTIVE',
+              },
+              orderBy: {
+                startedAt: 'desc',
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+
+    let user = await this.resolveWeChatUser({
+      openid,
+      unionid,
+      mobile,
+      realName: archiveRecords[0]?.realName ?? null,
+    });
+
+    if (archiveRecords.length > 0) {
+      await this.syncArchivesToUser(user.id, archiveRecords);
+      user = await this.prisma.user.findUniqueOrThrow({
+        where: { id: user.id },
+      });
+
+      return {
+        matched: true,
+        needRegistrationRequest: false,
+        message: '已根据物业登记手机号完成房屋绑定',
+        accessToken: this.signUserToken(user.id, user.wechatOpenid),
+        user: this.mapAuthUser(user),
+      };
+    }
+
+    return {
+      matched: false,
+      needRegistrationRequest: true,
+      message: '未匹配到该手机号对应的物业登记信息，请核对后重试或手动绑定房屋',
+      accessToken: this.signUserToken(user.id, user.wechatOpenid),
+      user: this.mapAuthUser(user),
+      mobile,
+    };
+  }
+
   private async resolveWeChatUser(params: {
     openid: string;
     unionid?: string;
@@ -261,7 +270,7 @@ export class AuthService {
     if (userByOpenid && userByMobile && userByOpenid.id !== userByMobile.id) {
       throw new BusinessException(
         AppErrorCode.INVALID_OPERATION,
-        '该手机号已绑定其他微信账号',
+        'This mobile number is already linked to another WeChat account',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -297,7 +306,7 @@ export class AuthService {
                 houseId: archive.houseId,
                 groupType: 'OWNER_HOUSEHOLD',
                 status: 'ACTIVE',
-                remark: '自动同步留存档案默认住户组',
+                remark: '自动同步档案时创建的默认住户组',
               },
             }));
 

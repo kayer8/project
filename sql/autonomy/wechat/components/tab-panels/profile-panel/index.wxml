@@ -20,8 +20,7 @@
           <view wx:else class="profile-avatar profile-avatar--placeholder">{{displayInitial}}</view>
 
           <view class="profile-user__content">
-            <view class="profile-user__name-row">
-              <text class="profile-user__name">{{displayName}}</text>
+            <view class="profile-user__role-row">
               <text class="profile-user__role">{{identityLabel}}</text>
             </view>
             <view class="profile-user__house">{{houseSummary}}</view>
@@ -30,7 +29,9 @@
                 <t-icon name="secured" size="24rpx" class="profile-mini-icon" />
                 <text>{{authStatusText}}</text>
               </view>
-              <text class="profile-user__mobile">{{sessionUser && sessionUser.mobile ? sessionUser.mobile : '未绑定手机号'}}</text>
+              <text class="profile-user__mobile">
+                {{sessionUser && sessionUser.mobile ? sessionUser.mobile : '未绑定手机号'}}
+              </text>
             </view>
           </view>
         </view>
@@ -41,28 +42,29 @@
       </view>
     </view>
 
-    <view class="profile-section profile-card">
-      <view class="profile-section__head">
-        <view>
-          <view class="profile-section__title">房屋信息</view>
-          <view class="profile-section__desc">{{houseMetaText}}</view>
+    <view wx:if="{{showAutoBindGuide}}" class="profile-section profile-card2">
+      <view class="guide-card">
+        <view class="guide-card__badge">推荐</view>
+        <view class="guide-card__title">已在物业登记信息，一键绑定</view>
+        <view class="guide-card__desc">
+          输入物业登记的手机号，系统会校验是否存在对应房屋，并自动为当前用户完成绑定。
         </view>
-      </view>
-
-      <view class="house-card">
-        <view class="house-card__content">
-          <text class="house-card__label">当前房屋</text>
-          <text class="house-card__value">{{activeHouseLabel}}</text>
+        <view class="guide-card__button-wrap">
+          <t-button
+            class="guide-card__button"
+            theme="primary"
+            size="large"
+            shape="round"
+            block
+            loading="{{oneClickBinding}}"
+            bindtap="handleManualBindTap"
+          >
+            一键绑定
+          </t-button>
         </view>
-        <view class="house-card__actions">
-          <view class="house-card__button house-card__button--ghost" bindtap="handleSwitchHouse">
-            <t-icon name="swap" size="26rpx" class="profile-mini-icon" />
-            <text>切换房屋</text>
-          </view>
-          <view class="house-card__button house-card__button--primary" bindtap="handleAddHouse">
-            <t-icon name="add" size="26rpx" class="profile-mini-icon profile-mini-icon--light" />
-            <text>添加房屋</text>
-          </view>
+        <view class="guide-card__footer">
+          <text class="guide-card__hint">未匹配到登记信息时，可继续手动绑定房屋。</text>
+          <text class="guide-card__link" bindtap="handleAddHouse">手动绑定</text>
         </view>
       </view>
     </view>
