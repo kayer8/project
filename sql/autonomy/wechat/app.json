@@ -1,38 +1,77 @@
 {
   "pages": [
     "pages/home/index",
-    "pages/disclosure/index",
-    "pages/voting/index",
-    "pages/profile/index",
-    "pages/assistant/index",
-    "pages/voting/detail/index",
-    "pages/voting/create/index",
-    "pages/disclosure/announcements/index",
-    "pages/disclosure/detail/index",
-    "pages/disclosure/financial/index",
-    "pages/disclosure/payment/index",
-    "pages/disclosure/payment/detail/index",
-    "pages/disclosure/management/index",
-    "pages/disclosure/maintenance/index",
-    "pages/profile/bind/index",
-    "pages/profile/members/index",
-    "pages/profile/invite/index",
-    "pages/profile/permissions/index",
-    "pages/profile/verification/index",
-    "pages/profile/agent/index",
-    "pages/profile/settings/index",
-    "pages/services/repair/index",
-    "pages/services/visitor/index",
-    "pages/services/access/index",
-    "pages/services/parcel/index",
-    "pages/services/parking/index",
-    "pages/services/neighbor/index",
-    "pages/services/contacts/index",
-    "pages/services/agency/index",
     "pages/login/index",
-    "pages/register/index",
-    "pages/legal/privacy/index"
+    "pages/register/index"
   ],
+  "subpackages": [
+    {
+      "root": "pages/disclosure",
+      "pages": [
+        "index",
+        "announcements/index",
+        "detail/index",
+        "payment/index",
+        "payment/detail/index",
+        "maintenance/index"
+      ]
+    },
+    {
+      "root": "pages/voting",
+      "pages": [
+        "index",
+        "detail/index",
+        "create/index"
+      ]
+    },
+    {
+      "root": "pages/profile",
+      "pages": [
+        "index",
+        "votes/index",
+        "bind/index",
+        "members/index",
+        "invite/index",
+        "permissions/index",
+        "verification/index",
+        "agent/index",
+        "settings/index"
+      ]
+    },
+    {
+      "root": "pages/services",
+      "pages": [
+        "access/index",
+        "parcel/index",
+        "parking/index",
+        "contacts/index",
+        "agency/index"
+      ]
+    },
+    {
+      "root": "pages/assistant",
+      "pages": [
+        "index"
+      ]
+    },
+    {
+      "root": "pages/legal",
+      "pages": [
+        "privacy/index"
+      ]
+    }
+  ],
+  "preloadRule": {
+    "pages/home/index": {
+      "network": "all",
+      "packages": [
+        "pages/disclosure",
+        "pages/voting",
+        "pages/profile",
+        "pages/services"
+      ]
+    }
+  },
   "window": {
     "navigationBarTitleText": "物业自治",
     "navigationBarBackgroundColor": "#ffffff",

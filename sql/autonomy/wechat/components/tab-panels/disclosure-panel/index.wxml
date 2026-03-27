@@ -1,5 +1,12 @@
 <app-navbar title="首页" left-arrow="{{false}}" />
 
+<t-pull-down-refresh
+  class="panel-refresh"
+  enable-passive="{{true}}"
+  loadingProps="{{PULL_DOWN_LOADING_PROPS}}"
+  value="{{isRefreshing}}"
+  bind:refresh="onPanelRefresh"
+>
 <view class="page-body ">
   <view class="card info-card home-profile-card">
     <view class="home-profile-card__head">
@@ -19,7 +26,7 @@
             </t-tag>
             <t-tag
               wx:if="{{homeProfileCard.statusTag}}"
-              theme="{{homeProfileCard.statusTag === '已认证' ? 'success' : 'warning'}}"
+              theme="{{homeProfileCard.statusTag === '已绑定' ? 'success' : 'warning'}}"
               variant="light"
             >
               {{homeProfileCard.statusTag}}
@@ -130,6 +137,7 @@
     </block>
   </view>
 </view>
+</t-pull-down-refresh>
 
 <t-popup
   visible="{{houseSwitcherVisible}}"
@@ -159,7 +167,7 @@
               <t-tag wx:if="{{item.roleLabel}}" theme="primary" variant="light">{{item.roleLabel}}</t-tag>
               <t-tag
                 wx:if="{{item.statusTag}}"
-                theme="{{item.statusTag === '已认证' ? 'success' : 'warning'}}"
+                theme="{{item.statusTag === '已绑定' ? 'success' : 'warning'}}"
                 variant="light"
               >
                 {{item.statusTag}}

@@ -1,6 +1,7 @@
 {
   "component": true,
   "usingComponents": {
-    "app-list": "../../app-list/app-list"
+    "app-list": "../../app-list/app-list",
+    "t-pull-down-refresh": "tdesign-miniprogram/pull-down-refresh/pull-down-refresh"
   }
 }

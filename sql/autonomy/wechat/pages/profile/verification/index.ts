@@ -3,7 +3,7 @@ import { CurrentUserDetail, fetchCurrentUser } from '../../../services/user';
 type VerificationViewStatus = 'verified' | 'pending' | 'unverified';
 
 function resolveVerificationStatus(user: CurrentUserDetail | null): VerificationViewStatus {
-  if (user?.currentHouseProfile?.isVerified) {
+  if (user?.residentStatus === 'SYNCED') {
     return 'verified';
   }
 
@@ -16,14 +16,14 @@ function resolveVerificationStatus(user: CurrentUserDetail | null): Verification
 
 function resolveStatusText(status: VerificationViewStatus) {
   if (status === 'verified') {
-    return '已通过';
+    return '已绑定';
   }
 
   if (status === 'pending') {
     return '审核中';
   }
 
-  return '待提交';
+  return '未绑定';
 }
 
 Page({
@@ -32,7 +32,7 @@ Page({
     errorMessage: '',
     currentUser: null as CurrentUserDetail | null,
     verificationStatus: 'unverified' as VerificationViewStatus,
-    statusText: '待提交',
+    statusText: '未绑定',
     editing: false,
     realName: '',
     idNo: '',
@@ -66,7 +66,7 @@ Page({
         loading: false,
         currentUser: null,
         verificationStatus: 'unverified',
-        statusText: '待提交',
+        statusText: '未绑定',
         errorMessage: error instanceof Error ? error.message : '个人信息加载失败',
       });
     }

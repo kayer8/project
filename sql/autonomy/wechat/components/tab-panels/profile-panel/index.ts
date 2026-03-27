@@ -1,3 +1,4 @@
+import { usePullDownRefresh } from '../../../behaviors/usePullDownRefresh';
 import { ROUTES } from '../../../constants/routes';
 import { getWechatLoginCode, manualBindWechatPhone } from '../../../services/auth';
 import { bootstrapWechatSession } from '../../../services/session';
@@ -23,12 +24,19 @@ type DisplayHouse = {
   isCurrent: boolean;
 };
 
+type PaymentCardView = {
+  headline: string;
+  description: string;
+  amountText: string;
+  tone: 'success' | 'warning' | 'danger' | 'neutral';
+};
+
 const PERSONAL_MENUS: ActionItem[] = [
   {
     key: 'vote-record',
     label: '我的投票记录',
     icon: 'check-circle',
-    url: ROUTES.voting.index,
+    url: ROUTES.profile.votes,
     requiresHouse: true,
   },
   {
@@ -69,22 +77,6 @@ function resolveErrorMessage(error: unknown) {
   return '状态获取失败，请稍后重试';
 }
 
-function resolveVerificationText(user: CurrentUserDetail | null) {
-  if (user?.currentHouseProfile?.isVerified) {
-    return '已认证';
-  }
-
-  if (user?.latestRegistrationRequest?.status === 'PENDING') {
-    return '审核中';
-  }
-
-  if (user?.residentStatus === 'REJECTED') {
-    return '未通过';
-  }
-
-  return '待认证';
-}
-
 function resolveRelationLabel(relationLabel?: string | null) {
   if (!relationLabel) {
     return '业主';
@@ -98,6 +90,10 @@ function resolveRelationLabel(relationLabel?: string | null) {
     AGENT: '代理人',
     MEMBER: '家庭成员',
     PRIMARY_OWNER: '业主',
+    MAIN_OWNER: '业主',
+    FAMILY_MEMBER: '家庭成员',
+    MAIN_TENANT: '租户',
+    CO_RESIDENT: '同住成员',
   };
 
   return relationMap[upper] || relationLabel;
@@ -105,7 +101,7 @@ function resolveRelationLabel(relationLabel?: string | null) {
 
 function composeHouseLabel(communityName?: string | null, houseLabel?: string | null) {
   if (communityName && houseLabel) {
-    return `${communityName}·${houseLabel}`;
+    return `${communityName} · ${houseLabel}`;
   }
 
   if (houseLabel) {
@@ -113,7 +109,7 @@ function composeHouseLabel(communityName?: string | null, houseLabel?: string | 
   }
 
   if (communityName) {
-    return `${communityName}·未绑定房屋`;
+    return `${communityName} · 未绑定房屋`;
   }
 
   return '未绑定房屋';
@@ -164,11 +160,80 @@ function isMainlandMobile(value: string) {
   return /^1\d{10}$/.test(value);
 }
 
+function buildPaymentCardView(user: CurrentUserDetail | null, hasBoundHouse: boolean): PaymentCardView {
+  if (!hasBoundHouse || !user?.currentHouseProfile.houseId) {
+    return {
+      headline: '绑定后可查看缴费状态',
+      description: '完成房屋绑定后，可查看当前房屋和其他已绑定房屋的缴费提醒。',
+      amountText: '待绑定',
+      tone: 'neutral',
+    };
+  }
+
+  const paymentSummary = user.currentHouseProfile.paymentSummary;
+  if (!paymentSummary) {
+    return {
+      headline: '当前已缴纳',
+      description: '当前房屋和其他已绑定房屋均无未到期待缴账单。',
+      amountText: '暂无待缴',
+      tone: 'success',
+    };
+  }
+
+  if (paymentSummary.hasCurrentHouseUnpaid) {
+    const headline =
+      paymentSummary.currentHouseUnpaidCount === 1
+        ? '当前房屋有 1 笔待缴'
+        : `当前房屋有 ${paymentSummary.currentHouseUnpaidCount} 笔待缴`;
+    const description = paymentSummary.hasOtherHouseUnpaid
+      ? paymentSummary.otherHouseCountWithUnpaid > 1
+        ? `另外 ${paymentSummary.otherHouseCountWithUnpaid} 套已绑定房屋还有 ${paymentSummary.otherHouseUnpaidCount} 笔待缴，请一并留意。`
+        : `另外 1 套已绑定房屋还有 ${paymentSummary.otherHouseUnpaidCount} 笔待缴，请一并留意。`
+      : '均为未过期账单，可前往收费公示查看并处理。';
+
+    return {
+      headline,
+      description,
+      amountText:
+        paymentSummary.totalUnpaidCount === 1
+          ? '1 笔未缴'
+          : `共 ${paymentSummary.totalUnpaidCount} 笔未缴`,
+      tone: 'warning',
+    };
+  }
+
+  if (paymentSummary.hasOtherHouseUnpaid) {
+    const otherHouseText =
+      paymentSummary.otherHouseCountWithUnpaid > 1
+        ? `其他 ${paymentSummary.otherHouseCountWithUnpaid} 套绑定房屋还有 ${paymentSummary.otherHouseUnpaidCount} 笔未缴，请留意处理。`
+        : `其他绑定房屋还有 ${paymentSummary.otherHouseUnpaidCount} 笔未缴，请留意处理。`;
+
+    return {
+      headline: '当前房屋已缴纳',
+      description: otherHouseText,
+      amountText:
+        paymentSummary.otherHouseUnpaidCount === 1
+          ? '其他房屋 1 笔未缴'
+          : `其他房屋 ${paymentSummary.otherHouseUnpaidCount} 笔未缴`,
+      tone: 'warning',
+    };
+  }
+
+  return {
+    headline: '当前已缴纳',
+    description: '当前房屋和其他已绑定房屋均无未到期待缴账单。',
+    amountText: '暂无待缴',
+    tone: 'success',
+  };
+}
+
 Component({
   options: {
     addGlobalClass: true,
     virtualHost: true,
   },
+
+  behaviors: [usePullDownRefresh],
 
   properties: {
     active: {
@@ -191,16 +256,15 @@ Component({
     errorMessage: '',
     sessionUser: null as SessionUser,
     currentUser: null as CurrentUserDetail | null,
-    displayName: '微信用户',
     displayInitial: '微',
     identityLabel: '业主',
     houseSummary: '未绑定房屋',
-    authStatusText: '未认证',
-    verificationText: '待认证',
-    availableHouses: [] as DisplayHouse[],
-    activeHouseIndex: 0,
-    activeHouseLabel: '未绑定房屋',
-    houseMetaText: '绑定房屋后可使用全部功能',
+    mobileText: '未绑定手机号',
+    paymentHeadline: '绑定后可查看缴费状态',
+    paymentDescription: '完成房屋绑定后，可查看当前房屋和其他已绑定房屋的缴费提醒。',
+    paymentAmountText: '待绑定',
+    paymentTone: 'neutral' as 'success' | 'warning' | 'danger' | 'neutral',
+    houseCountText: '暂无绑定房屋',
     personalMenus: PERSONAL_MENUS,
   },
 
@@ -213,6 +277,22 @@ Component({
   },
 
   methods: {
+    async refreshData() {
+      await this.bootstrap();
+    },
+
+    onPanelRefresh() {
+      const instance = this as unknown as WechatMiniprogram.Component.TrivialInstance & {
+        startPullDownRefresh: () => void;
+        stopPullDownRefresh: () => void;
+      };
+
+      instance.startPullDownRefresh();
+      void this.refreshData().finally(() => {
+        instance.stopPullDownRefresh();
+      });
+    },
+
     syncProfileView(
       sessionUser: SessionUser,
       currentUser: CurrentUserDetail | null,
@@ -221,47 +301,34 @@ Component({
     ) {
       const availableHouses = buildHouseList(currentUser);
       const hasBoundHouse = availableHouses.length > 0;
-      const activeHouseIndex = Math.max(0, availableHouses.findIndex((item) => item.isCurrent));
-      const activeHouse = availableHouses[activeHouseIndex] || null;
-      const displayName =
-        sessionUser?.realName ||
-        sessionUser?.nickname ||
-        currentUser?.realName ||
-        currentUser?.nickname ||
-        '微信用户';
-      const displayInitial = displayName.slice(0, 1).toUpperCase();
-      const verificationText = resolveVerificationText(currentUser);
-      const identityLabel =
-        activeHouse?.relationLabel ||
-        resolveRelationLabel(currentUser?.currentHouseProfile.relationType);
-      const houseSummary =
-        activeHouse?.fullLabel ||
-        composeHouseLabel(currentUser?.currentHouseProfile.communityName, null);
-      const authStatusText = hasBoundHouse ? verificationText : '未认证';
-      const houseMetaText = hasBoundHouse
-        ? `已绑定 ${availableHouses.length} 套房屋，可切换查看当前房屋信息。`
-        : '如物业已登记手机号，可尝试一键绑定。';
-
-      const showAutoBindGuide = !currentUser?.currentHouseProfile?.isVerified;
+      const activeHouse = availableHouses.find((item) => item.isCurrent) || availableHouses[0] || null;
+      const paymentCard = buildPaymentCardView(currentUser, hasBoundHouse);
+      const mobileText = sessionUser?.mobile || currentUser?.mobile || '未绑定手机号';
 
       this.setData({
         checking: false,
         hasAccount,
         hasBoundHouse,
-        showAutoBindGuide,
+        showAutoBindGuide: currentUser?.residentStatus !== 'SYNCED',
         errorMessage,
         sessionUser,
         currentUser,
-        displayName,
-        displayInitial,
-        identityLabel,
-        houseSummary,
-        authStatusText,
-        verificationText,
-        availableHouses,
-        activeHouseIndex,
-        activeHouseLabel: activeHouse?.label || '未绑定房屋',
-        houseMetaText,
+        displayInitial: (sessionUser?.realName || sessionUser?.nickname || currentUser?.nickname || '微')
+          .slice(0, 1)
+          .toUpperCase(),
+        identityLabel:
+          activeHouse?.relationLabel ||
+          resolveRelationLabel(currentUser?.currentHouseProfile.relationType),
+        houseSummary:
+          activeHouse?.label ||
+          currentUser?.currentHouseProfile.houseDisplayName ||
+          '未绑定房屋',
+        mobileText,
+        paymentHeadline: paymentCard.headline,
+        paymentDescription: paymentCard.description,
+        paymentAmountText: paymentCard.amountText,
+        paymentTone: paymentCard.tone,
+        houseCountText: hasBoundHouse ? `已绑定 ${availableHouses.length} 套房屋` : '暂无绑定房屋',
       });
     },
 
@@ -362,7 +429,7 @@ Component({
         if (bindResult.matched) {
           wx.showModal({
             title: '一键绑定成功',
-            content: '已根据物业登记手机号自动绑定房屋。',
+            content: '已根据物业登记手机号自动绑定对应房屋。',
             showCancel: false,
           });
           return;
@@ -371,7 +438,7 @@ Component({
         wx.showModal({
           title: '未匹配到登记信息',
           content: '该手机号暂未匹配到物业登记房屋，请核对手机号或继续手动绑定房屋。',
-          confirmText: '去手动绑定',
+          confirmText: '去绑定房屋',
           cancelText: '稍后再说',
           success: (res) => {
             if (res.confirm) {
@@ -405,38 +472,13 @@ Component({
       }
     },
 
-    handleSwitchHouse() {
-      const { availableHouses, activeHouseIndex, currentUser } = this.data;
-
-      if (!availableHouses.length) {
-        this.goBindHouse();
+    handlePaymentTap() {
+      if (!this.data.hasBoundHouse) {
+        this.showBindToast();
         return;
       }
 
-      if (availableHouses.length === 1) {
-        wx.showToast({
-          title: '当前仅绑定 1 套房屋',
-          icon: 'none',
-        });
-        return;
-      }
-
-      const nextIndex = (activeHouseIndex + 1) % availableHouses.length;
-      const activeHouse = availableHouses[nextIndex];
-
-      this.setData({
-        activeHouseIndex: nextIndex,
-        activeHouseLabel: activeHouse.label,
-        houseSummary: activeHouse.fullLabel,
-        identityLabel:
-          activeHouse.relationLabel ||
-          resolveRelationLabel(currentUser?.currentHouseProfile.relationType),
-      });
-
-      wx.showToast({
-        title: `已切换为${activeHouse.label}`,
-        icon: 'none',
-      });
+      navigateTo(ROUTES.disclosure.payment);
     },
 
     handleAddHouse() {

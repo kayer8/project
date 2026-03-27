@@ -1,11 +1,13 @@
 import {
   fetchVoteDetail,
+  fetchMyVoteDetail,
   formatVoteDeadline,
   formatVoteStatus,
   formatVoteType,
   submitVote,
   VoteItem,
 } from '../../../services/vote';
+import { appStore } from '../../../store/app';
 
 interface VoteDetailView extends VoteItem {
   typeLabel: string;
@@ -25,6 +27,7 @@ function mapVoteDetail(item: VoteItem): VoteDetailView {
 Page({
   data: {
     vote: null as VoteDetailView | null,
+    currentHouseId: '',
     selectedOptionId: '',
     submitted: false,
     loading: true,
@@ -41,17 +44,26 @@ Page({
       return;
     }
 
-    void this.loadVoteDetail(query.id);
+    const houseId = query.houseId || appStore.getSelectedHouseId() || '';
+
+    this.setData({
+      currentHouseId: houseId,
+    });
+
+    void this.loadVoteDetail(query.id, query.mine === '1', houseId);
   },
 
-  async loadVoteDetail(id: string) {
+  async loadVoteDetail(id: string, mine = false, houseId = '') {
     this.setData({
       loading: true,
       errorMessage: '',
     });
 
     try {
-      const vote = await fetchVoteDetail(id);
+      const vote =
+        mine || houseId
+          ? await fetchMyVoteDetail(id, houseId || undefined)
+          : await fetchVoteDetail(id);
 
       this.setData({
         vote: mapVoteDetail(vote),
@@ -83,10 +95,18 @@ Page({
       return;
     }
 
+    if (!this.data.currentHouseId) {
+      wx.showToast({
+        title: '请先选择房屋后再投票',
+        icon: 'none',
+      });
+      return;
+    }
+
     this.setData({ submitting: true });
 
     try {
-      const vote = await submitVote(this.data.vote.id, this.data.selectedOptionId);
+      const vote = await submitVote(this.data.vote.id, this.data.selectedOptionId, this.data.currentHouseId);
 
       wx.showToast({
         title: '投票已提交',

@@ -232,62 +232,11 @@ export class VoteService {
   }
 
   async listUser(userId: string, query: UserVoteListQueryDto) {
-    const page = query.page ?? 1;
-    const pageSize = query.pageSize ?? 20;
-    const scopeContext = await this.getUserScopeContext(userId);
+    return this.listUserVotes(userId, query, false);
+  }
 
-    if (!scopeContext.ownerBuildingIds.length && !scopeContext.residentBuildingIds.length) {
-      return {
-        items: [],
-        total: 0,
-        page,
-        pageSize,
-      };
-    }
-
-    const items = await this.prisma.vote.findMany({
-      where: {
-        status: query.status?.trim() || { in: ['ONGOING', 'ENDED'] },
-        ...(query.type?.trim() ? { type: query.type.trim() } : {}),
-      },
-      include: {
-        options: {
-          orderBy: [{ sortNo: 'asc' }, { createdAt: 'asc' }],
-        },
-      },
-      orderBy: [{ publishedAt: 'desc' }, { updatedAt: 'desc' }, { createdAt: 'desc' }],
-    });
-
-    const accessibleVotes = items.filter((item) => this.canAccessVote(item, scopeContext));
-    const voteIds = accessibleVotes.map((item) => item.id);
-    const ballots = voteIds.length
-      ? await this.prisma.voteBallot.findMany({
-          where: {
-            voteId: { in: voteIds },
-            houseId: { in: scopeContext.houseIds },
-          },
-          select: {
-            voteId: true,
-            optionId: true,
-            houseId: true,
-          },
-        })
-      : [];
-
-    const ballotMap = new Map(ballots.map((item) => [item.voteId, item]));
-    const total = accessibleVotes.length;
-    const slice = accessibleVotes.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize);
-
-    return {
-      items: slice.map((item) =>
-        this.mapUserVoteItem(item, {
-          ballot: ballotMap.get(item.id) ?? null,
-        }),
-      ),
-      total,
-      page,
-      pageSize,
-    };
+  async listMine(userId: string, query: UserVoteListQueryDto) {
+    return this.listUserVotes(userId, query, true);
   }
 
   async listPublic(query: UserVoteListQueryDto) {
@@ -322,8 +271,8 @@ export class VoteService {
     };
   }
 
-  async getUserDetail(userId: string, id: string) {
-    const scopeContext = await this.getUserScopeContext(userId);
+  async getUserDetail(userId: string, id: string, houseId?: string) {
+    const scopeContext = await this.getUserScopeContext(userId, houseId);
     const vote = await this.prisma.vote.findUnique({
       where: { id },
       include: {
@@ -478,6 +427,7 @@ export class VoteService {
       userId,
       vote.scopeAudience,
       vote.scopeType === 'BUILDING' ? this.extractVoteBuildingIds(vote) : [],
+      dto.houseId,
     );
 
     if (!relation) {
@@ -538,7 +488,69 @@ export class VoteService {
       });
     });
 
-    return this.getUserDetail(userId, id);
+    return this.getUserDetail(userId, id, dto.houseId);
+  }
+
+  private async listUserVotes(userId: string, query: UserVoteListQueryDto, votedOnly: boolean) {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const scopeContext = await this.getUserScopeContext(userId, query.houseId);
+
+    if (!scopeContext.ownerBuildingIds.length && !scopeContext.residentBuildingIds.length) {
+      return {
+        items: [],
+        total: 0,
+        page,
+        pageSize,
+      };
+    }
+
+    const items = await this.prisma.vote.findMany({
+      where: {
+        status: query.status?.trim() || { in: ['ONGOING', 'ENDED'] },
+        ...(query.type?.trim() ? { type: query.type.trim() } : {}),
+      },
+      include: {
+        options: {
+          orderBy: [{ sortNo: 'asc' }, { createdAt: 'asc' }],
+        },
+      },
+      orderBy: [{ publishedAt: 'desc' }, { updatedAt: 'desc' }, { createdAt: 'desc' }],
+    });
+
+    const accessibleVotes = items.filter((item) => this.canAccessVote(item, scopeContext));
+    const voteIds = accessibleVotes.map((item) => item.id);
+    const ballots = voteIds.length
+      ? await this.prisma.voteBallot.findMany({
+          where: {
+            voteId: { in: voteIds },
+            houseId: { in: scopeContext.houseIds },
+          },
+          select: {
+            voteId: true,
+            optionId: true,
+            houseId: true,
+          },
+        })
+      : [];
+
+    const ballotMap = new Map(ballots.map((item) => [item.voteId, item]));
+    const filteredVotes = votedOnly
+      ? accessibleVotes.filter((item) => ballotMap.has(item.id))
+      : accessibleVotes;
+    const total = filteredVotes.length;
+    const slice = filteredVotes.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize);
+
+    return {
+      items: slice.map((item) =>
+        this.mapUserVoteItem(item, {
+          ballot: ballotMap.get(item.id) ?? null,
+        }),
+      ),
+      total,
+      page,
+      pageSize,
+    };
   }
 
   private buildListWhere(query: AdminVoteListQueryDto): Prisma.VoteWhereInput {
@@ -846,11 +858,12 @@ export class VoteService {
     return items.length;
   }
 
-  private async getUserScopeContext(userId: string) {
+  private async getUserScopeContext(userId: string, houseId?: string) {
     const relations = await this.prisma.houseMemberRelation.findMany({
       where: {
         userId,
         status: 'ACTIVE',
+        ...(houseId ? { houseId } : {}),
         householdGroup: {
           status: 'ACTIVE',
         },
@@ -924,12 +937,14 @@ export class VoteService {
     userId: string,
     scopeAudience: string,
     limitBuildingIds: string[] = [],
+    houseId?: string,
   ) {
     const relations = await this.prisma.houseMemberRelation.findMany({
       where: {
         userId,
         status: 'ACTIVE',
         ...(scopeAudience === 'OWNER' ? { relationType: 'MAIN_OWNER' } : {}),
+        ...(houseId ? { houseId } : {}),
         house: {
           ...(limitBuildingIds.length > 0 ? { buildingId: { in: limitBuildingIds } } : {}),
         },

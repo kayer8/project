@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.fetchMyVoteDetail = exports.fetchMyVotes = void 0;
 exports.fetchVotes = fetchVotes;
 exports.fetchVoteDetail = fetchVoteDetail;
 exports.createVote = createVote;
@@ -16,6 +17,14 @@ function fetchVotes(query) {
         auth: false,
     });
 }
+function fetchMyVotes(query) {
+    const search = buildSearch(query);
+    return (0, request_1.request)({
+        url: `/votes/mine${search}`,
+        method: 'GET',
+    });
+}
+exports.fetchMyVotes = fetchMyVotes;
 function fetchVoteDetail(id) {
     return (0, request_1.request)({
         url: `/votes/${id}`,
@@ -23,6 +32,14 @@ function fetchVoteDetail(id) {
         auth: false,
     });
 }
+function fetchMyVoteDetail(id, houseId) {
+    const search = buildSearch({ houseId });
+    return (0, request_1.request)({
+        url: `/votes/mine/${id}${search}`,
+        method: 'GET',
+    });
+}
+exports.fetchMyVoteDetail = fetchMyVoteDetail;
 function createVote(payload) {
     return (0, request_1.request)({
         url: '/votes',
@@ -30,11 +47,14 @@ function createVote(payload) {
         data: payload,
     });
 }
-function submitVote(id, optionId) {
+function submitVote(id, optionId, houseId) {
     return (0, request_1.request)({
         url: `/votes/${id}/ballots`,
         method: 'POST',
-        data: { optionId },
+        data: {
+            optionId,
+            ...(houseId ? { houseId } : {}),
+        },
     });
 }
 function formatVoteType(type) {

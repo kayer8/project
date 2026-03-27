@@ -10,6 +10,10 @@ import {
   UpdateAdminUserDto,
 } from './dto/user.dto';
 import { AdminOwnerListQueryDto } from './dto/owner.dto';
+import {
+  AdminOwnerReviewListQueryDto,
+  ReviewOwnerRequestDto,
+} from './dto/owner-review.dto';
 
 const memberRelationLabelMap: Record<string, string> = {
   MAIN_OWNER: '主业主',
@@ -41,6 +45,13 @@ const voteQualificationLabelMap: Record<string, string> = {
   QUALIFIED: '有资格',
   NEEDS_AUTHORIZATION: '需授权',
   UNQUALIFIED: '无资格',
+};
+
+const ownerReviewStatusLabelMap: Record<string, string> = {
+  PENDING: '待审核',
+  REVIEWED: '已通过',
+  REJECTED: '已拒绝',
+  CANCELLED: '已取消',
 };
 
 @Injectable()
@@ -281,6 +292,270 @@ export class UserService {
     };
   }
 
+  async listOwnerReviewsAdmin(query: AdminOwnerReviewListQueryDto) {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const skip = (page - 1) * pageSize;
+    const andWhere: any[] = [];
+
+    if (query.keyword?.trim()) {
+      const keyword = query.keyword.trim();
+      andWhere.push({
+        OR: [
+          { mobile: { contains: keyword } },
+          { user: { realName: { contains: keyword } } },
+          { user: { nickname: { contains: keyword } } },
+          { house: { displayName: { contains: keyword } } },
+          { building: { buildingName: { contains: keyword } } },
+        ],
+      });
+    }
+
+    if (query.buildingId?.trim()) {
+      andWhere.push({
+        buildingId: query.buildingId.trim(),
+      });
+    }
+
+    if (query.status?.trim()) {
+      andWhere.push({
+        status: query.status.trim(),
+      });
+    }
+
+    const where = andWhere.length > 0 ? { AND: andWhere } : undefined;
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.registrationRequest.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: [{ submittedAt: 'desc' }, { createdAt: 'desc' }],
+        include: {
+          user: true,
+          building: true,
+          house: true,
+        },
+      }),
+      this.prisma.registrationRequest.count({ where }),
+    ]);
+
+    return {
+      items: items.map((item) => this.mapOwnerReviewListItem(item)),
+      total,
+      page,
+      pageSize,
+    };
+  }
+
+  async reviewOwnerRequestAdmin(
+    id: string,
+    dto: ReviewOwnerRequestDto,
+    context?: AdminAuditContext,
+  ) {
+    const reviewNote = dto.reviewNote?.trim() || null;
+    const before = await this.prisma.registrationRequest.findUnique({
+      where: { id },
+      include: {
+        user: true,
+        building: true,
+        house: true,
+      },
+    });
+
+    if (!before) {
+      throw new BusinessException(
+        AppErrorCode.INVALID_OPERATION,
+        'Registration request not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (before.status !== 'PENDING') {
+      throw new BusinessException(
+        AppErrorCode.INVALID_OPERATION,
+        'Only pending requests can be reviewed',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      if (dto.status === 'REJECTED') {
+        return tx.registrationRequest.update({
+          where: { id },
+          data: {
+            status: 'REJECTED',
+            reviewNote,
+          },
+          include: {
+            user: true,
+            building: true,
+            house: true,
+          },
+        });
+      }
+
+      if (!before.houseId) {
+        throw new BusinessException(
+          AppErrorCode.INVALID_OPERATION,
+          'The request has no selected house',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const house = await tx.house.findUnique({
+        where: { id: before.houseId },
+        include: {
+          householdGroups: {
+            where: { status: 'ACTIVE' },
+            orderBy: { startedAt: 'desc' },
+          },
+          residentArchives: {
+            where: {
+              mobile: before.mobile,
+              status: {
+                in: ['ACTIVE', 'SYNCED'],
+              },
+            },
+            orderBy: [{ matchedAt: 'desc' }, { createdAt: 'asc' }],
+          },
+        },
+      });
+
+      if (!house || house.buildingId !== before.buildingId) {
+        throw new BusinessException(
+          AppErrorCode.HOUSE_NOT_FOUND,
+          'House not found',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const archive = house.residentArchives[0] ?? null;
+      const desiredRelationType = archive?.relationType ?? 'MAIN_OWNER';
+      const wantsPrimaryRole =
+        desiredRelationType === 'MAIN_OWNER' || desiredRelationType === 'MAIN_TENANT';
+      const defaultGroupType =
+        desiredRelationType === 'MAIN_TENANT' ? 'TENANT_HOUSEHOLD' : 'OWNER_HOUSEHOLD';
+      const householdGroup =
+        house.householdGroups[0] ??
+        (await tx.householdGroup.create({
+          data: {
+            houseId: house.id,
+            groupType: defaultGroupType as any,
+            status: 'ACTIVE',
+            remark: 'Created from admin review approval',
+          },
+        }));
+
+      const existingPrimary = wantsPrimaryRole
+        ? await tx.houseMemberRelation.findFirst({
+            where: {
+              houseId: house.id,
+              userId: {
+                not: before.userId,
+              },
+              isPrimaryRole: true,
+              status: 'ACTIVE',
+            },
+            select: {
+              id: true,
+            },
+          })
+        : null;
+
+      const existingRelation = await tx.houseMemberRelation.findFirst({
+        where: {
+          houseId: house.id,
+          userId: before.userId,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      const relationPayload = {
+        householdGroupId: householdGroup.id,
+        relationType: desiredRelationType as any,
+        relationLabel: archive?.relationLabel ?? null,
+        isPrimaryRole: wantsPrimaryRole && !existingPrimary,
+        canViewBill: true,
+        canPayBill: true,
+        canActAsAgent: wantsPrimaryRole,
+        canJoinConsultation: true,
+        canBeVoteDelegate: wantsPrimaryRole,
+        status: 'ACTIVE' as any,
+        effectiveAt: new Date(),
+        expiredAt: null,
+      };
+
+      if (existingRelation) {
+        await tx.houseMemberRelation.update({
+          where: {
+            id: existingRelation.id,
+          },
+          data: relationPayload,
+        });
+      } else {
+        await tx.houseMemberRelation.create({
+          data: {
+            houseId: house.id,
+            userId: before.userId,
+            ...relationPayload,
+          },
+        });
+      }
+
+      await tx.user.update({
+        where: { id: before.userId },
+        data: {
+          mobile: before.mobile,
+          mobileVerifiedAt: new Date(),
+        },
+      });
+
+      if (archive) {
+        await tx.residentArchive.update({
+          where: { id: archive.id },
+          data: {
+            status: 'SYNCED',
+            matchedUserId: before.userId,
+            matchedAt: new Date(),
+          },
+        });
+      }
+
+      return tx.registrationRequest.update({
+        where: { id },
+        data: {
+          status: 'REVIEWED',
+          reviewNote,
+        },
+        include: {
+          user: true,
+          building: true,
+          house: true,
+        },
+      });
+    });
+
+    await this.auditLogService.recordAdminAction({
+      context,
+      action: dto.status === 'REVIEWED' ? 'APPROVE' : 'REJECT',
+      resourceType: 'OWNER_REVIEW',
+      resourceId: updated.id,
+      resourceName: `${updated.user?.realName ?? updated.user?.nickname ?? updated.mobile} / ${updated.house?.displayName ?? updated.building?.buildingName ?? updated.id}`,
+      snapshot: {
+        before: this.mapOwnerReviewListItem(before),
+        after: this.mapOwnerReviewListItem(updated),
+      },
+    });
+
+    return this.mapOwnerReviewListItem(updated);
+  }
+
   findByWechatOpenid(wechatOpenid: string) {
     return this.prisma.user.findUnique({
       where: { wechatOpenid },
@@ -474,7 +749,7 @@ export class UserService {
         : latestRegistrationRequest?.status === 'REJECTED'
           ? 'REJECTED'
           : 'REGISTERED';
-    const currentHouseProfile = await this.buildCurrentHouseProfile(user, residentStatus);
+    const currentHouseProfile = await this.buildCurrentHouseProfile(user);
 
     return {
       ...listItem,
@@ -539,7 +814,7 @@ export class UserService {
     };
   }
 
-  private async buildCurrentHouseProfile(user: any, residentStatus: string) {
+  private async buildCurrentHouseProfile(user: any) {
     const activeRelations = [...(user.memberRelations ?? [])]
       .filter((item: any) => item.status === 'ACTIVE')
       .sort((left: any, right: any) => {
@@ -557,8 +832,6 @@ export class UserService {
 
     if (!currentRelation) {
       return {
-        isVerified: false,
-        verificationStatus: residentStatus === 'SYNCED' ? 'VERIFIED' : 'UNVERIFIED',
         communityName,
         houseId: null,
         houseDisplayName: null,
@@ -572,6 +845,7 @@ export class UserService {
         canPayBill: false,
         canJoinConsultation: false,
         canBeVoteDelegate: false,
+        paymentSummary: null,
       };
     }
 
@@ -581,10 +855,12 @@ export class UserService {
         status: 'ACTIVE',
       },
     });
+    const paymentSummary = await this.getCurrentHousePaymentSummary(
+      activeRelations.map((item: any) => item.houseId),
+      currentRelation.houseId,
+    );
 
     return {
-      isVerified: true,
-      verificationStatus: 'VERIFIED',
       communityName,
       houseId: currentRelation.houseId,
       houseDisplayName: currentRelation.house.displayName,
@@ -598,6 +874,65 @@ export class UserService {
       canPayBill: currentRelation.canPayBill,
       canJoinConsultation: currentRelation.canJoinConsultation,
       canBeVoteDelegate: currentRelation.canBeVoteDelegate,
+      paymentSummary,
+    };
+  }
+
+  private async getCurrentHousePaymentSummary(boundHouseIds: string[], currentHouseId: string) {
+    const uniqueHouseIds = Array.from(new Set(boundHouseIds.filter(Boolean)));
+    if (!uniqueHouseIds.length) {
+      return null;
+    }
+
+    const now = new Date();
+    const records = await this.prisma.managementFeeRecord.findMany({
+      where: {
+        houseId: {
+          in: uniqueHouseIds,
+        },
+        paymentStatus: {
+          not: 'PAID',
+        },
+        OR: [
+          {
+            dueDate: null,
+          },
+          {
+            dueDate: {
+              gte: now,
+            },
+          },
+        ],
+      },
+      select: {
+        houseId: true,
+      },
+    });
+
+    const unpaidCountByHouse = new Map<string, number>();
+    records.forEach((item) => {
+      unpaidCountByHouse.set(item.houseId, (unpaidCountByHouse.get(item.houseId) ?? 0) + 1);
+    });
+
+    const currentHouseUnpaidCount = unpaidCountByHouse.get(currentHouseId) ?? 0;
+    const otherHouseUnpaidCount = Array.from(unpaidCountByHouse.entries()).reduce((sum, [houseId, count]) => {
+      if (houseId === currentHouseId) {
+        return sum;
+      }
+
+      return sum + count;
+    }, 0);
+    const otherHouseCountWithUnpaid = Array.from(unpaidCountByHouse.keys()).filter(
+      (houseId) => houseId !== currentHouseId,
+    ).length;
+
+    return {
+      currentHouseUnpaidCount,
+      otherHouseUnpaidCount,
+      otherHouseCountWithUnpaid,
+      totalUnpaidCount: records.length,
+      hasCurrentHouseUnpaid: currentHouseUnpaidCount > 0,
+      hasOtherHouseUnpaid: otherHouseUnpaidCount > 0,
     };
   }
 
@@ -615,6 +950,25 @@ export class UserService {
     );
 
     return latestIdentityCommunity?.community?.name ?? null;
+  }
+
+  private mapOwnerReviewListItem(request: any) {
+    return {
+      id: request.id,
+      userId: request.userId,
+      name: request.user?.realName ?? request.user?.nickname ?? '未实名用户',
+      mobile: request.mobile,
+      buildingId: request.buildingId,
+      buildingName: request.building?.buildingName ?? '-',
+      houseId: request.houseId ?? null,
+      house: request.house?.displayName ?? '未选择房屋',
+      roleLabel: '房屋绑定',
+      status: request.status,
+      statusLabel: ownerReviewStatusLabelMap[request.status] ?? request.status,
+      reviewNote: request.reviewNote ?? null,
+      submittedAt: request.submittedAt,
+      updatedAt: request.updatedAt,
+    };
   }
 
   private mapOwnerListItem(relation: any) {

@@ -7,6 +7,7 @@ import {
   VoteItem,
   VoteType,
 } from '../../../services/vote';
+import { appStore } from '../../../store/app';
 import { navigateTo } from '../../../utils/nav';
 
 interface VoteCardItem extends VoteItem {
@@ -41,11 +42,15 @@ Component({
 
   lifetimes: {
     attached() {
-      void this.loadVotes(true);
+      void this.refreshData();
     },
   },
 
   methods: {
+    async refreshData() {
+      await this.loadVotes(true);
+    },
+
     async loadVotes(reset = false) {
       const nextPage = reset ? 1 : this.data.page + 1;
 
@@ -86,7 +91,10 @@ Component({
         return;
       }
 
-      navigateTo(ROUTES.voting.detail, { id });
+      navigateTo(ROUTES.voting.detail, {
+        id,
+        houseId: appStore.getSelectedHouseId() || undefined,
+      });
     },
 
     openCreateVote(event: WechatMiniprogram.BaseEvent) {

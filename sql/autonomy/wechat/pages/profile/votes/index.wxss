@@ -1,0 +1,32 @@
+page {
+  min-height: 100vh;
+}
+
+.page-body {
+  padding: 24rpx 0;
+}
+
+.profile-vote-intro {
+  margin: 0 24rpx;
+}
+
+.vote-record + .vote-record {
+  margin-top: 20rpx;
+}
+
+.vote-record__meta {
+  display: grid;
+  gap: 10rpx;
+  margin-top: 14rpx;
+  padding-top: 14rpx;
+  border-top: 1px solid #edf1f5;
+}
+
+.vote-record__meta-item {
+  font-size: 23rpx;
+  color: #5f6b7a;
+}
+
+.list-content {
+  padding: 0 24rpx;
+}

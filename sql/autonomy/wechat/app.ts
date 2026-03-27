@@ -11,5 +11,6 @@ App<IAppOption>({
   globalData: {
     accessToken: '',
     sessionUser: null,
+    selectedHouseId: '',
   },
 });

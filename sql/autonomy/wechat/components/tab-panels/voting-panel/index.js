@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const routes_1 = require("../../../constants/routes");
 const vote_1 = require("../../../services/vote");
+const app_1 = require("../../../store/app");
 const nav_1 = require("../../../utils/nav");
 function mapVoteCard(item) {
     return {
@@ -26,10 +27,13 @@ Component({
     },
     lifetimes: {
         attached() {
-            void this.loadVotes(true);
+            void this.refreshData();
         },
     },
     methods: {
+        async refreshData() {
+            await this.loadVotes(true);
+        },
         async loadVotes(reset = false) {
             const nextPage = reset ? 1 : this.data.page + 1;
             this.setData({
@@ -66,7 +70,7 @@ Component({
             if (!id) {
                 return;
             }
-            (0, nav_1.navigateTo)(routes_1.ROUTES.voting.detail, { id });
+            (0, nav_1.navigateTo)(routes_1.ROUTES.voting.detail, { id, houseId: app_1.appStore.getSelectedHouseId() || undefined });
         },
         openCreateVote(event) {
             const { type } = event.currentTarget.dataset;

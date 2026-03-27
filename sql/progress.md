@@ -64,6 +64,24 @@
 |------|-------|----------|--------|--------|
 | Mini program build after shared infra repair | `npm run build` in `autonomy/wechat` | Build succeeds | Build succeeds | PASS |
 | Mini program build after list migration | `npm run build` in `autonomy/wechat` | Build succeeds | Build succeeds | PASS |
+| Backend build after owner review API implementation | `npm run build` in `autonomy/backend` | Build succeeds | Build succeeds | PASS |
+| Admin web build after owner review page API hookup | `npm run build` in `autonomy/admin-web` | Build succeeds | Build succeeds | PASS |
+
+## Session: 2026-03-26
+
+### Admin Owner Review API
+- **Status:** complete
+- Actions taken:
+  - Added backend admin owner review list and review action endpoints on `registration_requests`.
+  - Implemented approval flow to activate the user-house relation and rejection flow to update request status.
+  - Replaced admin review page mock data with real API-driven pagination, filtering, and approve/reject actions.
+- Files created/modified:
+  - `autonomy/backend/src/modules/admin/admin-owners.controller.ts`
+  - `autonomy/backend/src/modules/user/dto/owner-review.dto.ts`
+  - `autonomy/backend/src/modules/user/user.service.ts`
+  - `autonomy/admin-web/src/modules/owner/api.ts`
+  - `autonomy/admin-web/src/modules/owner/types.ts`
+  - `autonomy/admin-web/src/views/owner/review.vue`
 
 ## Error Log
 | Timestamp | Error | Attempt | Resolution |

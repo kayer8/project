@@ -1,6 +1,7 @@
 const STORAGE_KEYS = {
   accessToken: 'autonomy_access_token',
   sessionUser: 'autonomy_session_user',
+  selectedHouseId: 'autonomy_selected_house_id',
   registerDraft: 'autonomy_register_draft',
 };
 
@@ -26,6 +27,7 @@ function syncGlobalData() {
 
   app.globalData.accessToken = wx.getStorageSync(STORAGE_KEYS.accessToken) || '';
   app.globalData.sessionUser = wx.getStorageSync(STORAGE_KEYS.sessionUser) || null;
+  app.globalData.selectedHouseId = wx.getStorageSync(STORAGE_KEYS.selectedHouseId) || '';
 }
 
 export const appStore = {
@@ -57,6 +59,17 @@ export const appStore = {
     }
     syncGlobalData();
   },
+  getSelectedHouseId() {
+    return wx.getStorageSync(STORAGE_KEYS.selectedHouseId) || '';
+  },
+  setSelectedHouseId(houseId: string) {
+    if (houseId) {
+      wx.setStorageSync(STORAGE_KEYS.selectedHouseId, houseId);
+    } else {
+      wx.removeStorageSync(STORAGE_KEYS.selectedHouseId);
+    }
+    syncGlobalData();
+  },
   getPendingRegisterProfile(): PendingRegisterProfile | null {
     return wx.getStorageSync(STORAGE_KEYS.registerDraft) || null;
   },
@@ -70,6 +83,7 @@ export const appStore = {
   clearSession() {
     wx.removeStorageSync(STORAGE_KEYS.accessToken);
     wx.removeStorageSync(STORAGE_KEYS.sessionUser);
+    wx.removeStorageSync(STORAGE_KEYS.selectedHouseId);
     wx.removeStorageSync(STORAGE_KEYS.registerDraft);
     syncGlobalData();
   },

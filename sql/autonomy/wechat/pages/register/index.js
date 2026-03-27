@@ -4,29 +4,12 @@ const routes_1 = require("../../constants/routes");
 const auth_1 = require("../../services/auth");
 const app_1 = require("../../store/app");
 const nav_1 = require("../../utils/nav");
+const UNKNOWN_FLOOR_VALUE = '__UNKNOWN_FLOOR__';
 function resolveErrorMessage(error) {
     if (error instanceof Error && error.message) {
         return error.message;
     }
     return '操作失败，请稍后重试';
-}
-function maskMobile(mobile) {
-    if (!mobile || mobile.length < 11) {
-        return mobile || '';
-    }
-    return `${mobile.slice(0, 3)}****${mobile.slice(-4)}`;
-}
-function confirmSubmit(buildingName, houseName) {
-    return new Promise((resolve) => {
-        wx.showModal({
-            title: '确认提交',
-            content: `楼栋：${buildingName}\n房屋：${houseName || '暂未选择'}\n\n提交后将进入人工审核。`,
-            confirmText: '确认提交',
-            cancelText: '再看看',
-            success: (res) => resolve(res.confirm),
-            fail: () => resolve(false),
-        });
-    });
 }
 function getPickerResult(event) {
     const values = Array.isArray(event.detail.value) ? event.detail.value : [];
@@ -36,76 +19,86 @@ function getPickerResult(event) {
         label: labels[0] || '',
     };
 }
+function normalizeMobile(value) {
+    return value.replace(/\D/g, '').slice(0, 11);
+}
+function isValidMobile(value) {
+    return /^1\d{10}$/.test(value);
+}
+function getFloorValue(floorNo) {
+    return floorNo === null ? UNKNOWN_FLOOR_VALUE : String(floorNo);
+}
+function getFloorLabel(floorNo) {
+    return floorNo === null ? '未设置楼层' : `${floorNo}层`;
+}
+function buildFloorOptions(houses) {
+    const seen = new Set();
+    const options = [];
+    houses.forEach((item) => {
+        const value = getFloorValue(item.floorNo);
+        if (seen.has(value)) {
+            return;
+        }
+        seen.add(value);
+        options.push({
+            label: getFloorLabel(item.floorNo),
+            value,
+        });
+    });
+    return options;
+}
+function buildRoomOptions(houses, floorValue) {
+    return houses
+        .filter((item) => getFloorValue(item.floorNo) === floorValue)
+        .map((item) => ({
+        label: item.roomNo || item.displayName,
+        value: item.id,
+    }));
+}
+function confirmSubmit(mobile, houseName) {
+    return new Promise((resolve) => {
+        wx.showModal({
+            title: '确认提交',
+            content: `手机号：${mobile}\n房屋：${houseName}\n\n系统将先按手机号匹配物业登记信息，未命中时会提交人工审核。`,
+            confirmText: '确认提交',
+            cancelText: '再看看',
+            success: (res) => resolve(res.confirm),
+            fail: () => resolve(false),
+        });
+    });
+}
 Page({
     data: {
-        phase: 'phone',
         submitting: false,
-        loadingOptions: false,
+        loadingBuildings: false,
+        loadingHouses: false,
         mobile: '',
-        mobileMasked: '',
-        syncMessage: '',
         buildingOptions: [],
         houseOptions: [],
         buildingPickerOptions: [],
-        housePickerOptions: [],
+        floorPickerOptions: [],
+        roomPickerOptions: [],
         buildingPickerVisible: false,
-        housePickerVisible: false,
+        floorPickerVisible: false,
+        roomPickerVisible: false,
         buildingPickerValue: [],
-        housePickerValue: [],
+        floorPickerValue: [],
+        roomPickerValue: [],
         selectedBuildingId: '',
         selectedBuildingName: '',
+        selectedFloorValue: '',
+        selectedFloorLabel: '',
         selectedHouseId: '',
+        selectedRoomLabel: '',
         selectedHouseName: '',
     },
-    async handleGetPhoneNumber(event) {
-        const detail = event.detail;
-        if (!detail.code || detail.errMsg !== 'getPhoneNumber:ok') {
-            wx.showToast({
-                title: '未获取到手机号授权',
-                icon: 'none',
-            });
-            return;
-        }
-        this.setData({ submitting: true });
-        try {
-            const code = await (0, auth_1.getWechatLoginCode)();
-            const result = await (0, auth_1.syncWechatPhone)({
-                code,
-                phoneCode: detail.code,
-            });
-            app_1.appStore.setAccessToken(result.accessToken);
-            app_1.appStore.setSessionUser(result.user);
-            if (result.matched) {
-                wx.showModal({
-                    title: '同步成功',
-                    content: result.message,
-                    showCancel: false,
-                    success: () => {
-                        (0, nav_1.reLaunch)(routes_1.ROUTES.profile.index);
-                    },
-                });
-                return;
-            }
-            this.setData({
-                phase: 'form',
-                mobile: result.mobile || result.user.mobile || '',
-                mobileMasked: maskMobile(result.mobile || result.user.mobile || ''),
-                syncMessage: result.message,
-            });
-            await this.loadBuildingOptions();
-        }
-        catch (error) {
-            wx.showToast({
-                title: resolveErrorMessage(error),
-                icon: 'none',
-            });
-        }
-        finally {
-            this.setData({ submitting: false });
-        }
+    onLoad() {
+        this.bootstrap();
     },
-    async loadBuildingOptions() {
-        this.setData({ loadingOptions: true });
+    async bootstrap() {
+        this.setData({
+            loadingBuildings: true,
+        });
         try {
             const buildingOptions = await (0, auth_1.listRegisterBuildings)();
             const buildingPickerOptions = buildingOptions.map((item) => ({
@@ -115,38 +108,29 @@ Page({
             this.setData({
                 buildingOptions,
                 buildingPickerOptions,
-                buildingPickerValue: [],
-                selectedBuildingId: '',
-                selectedBuildingName: '',
-                selectedHouseId: '',
-                selectedHouseName: '',
-                houseOptions: [],
-                housePickerOptions: [],
-                housePickerValue: [],
             });
             if (!buildingOptions.length) {
                 wx.showToast({
-                    title: '暂无可选楼栋，请联系管理员',
+                    title: '暂无可选择的楼栋，请联系物业处理',
                     icon: 'none',
                 });
             }
         }
+        catch (error) {
+            wx.showToast({
+                title: resolveErrorMessage(error),
+                icon: 'none',
+            });
+        }
         finally {
-            this.setData({ loadingOptions: false });
+            this.setData({
+                loadingBuildings: false,
+            });
         }
     },
-    async loadHouseOptions(buildingId) {
-        const houseOptions = await (0, auth_1.listRegisterHouses)(buildingId);
-        const housePickerOptions = houseOptions.map((item) => ({
-            label: item.displayName,
-            value: item.id,
-        }));
+    handleMobileChange(event) {
         this.setData({
-            houseOptions,
-            housePickerOptions,
-            housePickerValue: [],
-            selectedHouseId: '',
-            selectedHouseName: '',
+            mobile: normalizeMobile(event.detail.value || ''),
         });
     },
     openBuildingPicker() {
@@ -171,17 +155,36 @@ Page({
             buildingPickerValue: selected.value ? [selected.value] : [],
             selectedBuildingId: selected.value,
             selectedBuildingName: selected.label,
+            selectedFloorValue: '',
+            selectedFloorLabel: '',
             selectedHouseId: '',
+            selectedRoomLabel: '',
             selectedHouseName: '',
+            floorPickerOptions: [],
+            floorPickerValue: [],
+            roomPickerOptions: [],
+            roomPickerValue: [],
             houseOptions: [],
-            housePickerOptions: [],
-            housePickerValue: [],
         });
         if (!selected.value) {
             return;
         }
+        this.setData({
+            loadingHouses: true,
+        });
         try {
-            await this.loadHouseOptions(selected.value);
+            const houseOptions = await (0, auth_1.listRegisterHouses)(selected.value);
+            const floorPickerOptions = buildFloorOptions(houseOptions);
+            this.setData({
+                houseOptions,
+                floorPickerOptions,
+            });
+            if (!houseOptions.length) {
+                wx.showToast({
+                    title: '该楼栋暂无可登记房屋',
+                    icon: 'none',
+                });
+            }
         }
         catch (error) {
             wx.showToast({
@@ -189,56 +192,134 @@ Page({
                 icon: 'none',
             });
         }
+        finally {
+            this.setData({
+                loadingHouses: false,
+            });
+        }
     },
-    openHousePicker() {
-        if (!this.data.housePickerOptions.length) {
+    openFloorPicker() {
+        if (!this.data.floorPickerOptions.length) {
             return;
         }
         this.setData({
-            housePickerVisible: true,
-            housePickerValue: [this.data.selectedHouseId || this.data.housePickerOptions[0].value],
+            floorPickerVisible: true,
+            floorPickerValue: [this.data.selectedFloorValue || this.data.floorPickerOptions[0].value],
         });
     },
-    handleHousePickerVisibleChange(event) {
-        this.setData({ housePickerVisible: !!event.detail.visible });
+    handleFloorPickerVisibleChange(event) {
+        this.setData({ floorPickerVisible: !!event.detail.visible });
     },
-    closeHousePicker() {
-        this.setData({ housePickerVisible: false });
+    closeFloorPicker() {
+        this.setData({ floorPickerVisible: false });
     },
-    handleHouseConfirm(event) {
+    handleFloorConfirm(event) {
         const selected = getPickerResult(event);
+        const roomPickerOptions = buildRoomOptions(this.data.houseOptions, selected.value);
         this.setData({
-            housePickerVisible: false,
-            housePickerValue: selected.value ? [selected.value] : [],
-            selectedHouseId: selected.value,
-            selectedHouseName: selected.label,
+            floorPickerVisible: false,
+            floorPickerValue: selected.value ? [selected.value] : [],
+            selectedFloorValue: selected.value,
+            selectedFloorLabel: selected.label,
+            selectedHouseId: '',
+            selectedRoomLabel: '',
+            selectedHouseName: '',
+            roomPickerOptions,
+            roomPickerValue: [],
         });
     },
-    async handleSubmitRequest() {
-        if (!this.data.selectedBuildingId) {
+    openRoomPicker() {
+        if (!this.data.roomPickerOptions.length) {
+            return;
+        }
+        this.setData({
+            roomPickerVisible: true,
+            roomPickerValue: [this.data.selectedHouseId || this.data.roomPickerOptions[0].value],
+        });
+    },
+    handleRoomPickerVisibleChange(event) {
+        this.setData({ roomPickerVisible: !!event.detail.visible });
+    },
+    closeRoomPicker() {
+        this.setData({ roomPickerVisible: false });
+    },
+    handleRoomConfirm(event) {
+        const selected = getPickerResult(event);
+        const selectedHouse = this.data.houseOptions.find((item) => item.id === selected.value);
+        this.setData({
+            roomPickerVisible: false,
+            roomPickerValue: selected.value ? [selected.value] : [],
+            selectedHouseId: selected.value,
+            selectedRoomLabel: selected.label,
+            selectedHouseName: selectedHouse?.displayName || selected.label,
+        });
+    },
+    async handleSubmit() {
+        const mobile = normalizeMobile(this.data.mobile);
+        if (!isValidMobile(mobile)) {
             wx.showToast({
-                title: '请先选择楼栋',
+                title: '请输入正确的手机号',
                 icon: 'none',
             });
             return;
         }
-        const confirmed = await confirmSubmit(this.data.selectedBuildingName || '未选择楼栋', this.data.selectedHouseName);
+        if (!this.data.selectedBuildingId) {
+            wx.showToast({
+                title: '请选择楼栋',
+                icon: 'none',
+            });
+            return;
+        }
+        if (!this.data.selectedFloorValue) {
+            wx.showToast({
+                title: '请选择楼层',
+                icon: 'none',
+            });
+            return;
+        }
+        if (!this.data.selectedHouseId) {
+            wx.showToast({
+                title: '请选择房号',
+                icon: 'none',
+            });
+            return;
+        }
+        const confirmed = await confirmSubmit(mobile, this.data.selectedHouseName);
         if (!confirmed) {
             return;
         }
         this.setData({ submitting: true });
         try {
+            const code = await (0, auth_1.getWechatLoginCode)();
+            const bindResult = await (0, auth_1.manualBindWechatPhone)({
+                code,
+                mobile,
+            });
+            app_1.appStore.setAccessToken(bindResult.accessToken);
+            app_1.appStore.setSessionUser(bindResult.user);
+            if (bindResult.matched) {
+                wx.showModal({
+                    title: '已完成绑定',
+                    content: '已根据物业登记手机号为你完成房屋绑定，可直接进入“我的”查看。',
+                    showCancel: false,
+                    success: () => {
+                        (0, nav_1.reLaunch)(routes_1.ROUTES.profile.index);
+                    },
+                });
+                return;
+            }
             await (0, auth_1.submitRegistrationRequest)({
                 buildingId: this.data.selectedBuildingId,
-                houseId: this.data.selectedHouseId || undefined,
+                houseId: this.data.selectedHouseId,
             });
-            wx.showToast({
-                title: '提交成功',
-                icon: 'success',
+            wx.showModal({
+                title: '申请已提交',
+                content: '物业暂未匹配到该手机号的登记记录，已为你提交人工审核申请，请留意审核结果。',
+                showCancel: false,
+                success: () => {
+                    (0, nav_1.reLaunch)(routes_1.ROUTES.profile.index);
+                },
             });
-            setTimeout(() => {
-                (0, nav_1.reLaunch)(routes_1.ROUTES.profile.index);
-            }, 300);
         }
         catch (error) {
             wx.showToast({

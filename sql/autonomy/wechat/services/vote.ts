@@ -48,6 +48,7 @@ export interface VoteListQuery {
   pageSize?: number;
   type?: VoteType;
   status?: VoteStatus;
+  houseId?: string;
 }
 
 export interface CreateVotePayload {
@@ -70,11 +71,29 @@ export function fetchVotes(query: VoteListQuery) {
   });
 }
 
+export function fetchMyVotes(query: VoteListQuery) {
+  const search = buildSearch(query);
+
+  return request<VoteListResult>({
+    url: `/votes/mine${search}`,
+    method: 'GET',
+  });
+}
+
 export function fetchVoteDetail(id: string) {
   return request<VoteItem>({
     url: `/votes/${id}`,
     method: 'GET',
     auth: false,
+  });
+}
+
+export function fetchMyVoteDetail(id: string, houseId?: string) {
+  const search = buildSearch({ houseId });
+
+  return request<VoteItem>({
+    url: `/votes/mine/${id}${search}`,
+    method: 'GET',
   });
 }
 
@@ -86,11 +105,14 @@ export function createVote(payload: CreateVotePayload) {
   });
 }
 
-export function submitVote(id: string, optionId: string) {
+export function submitVote(id: string, optionId: string, houseId?: string) {
   return request<VoteItem>({
     url: `/votes/${id}/ballots`,
     method: 'POST',
-    data: { optionId },
+    data: {
+      optionId,
+      ...(houseId ? { houseId } : {}),
+    },
   });
 }
 

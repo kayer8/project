@@ -251,6 +251,78 @@ export class ManagementFeeService {
     return fallbackCreated;
   }
 
+  async removePeriod(periodKey: string, context?: AdminAuditContext) {
+    const trimmedPeriodKey = periodKey.trim();
+    if (!trimmedPeriodKey) {
+      throw new BadRequestException('管理时段不能为空');
+    }
+
+    const existed = await this.prisma.managementFeePeriod.findUnique({
+      where: { periodKey: trimmedPeriodKey },
+      select: {
+        id: true,
+        periodKey: true,
+        periodMonth: true,
+        chargeStartDate: true,
+        chargeEndDate: true,
+        dueDate: true,
+        pricingMode: true,
+        unitPrice: true,
+        baseAmount: true,
+        defaultArea: true,
+        _count: {
+          select: {
+            records: true,
+          },
+        },
+      },
+    });
+
+    if (!existed) {
+      throw new NotFoundException('管理时段不存在');
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.managementFeeRecord.deleteMany({
+        where: {
+          periodKey: trimmedPeriodKey,
+        },
+      }),
+      this.prisma.managementFeePeriod.delete({
+        where: {
+          periodKey: trimmedPeriodKey,
+        },
+      }),
+    ]);
+
+    await this.auditLogService.recordAdminAction({
+      context,
+      action: 'DELETE',
+      resourceType: 'MANAGEMENT_FEE_PERIOD',
+      resourceId: existed.id,
+      resourceName: `${existed.periodKey} 管理时段`,
+      snapshot: {
+        before: {
+          periodKey: existed.periodKey,
+          periodMonth: existed.periodMonth,
+          chargeStartDate: existed.chargeStartDate?.toISOString() ?? null,
+          chargeEndDate: existed.chargeEndDate?.toISOString() ?? null,
+          dueDate: existed.dueDate?.toISOString() ?? null,
+          pricingMode: existed.pricingMode,
+          unitPrice: existed.unitPrice,
+          baseAmount: existed.baseAmount,
+          defaultArea: existed.defaultArea,
+          recordCount: existed._count.records,
+        },
+      },
+    });
+
+    return {
+      periodKey: trimmedPeriodKey,
+      removed: true,
+    };
+  }
+
   async getAdminSummary(query: ManagementFeePeriodQueryDto) {
     const period = await this.resolvePeriod(query);
     const records = await this.loadHouseRecords(period);

@@ -81,6 +81,157 @@ export class MemberService {
     return this.mapMemberDetail(relation);
   }
 
+  async getCurrentHouseMembers(userId: string) {
+    const currentRelation = await this.prisma.houseMemberRelation.findFirst({
+      where: {
+        userId,
+        status: {
+          in: ['ACTIVE', 'PENDING'],
+        },
+      },
+      orderBy: [{ isPrimaryRole: 'desc' }, { createdAt: 'asc' }],
+      include: {
+        house: {
+          include: {
+            building: true,
+          },
+        },
+      },
+    });
+
+    if (!currentRelation) {
+      return {
+        houseId: null,
+        houseDisplayName: '未绑定房屋',
+        buildingName: null,
+        canManageMembers: false,
+        total: 0,
+        items: [],
+      };
+    }
+
+    const relations = await this.prisma.houseMemberRelation.findMany({
+      where: {
+        houseId: currentRelation.houseId,
+        status: {
+          in: ['ACTIVE', 'PENDING'],
+        },
+      },
+      include: {
+        user: true,
+        house: {
+          include: {
+            building: true,
+          },
+        },
+        householdGroup: true,
+      },
+      orderBy: [{ isPrimaryRole: 'desc' }, { createdAt: 'asc' }],
+    });
+
+    const canManageMembers = Boolean(
+      currentRelation.isPrimaryRole || currentRelation.canActAsAgent,
+    );
+
+    return {
+      houseId: currentRelation.houseId,
+      houseDisplayName: currentRelation.house.displayName,
+      buildingName: currentRelation.house.building.buildingName,
+      canManageMembers,
+      total: relations.length,
+      items: relations.map((item) => ({
+        id: item.id,
+        userId: item.userId,
+        name: item.user.realName ?? item.user.nickname ?? '未命名用户',
+        phone: item.user.mobile ?? '',
+        role: memberRelationLabelMap[item.relationType] ?? item.relationType,
+        status: item.status,
+        statusLabel: item.status === 'ACTIVE' ? '已加入' : '待确认',
+        joinDate: item.createdAt,
+        isPrimaryRole: item.isPrimaryRole,
+        canRemove:
+          canManageMembers &&
+          item.id !== currentRelation.id &&
+          !item.isPrimaryRole,
+      })),
+    };
+  }
+
+  async removeCurrentHouseMember(userId: string, relationId: string) {
+    const currentRelation = await this.prisma.houseMemberRelation.findFirst({
+      where: {
+        userId,
+        status: 'ACTIVE',
+      },
+      orderBy: [{ isPrimaryRole: 'desc' }, { createdAt: 'asc' }],
+      select: {
+        id: true,
+        houseId: true,
+        isPrimaryRole: true,
+        canActAsAgent: true,
+      },
+    });
+
+    if (!currentRelation) {
+      throw new BusinessException(
+        AppErrorCode.INVALID_OPERATION,
+        'Current house relation not found',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!currentRelation.isPrimaryRole && !currentRelation.canActAsAgent) {
+      throw new BusinessException(
+        AppErrorCode.PERMISSION_DENIED,
+        'You do not have permission to manage house members',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    const targetRelation = await this.prisma.houseMemberRelation.findFirst({
+      where: {
+        id: relationId,
+        houseId: currentRelation.houseId,
+        status: {
+          in: ['ACTIVE', 'PENDING'],
+        },
+      },
+      select: {
+        id: true,
+        isPrimaryRole: true,
+      },
+    });
+
+    if (!targetRelation) {
+      throw new BusinessException(
+        AppErrorCode.MEMBER_NOT_FOUND,
+        'Member relation not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (targetRelation.id === currentRelation.id || targetRelation.isPrimaryRole) {
+      throw new BusinessException(
+        AppErrorCode.INVALID_OPERATION,
+        'The selected member cannot be removed',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    await this.prisma.houseMemberRelation.update({
+      where: { id: relationId },
+      data: {
+        status: 'REMOVED',
+        expiredAt: new Date(),
+      },
+    });
+
+    return {
+      id: relationId,
+      removed: true,
+    };
+  }
+
   async listAdmin(query: AdminMemberListQueryDto) {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;

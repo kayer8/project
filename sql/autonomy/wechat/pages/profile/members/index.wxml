@@ -4,44 +4,57 @@
   <view class="card info-card">
     <view class="icon-title-row">
       <t-icon name="user" size="40rpx" class="ui-icon ui-icon--primary" />
-      <view class="record-title">3号楼 1202</view>
+      <view class="record-title">{{houseName}}</view>
     </view>
-    <view class="record-note">当前共有 {{allMembers.length}} 位成员</view>
+    <view class="record-note">
+      {{buildingName ? buildingName + ' · ' : ''}}当前共有 {{members.length}} 位成员
+    </view>
     <view class="action-row section">
       <button class="primary-button" bindtap="openInvite">邀请成员</button>
       <button class="secondary-button" bindtap="openPermissions">权限设置</button>
     </view>
   </view>
 
-  <view class="section section--fill">
-    <app-list
-      list="{{members}}"
-      loading="{{loading}}"
-      showLoading="{{true}}"
-      isLoadMore="{{isLoadMore}}"
-      finished="{{finished}}"
-      content-class="list-content"
-      bind:refresh="onListRefresh"
-      bind:loadMore="onListLoadMore"
-    >
-      <view wx:for="{{members}}" wx:key="id" class="record-card member-card">
-        <view class="record-row">
-          <view>
-            <view class="icon-inline-row">
-              <t-icon name="user" size="32rpx" class="ui-icon" />
-              <view class="record-title">{{item.name}}</view>
-            </view>
-            <view class="record-note">{{item.phone}} · 加入于 {{item.joinDate}}</view>
+  <view wx:if="{{loading}}" class="section loading-block">
+    <t-loading theme="circular" size="56rpx" />
+  </view>
+
+  <view wx:elif="{{errorMessage}}" class="section card info-card error-block">
+    <view class="record-note">{{errorMessage}}</view>
+  </view>
+
+  <view wx:elif="{{!members.length}}" class="section card info-card empty-block">
+    当前房屋暂无成员
+  </view>
+
+  <view wx:else class="section">
+    <view wx:for="{{members}}" wx:key="id" class="record-card member-card">
+      <view class="record-row">
+        <view>
+          <view class="icon-inline-row">
+            <t-icon name="user" size="32rpx" class="ui-icon" />
+            <view class="record-title">{{item.name}}</view>
           </view>
-          <view class="badge-row">
-            <t-tag theme="{{item.role === '业主' ? 'primary' : item.role === '家属' ? 'success' : 'warning'}}" variant="light">{{item.role}}</t-tag>
-            <t-tag theme="{{item.status === 'active' ? 'success' : 'warning'}}" variant="light">
-              {{item.status === 'active' ? '已加入' : '待确认'}}
-            </t-tag>
-          </view>
+          <view class="record-note">{{item.phone || '未绑定手机号'}} · 加入于 {{item.joinDateText}}</view>
         </view>
-        <button wx:if="{{item.role !== '业主'}}" class="ghost-button member-card__remove" data-id="{{item.id}}" bindtap="handleRemove">移除成员</button>
+        <view class="badge-row">
+          <t-tag theme="{{item.isPrimaryRole ? 'primary' : item.role === '家庭成员' ? 'success' : 'warning'}}" variant="light">
+            {{item.role}}
+          </t-tag>
+          <t-tag theme="{{item.status === 'ACTIVE' ? 'success' : 'warning'}}" variant="light">
+            {{item.statusLabel}}
+          </t-tag>
+        </view>
       </view>
-    </app-list>
+      <button
+        wx:if="{{item.canRemove && canManageMembers}}"
+        class="ghost-button member-card__remove"
+        data-id="{{item.id}}"
+        data-name="{{item.name}}"
+        bindtap="handleRemove"
+      >
+        移除成员
+      </button>
+    </view>
   </view>
 </view>

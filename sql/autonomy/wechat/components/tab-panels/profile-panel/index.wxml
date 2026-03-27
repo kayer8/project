@@ -1,5 +1,12 @@
 <app-navbar title="我的" left-arrow="{{false}}" />
 
+<t-pull-down-refresh
+  class="panel-refresh"
+  enable-passive="{{true}}"
+  loadingProps="{{PULL_DOWN_LOADING_PROPS}}"
+  value="{{isRefreshing}}"
+  bind:refresh="onPanelRefresh"
+>
 <view class="page-body">
   <view wx:if="{{checking}}" class="profile-section profile-card profile-card--loading">
     <view class="profile-loading__avatar"></view>
@@ -20,24 +27,29 @@
           <view wx:else class="profile-avatar profile-avatar--placeholder">{{displayInitial}}</view>
 
           <view class="profile-user__content">
-            <view class="profile-user__role-row">
-              <text class="profile-user__role">{{identityLabel}}</text>
-            </view>
             <view class="profile-user__house">{{houseSummary}}</view>
-            <view class="profile-user__auth-row">
-              <view class="profile-user__auth-pill">
-                <t-icon name="secured" size="24rpx" class="profile-mini-icon" />
-                <text>{{authStatusText}}</text>
-              </view>
-              <text class="profile-user__mobile">
-                {{sessionUser && sessionUser.mobile ? sessionUser.mobile : '未绑定手机号'}}
-              </text>
+            <view class="profile-user__meta">
+              <view class="profile-chip profile-chip--primary">{{identityLabel}}</view>
+              <view class="profile-chip profile-chip--muted">{{mobileText}}</view>
             </view>
           </view>
         </view>
+      </view>
 
-        <view class="profile-status {{hasBoundHouse ? 'profile-status--success' : 'profile-status--pending'}}">
-          {{hasBoundHouse ? authStatusText : '未绑定'}}
+      <view
+        class="profile-payment-card profile-payment-card--{{paymentTone}}"
+        bindtap="handlePaymentTap"
+      >
+        <view class="profile-payment__left">
+          <view class="profile-payment__label">缴费提醒</view>
+          <view class="profile-payment__headline">{{paymentHeadline}}</view>
+          <view class="profile-payment__desc">{{paymentDescription}}</view>
+        </view>
+
+        <view class="profile-payment__right">
+          <view class="profile-payment__amount">{{paymentAmountText}}</view>
+          <view class="profile-payment__hint">{{houseCountText}}</view>
+          <t-icon name="chevron-right" size="28rpx" class="profile-payment__arrow" />
         </view>
       </view>
     </view>
@@ -45,9 +57,9 @@
     <view wx:if="{{showAutoBindGuide}}" class="profile-section profile-card2">
       <view class="guide-card">
         <view class="guide-card__badge">推荐</view>
-        <view class="guide-card__title">已在物业登记信息，一键绑定</view>
+        <view class="guide-card__title">已在物业登记信息，可一键绑定</view>
         <view class="guide-card__desc">
-          输入物业登记的手机号，系统会校验是否存在对应房屋，并自动为当前用户完成绑定。
+          输入物业登记的手机号，系统会自动校验是否存在对应房屋，并尝试为当前账号完成绑定。
         </view>
         <view class="guide-card__button-wrap">
           <t-button
@@ -96,3 +108,4 @@
 
   <view class="safe-bottom-space"></view>
 </view>
+</t-pull-down-refresh>

@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const vote_1 = require("../../../services/vote");
+const app_1 = require("../../../store/app");
 function mapVoteDetail(item) {
     return {
         ...item,
@@ -12,6 +13,7 @@ function mapVoteDetail(item) {
 Page({
     data: {
         vote: null,
+        currentHouseId: '',
         selectedOptionId: '',
         submitted: false,
         loading: true,
@@ -26,15 +28,21 @@ Page({
             });
             return;
         }
-        void this.loadVoteDetail(query.id);
+        const houseId = query.houseId || app_1.appStore.getSelectedHouseId() || '';
+        this.setData({
+            currentHouseId: houseId,
+        });
+        void this.loadVoteDetail(query.id, query.mine === '1', houseId);
     },
-    async loadVoteDetail(id) {
+    async loadVoteDetail(id, mine = false, houseId = '') {
         this.setData({
             loading: true,
             errorMessage: '',
         });
         try {
-            const vote = await (0, vote_1.fetchVoteDetail)(id);
+            const vote = mine || houseId
+                ? await (0, vote_1.fetchMyVoteDetail)(id, houseId || undefined)
+                : await (0, vote_1.fetchVoteDetail)(id);
             this.setData({
                 vote: mapVoteDetail(vote),
                 selectedOptionId: vote.selectedOptionId || '',
@@ -61,9 +69,16 @@ Page({
         if (!this.data.vote || !this.data.selectedOptionId || this.data.submitting) {
             return;
         }
+        if (!this.data.currentHouseId) {
+            wx.showToast({
+                title: '请先选择房屋后再投票',
+                icon: 'none',
+            });
+            return;
+        }
         this.setData({ submitting: true });
         try {
-            const vote = await (0, vote_1.submitVote)(this.data.vote.id, this.data.selectedOptionId);
+            const vote = await (0, vote_1.submitVote)(this.data.vote.id, this.data.selectedOptionId, this.data.currentHouseId);
             wx.showToast({
                 title: '投票已提交',
                 icon: 'success',

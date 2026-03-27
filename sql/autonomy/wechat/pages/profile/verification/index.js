@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const user_1 = require("../../../services/user");
 function resolveVerificationStatus(user) {
-    if (user?.currentHouseProfile?.isVerified) {
+    if (user?.residentStatus === 'SYNCED') {
         return 'verified';
     }
     if (user?.latestRegistrationRequest?.status === 'PENDING') {
@@ -12,12 +12,12 @@ function resolveVerificationStatus(user) {
 }
 function resolveStatusText(status) {
     if (status === 'verified') {
-        return '已通过';
+        return '已绑定';
     }
     if (status === 'pending') {
         return '审核中';
     }
-    return '待提交';
+    return '未绑定';
 }
 Page({
     data: {
@@ -25,7 +25,7 @@ Page({
         errorMessage: '',
         currentUser: null,
         verificationStatus: 'unverified',
-        statusText: '待提交',
+        statusText: '未绑定',
         editing: false,
         realName: '',
         idNo: '',
@@ -56,7 +56,7 @@ Page({
                 loading: false,
                 currentUser: null,
                 verificationStatus: 'unverified',
-                statusText: '待提交',
+                statusText: '未绑定',
                 errorMessage: error instanceof Error ? error.message : '个人信息加载失败',
             });
         }

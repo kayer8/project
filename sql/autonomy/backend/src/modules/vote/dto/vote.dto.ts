@@ -164,6 +164,11 @@ export class UserVoteListQueryDto extends PaginationDto {
   @IsString()
   @IsIn(VOTE_STATUSES)
   status?: string;
+
+  @ApiPropertyOptional({ description: 'Selected house id' })
+  @IsOptional()
+  @IsString()
+  houseId?: string;
 }
 
 export class CreateUserVoteDto {
@@ -200,4 +205,9 @@ export class SubmitUserVoteDto {
   @IsString()
   @IsNotEmpty()
   optionId!: string;
+
+  @ApiPropertyOptional({ description: 'Selected house id' })
+  @IsOptional()
+  @IsString()
+  houseId?: string;
 }

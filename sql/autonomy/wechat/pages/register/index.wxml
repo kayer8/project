@@ -1,71 +1,142 @@
-  <app-navbar title="绑定房屋" left-arrow="{{true}}" />
+<app-navbar title="绑定房屋" left-arrow="{{true}}" />
 
-  <view class="page-body">
-    <view wx:if="{{phase === 'phone'}}" class="section card form-card">
-      <view class="icon-title-row">
-        <t-icon name="user" size="40rpx" class="ui-icon ui-icon--primary" />
-        <view class="section-title">第一步：手机号核验</view>
-      </view>
-      <button
-        class="primary-button section"
-        open-type="getPhoneNumber"
-        bindgetphonenumber="handleGetPhoneNumber"
-        loading="{{submitting}}"
-      >
-        微信授权手机号
-      </button>
-      <view class="register-link-row">
-        <text class="muted-text">继续即表示你已阅读并同意</text>
-        <text class="section-link" bindtap="openPrivacy">《隐私政策》</text>
-      </view>
+<view class="register-page">
+  <view class="register-hero">
+    <view class="register-hero__badge">房屋绑定</view>
+    <view class="register-hero__title">完善手机号与房屋信息</view>
+    <view class="register-hero__desc">
+      填写物业登记手机号，并选择楼栋、楼层和房号。系统会优先自动匹配，未命中时再进入人工审核。
     </view>
-
-    <view wx:if="{{phase === 'form'}}" class="section card form-card">
-      <view class="icon-title-row">
-        <t-icon name="home" size="40rpx" class="ui-icon ui-icon--primary" />
-        <view class="section-title">第二步：补充房屋信息</view>
+    <view class="register-steps">
+      <view class="register-step">
+        <view class="register-step__index">1</view>
+        <view class="register-step__text">填写手机号</view>
       </view>
-
-      <view class="field-block">
-        <text class="field-label">手机号</text>
-        <view class="text-input static-field">{{mobileMasked}}</view>
-        <view wx:if="{{syncMessage}}" class="field-hint">{{syncMessage}}</view>
+      <view class="register-step">
+        <view class="register-step__index">2</view>
+        <view class="register-step__text">选择房屋</view>
       </view>
-
-      <view class="field-block">
-        <text class="field-label">楼栋</text>
-        <view class="picker-field" bindtap="openBuildingPicker">{{selectedBuildingName || '请选择楼栋'}}</view>
+      <view class="register-step">
+        <view class="register-step__index">3</view>
+        <view class="register-step__text">提交绑定</view>
       </view>
-
-      <view class="field-block">
-        <text class="field-label">房屋</text>
-        <view class="picker-field" bindtap="openHousePicker">{{selectedHouseName || '请选择房屋'}}</view>
-      </view>
-
-      <button class="primary-button section" bindtap="handleSubmitRequest" loading="{{submitting}}">
-        提交楼栋信息
-      </button>
     </view>
   </view>
 
-  <t-picker
-    visible="{{buildingPickerVisible}}"
-    title="选择楼栋"
-    value="{{buildingPickerValue}}"
-    bind:confirm="handleBuildingConfirm"
-    bind:cancel="closeBuildingPicker"
-    bind:visible-change="handleBuildingPickerVisibleChange"
-  >
-    <t-picker-item options="{{buildingPickerOptions}}" />
-  </t-picker>
+  <view class="register-card">
+    <view class="register-card__header">
+      <view class="register-card__title">登记信息</view>
+      <view class="register-card__subtitle">请尽量填写与物业登记一致的信息</view>
+    </view>
 
-  <t-picker
-    visible="{{housePickerVisible}}"
-    title="选择房屋"
-    value="{{housePickerValue}}"
-    bind:confirm="handleHouseConfirm"
-    bind:cancel="closeHousePicker"
-    bind:visible-change="handleHousePickerVisibleChange"
-  >
-    <t-picker-item options="{{housePickerOptions}}" />
-  </t-picker>
+    <view class="form-field">
+      <view class="form-field__label">手机号</view>
+      <t-input
+        t-class="register-input"
+        t-class-input="register-input__element"
+        borderless="{{true}}"
+        type="number"
+        maxlength="{{11}}"
+        placeholder="请输入物业登记手机号"
+        value="{{mobile}}"
+        bind:change="handleMobileChange"
+      />
+      <view class="form-field__hint">用于核验物业登记信息，未命中时会作为人工审核联系方式。</view>
+    </view>
+
+    <view class="form-grid">
+      <view class="form-field">
+        <view class="form-field__label">楼栋</view>
+        <view class="selector-field" bindtap="openBuildingPicker">
+          <text class="selector-field__text {{selectedBuildingName ? 'selector-field__text--selected' : ''}}">
+            {{selectedBuildingName || (loadingBuildings ? '楼栋加载中...' : '请选择楼栋')}}
+          </text>
+          <t-icon name="chevron-down" size="36rpx" class="selector-field__icon" />
+        </view>
+      </view>
+
+      <view class="form-field">
+        <view class="form-field__label">楼层</view>
+        <view class="selector-field {{!selectedBuildingId ? 'selector-field--disabled' : ''}}" bindtap="openFloorPicker">
+          <text class="selector-field__text {{selectedFloorLabel ? 'selector-field__text--selected' : ''}}">
+            {{selectedFloorLabel || (selectedBuildingId ? '请选择楼层' : '先选楼栋')}}
+          </text>
+          <t-icon name="chevron-down" size="36rpx" class="selector-field__icon" />
+        </view>
+      </view>
+
+      <view class="form-field form-field--full">
+        <view class="form-field__label">房号</view>
+        <view class="selector-field {{!selectedFloorValue ? 'selector-field--disabled' : ''}}" bindtap="openRoomPicker">
+          <text class="selector-field__text {{selectedRoomLabel ? 'selector-field__text--selected' : ''}}">
+            {{selectedRoomLabel || (loadingHouses ? '房屋加载中...' : selectedFloorValue ? '请选择房号' : '先选楼层')}}
+          </text>
+          <t-icon name="chevron-down" size="36rpx" class="selector-field__icon" />
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{selectedHouseName || mobile}}" class="register-summary">
+    <view class="register-summary__title">本次提交内容</view>
+    <view class="register-summary__row">
+      <text class="register-summary__label">手机号</text>
+      <text class="register-summary__value">{{mobile || '待填写'}}</text>
+    </view>
+    <view class="register-summary__row">
+      <text class="register-summary__label">房屋</text>
+      <text class="register-summary__value">{{selectedHouseName || '待选择'}}</text>
+    </view>
+  </view>
+
+  <view class="register-action">
+    <t-button
+      theme="primary"
+      size="large"
+      shape="round"
+      block
+      loading="{{submitting}}"
+      disabled="{{submitting || mobile.length !== 11 || !selectedBuildingId || !selectedFloorValue || !selectedHouseId}}"
+      bindtap="handleSubmit"
+    >
+      提交绑定申请
+    </t-button>
+    <view class="register-action__hint">
+      点击提交即表示你已阅读并同意
+      <text class="register-action__link" bindtap="openPrivacy">《隐私政策》</text>
+    </view>
+  </view>
+</view>
+
+<t-picker
+  visible="{{buildingPickerVisible}}"
+  title="选择楼栋"
+  value="{{buildingPickerValue}}"
+  bind:confirm="handleBuildingConfirm"
+  bind:cancel="closeBuildingPicker"
+  bind:visible-change="handleBuildingPickerVisibleChange"
+>
+  <t-picker-item options="{{buildingPickerOptions}}" />
+</t-picker>
+
+<t-picker
+  visible="{{floorPickerVisible}}"
+  title="选择楼层"
+  value="{{floorPickerValue}}"
+  bind:confirm="handleFloorConfirm"
+  bind:cancel="closeFloorPicker"
+  bind:visible-change="handleFloorPickerVisibleChange"
+>
+  <t-picker-item options="{{floorPickerOptions}}" />
+</t-picker>
+
+<t-picker
+  visible="{{roomPickerVisible}}"
+  title="选择房号"
+  value="{{roomPickerValue}}"
+  bind:confirm="handleRoomConfirm"
+  bind:cancel="closeRoomPicker"
+  bind:visible-change="handleRoomPickerVisibleChange"
+>
+  <t-picker-item options="{{roomPickerOptions}}" />
+</t-picker>

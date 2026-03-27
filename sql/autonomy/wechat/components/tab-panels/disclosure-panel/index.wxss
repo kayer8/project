@@ -1,6 +1,12 @@
+.panel-refresh {
+  display: block;
+  height: 100%;
+}
+
 .page-body {
+  box-sizing: border-box;
+  min-height: 100%;
   padding: 24rpx 24rpx 48rpx;
-  overflow: scroll;
 }
 
 .disclosure-hero__head {
@@ -132,6 +138,103 @@
   background: #eef3ff;
   color: #3a66e9;
   flex-shrink: 0;
+}
+
+.house-switcher-popup {
+  padding: 28rpx 24rpx calc(28rpx + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, #ffffff 0%, #f7f9fd 100%);
+  border-radius: 32rpx 32rpx 0 0;
+}
+
+.house-switcher-popup__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.house-switcher-popup__title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1f2329;
+}
+
+.house-switcher-popup__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 28rpx;
+  background: #eef3ff;
+  color: #3a66e9;
+}
+
+.house-switcher-popup__scroll {
+  max-height: 58vh;
+  margin-top: 22rpx;
+}
+
+.house-switcher-item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 24rpx 22rpx;
+  border-radius: 22rpx;
+  background: #ffffff;
+  border: 1px solid #e6ebf2;
+  box-shadow: 0 10rpx 30rpx rgba(31, 95, 191, 0.04);
+}
+
+.house-switcher-item + .house-switcher-item {
+  margin-top: 16rpx;
+}
+
+.house-switcher-item--active {
+  border-color: #b9ccff;
+  background: linear-gradient(180deg, #f7faff 0%, #eef4ff 100%);
+}
+
+.house-switcher-item__content {
+  min-width: 0;
+  flex: 1;
+}
+
+.house-switcher-item__title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.house-switcher-item__title {
+  font-size: 30rpx;
+  line-height: 1.4;
+  font-weight: 700;
+  color: #1f2329;
+}
+
+.house-switcher-item__subtitle {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #7a8599;
+}
+
+.house-switcher-item__check {
+  color: #2f6bff;
+  flex-shrink: 0;
+}
+
+.house-switcher-popup__empty {
+  padding: 56rpx 0 40rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: #7a8599;
+}
+
+.house-switcher-popup__footer {
+  margin-top: 24rpx;
 }
 
 .home-profile-card__stats {

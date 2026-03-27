@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { Admin } from '../../common/decorators/admin.decorator';
@@ -27,6 +27,15 @@ export class AdminManagementFeesController {
   @Post('periods')
   createPeriod(@Body() dto: CreateManagementFeePeriodDto, @Admin() admin: AdminAuthUser, @Req() request: Request) {
     return this.managementFeeService.createPeriod(dto, buildAuditContext(admin, request));
+  }
+
+  @Delete('periods/:periodKey')
+  removePeriod(
+    @Param('periodKey') periodKey: string,
+    @Admin() admin: AdminAuthUser,
+    @Req() request: Request,
+  ) {
+    return this.managementFeeService.removePeriod(periodKey, buildAuditContext(admin, request));
   }
 
   @Get('summary')

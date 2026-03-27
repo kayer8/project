@@ -26,6 +26,13 @@ export function createManagementFeePeriod(payload: CreateManagementFeePeriodPayl
   });
 }
 
+export function removeManagementFeePeriod(periodKey: string) {
+  return request<{ periodKey: string; removed: boolean }>({
+    url: `/management-fees/periods/${encodeURIComponent(periodKey)}`,
+    method: 'delete',
+  });
+}
+
 export function fetchManagementFeeSummary(params?: { periodKey?: string; periodMonth?: string }) {
   return request<ManagementFeeSummary>({
     url: '/management-fees/summary',

@@ -1,3 +1,4 @@
+import { usePullDownRefresh } from '../../../behaviors/usePullDownRefresh';
 import { ROUTES } from '../../../constants/routes';
 import {
   fetchDisclosureContents,
@@ -60,6 +61,7 @@ interface BoundHouseOption {
   statusTag: string | null;
   subtitle: string;
   isCurrent: boolean;
+  pendingReview?: boolean;
 }
 
 const relationTypeLabelMap: Record<string, string> = {
@@ -187,7 +189,7 @@ function createDefaultHomeProfileCard(): HomeProfileCard {
     stats: [
       { label: '房屋成员', value: '0' },
       { label: '缴费权限', value: '未开通' },
-      { label: '参与咨询', value: '待认证' },
+      { label: '参与咨询', value: '未绑定' },
     ],
     actions: [
       { title: '立即认证', url: ROUTES.profile.bind, theme: 'secondary' },
@@ -204,14 +206,14 @@ function buildBoundHouseOptions(user: CurrentUserDetail): BoundHouseOption[] {
   const currentHouseId = user.currentHouseProfile.houseId || '';
   const communityName = user.currentHouseProfile.communityName || '已绑定房屋';
 
-  return user.houseRelations.map((item) => {
+  const relationOptions = user.houseRelations.map((item) => {
     const roleLabel =
       relationTypeLabelMap[item.relationLabel?.toUpperCase?.() || ''] ||
       item.relationLabel ||
       '住户';
     const isCurrent = Boolean(currentHouseId) && currentHouseId === item.houseId;
-    const statusTag = isCurrent && user.currentHouseProfile.isVerified
-      ? '已认证'
+    const statusTag = isCurrent && user.residentStatus === 'SYNCED'
+      ? '已绑定'
       : memberStatusLabelMap[item.status] || '已绑定';
 
     return {
@@ -225,6 +227,31 @@ function buildBoundHouseOptions(user: CurrentUserDetail): BoundHouseOption[] {
       isCurrent,
     };
   });
+
+  const pendingRequest = user.latestRegistrationRequest;
+  const canAppendPendingHouse =
+    pendingRequest?.status === 'PENDING' &&
+    Boolean(pendingRequest.houseId) &&
+    !relationOptions.some((item) => item.id === pendingRequest.houseId);
+
+  if (!canAppendPendingHouse || !pendingRequest) {
+    return relationOptions;
+  }
+
+  return [
+    ...relationOptions,
+    {
+      id: `pending:${pendingRequest.id}`,
+      houseName: pendingRequest.houseDisplayName || '待审核房屋',
+      fullName: `${communityName}路${pendingRequest.houseDisplayName || '待审核房屋'}`,
+      buildingName: pendingRequest.buildingName || '待审核楼栋',
+      roleLabel: '绑定申请',
+      statusTag: '审核中',
+      subtitle: `${pendingRequest.buildingName || '待审核楼栋'} 路 审核中`,
+      isCurrent: false,
+      pendingReview: true,
+    },
+  ];
 }
 
 function buildCardStats(profile: CurrentHouseProfile | null | undefined, selectedHouse: BoundHouseOption | null) {
@@ -274,6 +301,8 @@ Component({
     addGlobalClass: true,
   },
 
+  behaviors: [usePullDownRefresh],
+
   data: {
     sections,
     homeProfileCard: createDefaultHomeProfileCard(),
@@ -289,13 +318,31 @@ Component({
 
   lifetimes: {
     attached() {
-      void this.loadHomeProfile();
-      void this.loadVoteGuide();
-      void this.loadLatestAnnouncements();
+      void this.refreshData();
     },
   },
 
   methods: {
+    async refreshData() {
+      await Promise.all([
+        this.loadHomeProfile(),
+        this.loadVoteGuide(),
+        this.loadLatestAnnouncements(),
+      ]);
+    },
+
+    onPanelRefresh() {
+      const instance = this as unknown as WechatMiniprogram.Component.TrivialInstance & {
+        startPullDownRefresh: () => void;
+        stopPullDownRefresh: () => void;
+      };
+
+      instance.startPullDownRefresh();
+      void this.refreshData().finally(() => {
+        instance.stopPullDownRefresh();
+      });
+    },
+
     async loadHomeProfile() {
       try {
         const hasSession = await bootstrapWechatSession();
@@ -307,19 +354,26 @@ Component({
             selectedHouseId: '',
             hasBoundHouse: false,
           });
+          appStore.setSelectedHouseId('');
           return;
         }
 
         const user = await fetchCurrentUser();
         const boundHouses = buildBoundHouseOptions(user);
-        const selectedHouse = boundHouses.find((item) => item.isCurrent) || boundHouses[0] || null;
+        const storedHouseId = appStore.getSelectedHouseId();
+        const selectedHouse =
+          boundHouses.find((item) => item.id === storedHouseId && !item.pendingReview) ||
+          boundHouses.find((item) => item.isCurrent) ||
+          boundHouses.find((item) => !item.pendingReview) ||
+          null;
 
         this.setData({
           homeProfileCard: mapHomeProfileCard(user.currentHouseProfile, selectedHouse),
           boundHouses,
           selectedHouseId: selectedHouse?.id || '',
-          hasBoundHouse: boundHouses.length > 0,
+          hasBoundHouse: Boolean(user.currentHouseProfile.houseId),
         });
+        appStore.setSelectedHouseId(selectedHouse?.id || '');
       } catch (error) {
         console.error('load current user profile failed', error);
         this.setData({
@@ -328,6 +382,7 @@ Component({
           selectedHouseId: '',
           hasBoundHouse: false,
         });
+        appStore.setSelectedHouseId('');
       }
     },
 
@@ -460,6 +515,14 @@ Component({
         return;
       }
 
+      if (selectedHouse.pendingReview) {
+        wx.showToast({
+          title: '该房屋正在审核中，审核通过后才可切换使用',
+          icon: 'none',
+        });
+        return;
+      }
+
       try {
         const hasSession = await bootstrapWechatSession();
         if (!hasSession || !appStore.hasAccessToken()) {
@@ -476,6 +539,7 @@ Component({
           homeProfileCard: mapHomeProfileCard(user.currentHouseProfile, selectedHouse),
           houseSwitcherVisible: false,
         });
+        appStore.setSelectedHouseId(id);
       } catch (error) {
         console.error('switch home card house failed', error);
       }

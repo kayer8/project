@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, Param, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { User } from '../../common/decorators/user.decorator';
@@ -15,6 +15,16 @@ export class MemberController {
   @Get('my')
   listMine(@User() user: AuthUser) {
     return this.memberService.listMine(user.userId);
+  }
+
+  @Get('current-house')
+  getCurrentHouseMembers(@User() user: AuthUser) {
+    return this.memberService.getCurrentHouseMembers(user.userId);
+  }
+
+  @Delete('current-house/:id')
+  removeCurrentHouseMember(@User() user: AuthUser, @Param('id') id: string) {
+    return this.memberService.removeCurrentHouseMember(user.userId, id);
   }
 
   @Get(':id')

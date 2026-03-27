@@ -1,8 +1,6 @@
 import { request } from './request';
 
 export interface CurrentHouseProfile {
-  isVerified: boolean;
-  verificationStatus: 'VERIFIED' | 'UNVERIFIED';
   communityName: string | null;
   houseId: string | null;
   houseDisplayName: string | null;
@@ -16,6 +14,14 @@ export interface CurrentHouseProfile {
   canPayBill: boolean;
   canJoinConsultation: boolean;
   canBeVoteDelegate: boolean;
+  paymentSummary: {
+    currentHouseUnpaidCount: number;
+    otherHouseUnpaidCount: number;
+    otherHouseCountWithUnpaid: number;
+    totalUnpaidCount: number;
+    hasCurrentHouseUnpaid: boolean;
+    hasOtherHouseUnpaid: boolean;
+  } | null;
 }
 
 export interface CurrentUserDetail {

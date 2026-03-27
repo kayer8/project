@@ -32,6 +32,12 @@
 - `E:\work\project\kmer_card_wechat_lite\packages\shared\src\pages\home\news\list\list.ts`
 - `E:\work\project\kmer_card_wechat_lite\packages\shared\src\components\km-list\km-list.ts`
 
+## Additional Findings: Admin Owner Reviews
+- Admin owner review page (`admin-web/src/views/owner/review.vue`) was still using mock data and had no real backend integration.
+- Backend already had owner result-list capability via `admin/v1/owners`, but no dedicated registration request review queue endpoint.
+- The real review source for mini program house binding is `registration_requests`, not `identity_applications`.
+- Approval must do more than flip status: it needs to activate or create the `house_member_relations` record so the user actually gains the house binding after review.
+
 ## Visual/Browser Findings
 - Current list pages mostly render `record-card` loops directly in page bodies without shared list container.
 - `app-list` is now buildable and suitable as the wrapper for these repeated list blocks.

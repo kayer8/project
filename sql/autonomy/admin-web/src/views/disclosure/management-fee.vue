@@ -38,6 +38,9 @@
               <t-button variant="text" theme="primary" @click="openPeriodLedger(row)">
                 进入账本
               </t-button>
+              <t-button variant="text" theme="danger" @click="handleDelete(row)">
+                删除
+              </t-button>
             </div>
           </template>
         </t-table>
@@ -112,11 +115,15 @@
 
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
-import { MessagePlugin } from 'tdesign-vue-next';
+import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 import { useRouter } from 'vue-router';
 import PageContainer from '@/components/PageContainer/index.vue';
 import { formatDate } from '@/utils/format';
-import { createManagementFeePeriod, fetchManagementFeePeriods } from '@/modules/management-fee/api';
+import {
+  createManagementFeePeriod,
+  fetchManagementFeePeriods,
+  removeManagementFeePeriod,
+} from '@/modules/management-fee/api';
 import type { ManagementFeePeriodItem } from '@/modules/management-fee/types';
 
 const router = useRouter();
@@ -138,7 +145,7 @@ const periodColumns = [
   { colKey: 'paidHouseholds', title: '已缴清', width: 100 },
   { colKey: 'unpaidHouseholds', title: '未缴纳', width: 100 },
   { colKey: 'dueDate', title: '截止日期', width: 140 },
-  { colKey: 'actions', title: '操作', width: 120, fixed: 'right' },
+  { colKey: 'actions', title: '操作', width: 180, fixed: 'right' },
 ];
 
 function getMonthEndLabel(dateText?: string | null) {
@@ -179,6 +186,23 @@ function openPeriodLedger(period: ManagementFeePeriodItem) {
 
 async function handleRefresh() {
   await loadPeriodList();
+}
+
+function handleDelete(period: ManagementFeePeriodItem) {
+  const label = formatPeriodRangeLabel(period.chargeStartDate, period.chargeEndDate);
+  const dialog = DialogPlugin.confirm({
+    header: '确认删除管理时段',
+    body: `将删除“${label}”及该时段下全部管理费账目，删除后不可恢复。`,
+    confirmBtn: '确认删除',
+    cancelBtn: '取消',
+    onConfirm: async () => {
+      await removeManagementFeePeriod(period.periodKey);
+      await loadPeriodList();
+      MessagePlugin.success('管理时段删除成功');
+      dialog.destroy();
+    },
+    onClose: () => dialog.destroy(),
+  });
 }
 
 function resetForm() {

@@ -8,9 +8,9 @@
   <block wx:else>
     <view class="section card info-card">
       <view class="badge-row verification-status">
-        <t-tag wx:if="{{verificationStatus === 'verified'}}" theme="success" variant="light">已通过</t-tag>
+        <t-tag wx:if="{{verificationStatus === 'verified'}}" theme="success" variant="light">已绑定</t-tag>
         <t-tag wx:elif="{{verificationStatus === 'pending'}}" theme="warning" variant="light">审核中</t-tag>
-        <t-tag wx:else theme="danger" variant="light">待提交</t-tag>
+        <t-tag wx:else theme="danger" variant="light">未绑定</t-tag>
         <t-tag theme="primary" variant="light">实名认证</t-tag>
       </view>
 

@@ -20,6 +20,20 @@ export class VoteController {
     return this.voteService.listPublic(query);
   }
 
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get('mine')
+  listMine(@User() user: AuthUser, @Query() query: UserVoteListQueryDto) {
+    return this.voteService.listMine(user.userId, query);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get('mine/:id')
+  detailMine(@User() user: AuthUser, @Param('id') id: string, @Query('houseId') houseId?: string) {
+    return this.voteService.getUserDetail(user.userId, id, houseId);
+  }
+
   @Get(':id')
   detail(@Param('id') id: string) {
     return this.voteService.getPublicDetail(id);

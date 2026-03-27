@@ -4,6 +4,7 @@ export const ROUTES = {
   home: '/pages/home/index',
   voting: {
     index: '/pages/home/index?tab=voting',
+    mine: '/pages/profile/votes/index',
     detail: '/pages/voting/detail/index',
     create: '/pages/voting/create/index',
   },
@@ -19,6 +20,7 @@ export const ROUTES = {
   },
   profile: {
     index: '/pages/home/index?tab=profile',
+    votes: '/pages/profile/votes/index',
     bind: '/pages/profile/bind/index',
     members: '/pages/profile/members/index',
     invite: '/pages/profile/invite/index',
