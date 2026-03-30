@@ -1,6 +1,22 @@
 <app-navbar title="{{disclosureTitle || '收费公示'}}" />
 
 <view class="page-body">
+  <view class="section search-field">
+    <t-input
+      t-class="search-field__input"
+      t-class-input="search-field__input-element"
+      t-class-prefix-icon="search-field__icon"
+      t-class-clearable="search-field__clear"
+      borderless="{{true}}"
+      clearable="{{true}}"
+      prefix-icon="search"
+      placeholder-style="color: #7a8594; font-size: 30rpx;"
+      placeholder="搜索账期、楼栋"
+      value="{{keyword}}"
+      bind:change="handleKeywordInput"
+    />
+  </view>
+
   <app-list
     list="{{periodCards}}"
     loading="{{loading}}"

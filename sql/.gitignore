@@ -2,3 +2,16 @@ node_modules
 dist
 .DS_Store
 codex-manager
+
+# WeChat Mini Program local/generated files
+autonomy/wechat/project.private.config.json
+autonomy/wechat/miniprogram_npm/
+autonomy/wechat/app.js
+autonomy/wechat/behaviors/**/*.js
+autonomy/wechat/components/**/*.js
+autonomy/wechat/constants/**/*.js
+autonomy/wechat/mock/**/*.js
+autonomy/wechat/pages/**/*.js
+autonomy/wechat/services/**/*.js
+autonomy/wechat/store/**/*.js
+autonomy/wechat/utils/**/*.js

@@ -6,8 +6,12 @@
   padding-bottom: 48rpx;
 }
 
+.section.search-field {
+  padding: 0 24rpx;
+}
+
 .payment-list-content {
-  padding: 0 28rpx 36rpx;
+  padding: 0 24rpx 36rpx;
 }
 
 .payment-summary {

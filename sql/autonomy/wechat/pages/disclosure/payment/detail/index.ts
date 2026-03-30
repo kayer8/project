@@ -7,6 +7,8 @@ import {
   ManagementFeePaymentStatus,
 } from '../../../../services/management-fee';
 
+const HOUSE_PAGE_SIZE = 30;
+
 type StatusTone = 'paid' | 'partial' | 'unpaid';
 type RateTone = 'high' | 'medium' | 'low';
 
@@ -49,12 +51,53 @@ interface SummaryView {
   rateTone: RateTone;
 }
 
+interface ActiveBuildingState {
+  activeBuildingId: string;
+  activeBuildingName: string;
+  activeBuilding: BuildingView | null;
+  visibleHouseCount: number;
+  filteredHouseCount: number;
+  hasMoreHouses: boolean;
+}
+
 function formatCurrency(value: number) {
   return `¥${value.toFixed(2)}`;
 }
 
 function formatRate(value: number) {
   return `${Number.isInteger(value) ? value.toFixed(0) : value.toFixed(1)}%`;
+}
+
+function compareNaturalText(left?: string | null, right?: string | null) {
+  return String(left || '').localeCompare(String(right || ''), 'zh-CN', {
+    numeric: true,
+    sensitivity: 'base',
+  });
+}
+
+function sortBuildings(buildings: ManagementFeeDisclosureBuildingItem[]) {
+  return [...buildings].sort((a, b) => compareNaturalText(a.buildingName, b.buildingName));
+}
+
+function sortHouses(houses: ManagementFeeDisclosureHouseItem[]) {
+  return [...houses].sort((a, b) => {
+    const byRoom = compareNaturalText(a.roomNo, b.roomNo);
+    if (byRoom !== 0) {
+      return byRoom;
+    }
+
+    const byUnit = compareNaturalText(a.unitNo, b.unitNo);
+    if (byUnit !== 0) {
+      return byUnit;
+    }
+
+    const byDisplayName = compareNaturalText(a.displayName, b.displayName);
+    if (byDisplayName !== 0) {
+      return byDisplayName;
+    }
+
+    return compareNaturalText(a.houseId, b.houseId);
+  });
 }
 
 function getStatusTone(status: ManagementFeePaymentStatus): StatusTone {
@@ -113,11 +156,12 @@ function mapHouseView(item: ManagementFeeDisclosureHouseItem): HouseView {
 }
 
 function mapBuildingView(building: ManagementFeeDisclosureBuildingItem): BuildingView {
-  const houseCount = building.houses.length;
-  const paidHouseholds = building.houses.filter((item) => item.paymentStatus === 'PAID').length;
+  const sortedHouses = sortHouses(building.houses);
+  const houseCount = sortedHouses.length;
+  const paidHouseholds = sortedHouses.filter((item) => item.paymentStatus === 'PAID').length;
   const unpaidHouseholds = Math.max(houseCount - paidHouseholds, 0);
-  const receivableAmount = building.houses.reduce((sum, item) => sum + item.receivableAmount, 0);
-  const paidAmount = building.houses.reduce((sum, item) => sum + item.paidAmount, 0);
+  const receivableAmount = sortedHouses.reduce((sum, item) => sum + item.receivableAmount, 0);
+  const paidAmount = sortedHouses.reduce((sum, item) => sum + item.paidAmount, 0);
   const paymentRate = receivableAmount > 0 ? (paidAmount / receivableAmount) * 100 : 0;
 
   return {
@@ -131,7 +175,7 @@ function mapBuildingView(building: ManagementFeeDisclosureBuildingItem): Buildin
     receivableText: formatCurrency(receivableAmount),
     paidText: formatCurrency(paidAmount),
     paymentRateText: formatRate(paymentRate),
-    houses: building.houses.map(mapHouseView),
+    houses: sortedHouses.map(mapHouseView),
   };
 }
 
@@ -180,10 +224,6 @@ function buildBuildingTabs(buildings: BuildingView[]): BuildingTab[] {
   }));
 }
 
-function sortBuildings(buildings: ManagementFeeDisclosureBuildingItem[]) {
-  return [...buildings].sort((a, b) => a.buildingName.localeCompare(b.buildingName, 'zh-CN', { numeric: true }));
-}
-
 function filterBuildingHouses(building: BuildingView | null, keyword: string) {
   if (!building) {
     return null;
@@ -203,6 +243,33 @@ function filterBuildingHouses(building: BuildingView | null, keyword: string) {
   return {
     ...building,
     houses,
+  };
+}
+
+function buildActiveBuildingState(
+  buildings: BuildingView[],
+  targetBuildingId: string,
+  keyword: string,
+  requestedVisibleCount: number,
+): ActiveBuildingState {
+  const sourceBuilding =
+    buildings.find((item) => item.buildingId === targetBuildingId) || buildings[0] || null;
+  const filteredBuilding = filterBuildingHouses(sourceBuilding, keyword);
+  const filteredHouseCount = filteredBuilding?.houses.length || 0;
+  const visibleHouseCount = Math.min(requestedVisibleCount, filteredHouseCount);
+
+  return {
+    activeBuildingId: sourceBuilding?.buildingId || '',
+    activeBuildingName: sourceBuilding?.buildingName || '',
+    activeBuilding: filteredBuilding
+      ? {
+          ...filteredBuilding,
+          houses: filteredBuilding.houses.slice(0, visibleHouseCount),
+        }
+      : null,
+    visibleHouseCount,
+    filteredHouseCount,
+    hasMoreHouses: visibleHouseCount < filteredHouseCount,
   };
 }
 
@@ -226,6 +293,9 @@ Page({
     activeBuildingId: '',
     activeBuildingName: '',
     activeBuilding: null as BuildingView | null,
+    visibleHouseCount: 0,
+    filteredHouseCount: 0,
+    hasMoreHouses: false,
     summary: {
       receivableText: '¥0.00',
       paidText: '¥0.00',
@@ -266,6 +336,21 @@ Page({
     });
   },
 
+  updateActiveBuilding(targetBuildingId: string, keyword: string, requestedVisibleCount = HOUSE_PAGE_SIZE) {
+    const nextState = buildActiveBuildingState(
+      this.data.rawBuildings,
+      targetBuildingId,
+      keyword,
+      requestedVisibleCount,
+    );
+
+    this.setData({
+      ...nextState,
+      keyword,
+      emptyDescription: keyword.trim() ? '当前搜索条件下暂无房屋明细' : '暂无账期明细数据',
+    });
+  },
+
   async loadDetail(periodKey: string) {
     this.setData({
       loading: true,
@@ -282,7 +367,7 @@ Page({
 
       const rawBuildings = sortBuildings(period.buildings).map(mapBuildingView);
       const buildingTabs = buildBuildingTabs(rawBuildings);
-      const activeBuilding = rawBuildings[0] || null;
+      const initialBuildingState = buildActiveBuildingState(rawBuildings, rawBuildings[0]?.buildingId || '', '', HOUSE_PAGE_SIZE);
 
       this.setData({
         navbarTitle: '收费详情',
@@ -292,9 +377,7 @@ Page({
         updatedAtText: formatManagementFeeDateTime(result.updatedAt),
         rawBuildings,
         buildingTabs,
-        activeBuildingId: activeBuilding?.buildingId || '',
-        activeBuildingName: activeBuilding?.buildingName || '',
-        activeBuilding,
+        ...initialBuildingState,
         summary: buildSummary(period.buildings),
         keyword: '',
         emptyDescription: '暂无账期明细数据',
@@ -309,6 +392,9 @@ Page({
         activeBuildingId: '',
         activeBuildingName: '',
         activeBuilding: null,
+        visibleHouseCount: 0,
+        filteredHouseCount: 0,
+        hasMoreHouses: false,
         summary: buildSummary([]),
         errorMessage: message,
         emptyDescription: message,
@@ -320,25 +406,24 @@ Page({
 
   handleKeywordInput(event: WechatMiniprogram.CustomEvent<{ value?: string }>) {
     const keyword = event.detail.value || '';
-    const activeBuilding =
-      this.data.rawBuildings.find((item) => item.buildingId === this.data.activeBuildingId) || null;
-
-    this.setData({
-      keyword,
-      activeBuilding: filterBuildingHouses(activeBuilding, keyword),
-      emptyDescription: keyword.trim() ? '当前搜索条件下暂无房屋明细' : '暂无账期明细数据',
-    });
+    this.updateActiveBuilding(this.data.activeBuildingId, keyword, HOUSE_PAGE_SIZE);
   },
 
   handleSideBarChange(event: WechatMiniprogram.CustomEvent<{ value?: string; label?: string }>) {
     const selected = getSidebarResult(event);
-    const activeBuilding =
-      this.data.rawBuildings.find((item) => item.buildingId === selected.value) || this.data.rawBuildings[0] || null;
+    const nextBuildingId = selected.value || this.data.rawBuildings[0]?.buildingId || '';
+    this.updateActiveBuilding(nextBuildingId, this.data.keyword, HOUSE_PAGE_SIZE);
+  },
 
-    this.setData({
-      activeBuildingId: activeBuilding?.buildingId || '',
-      activeBuildingName: activeBuilding?.buildingName || selected.label || '',
-      activeBuilding: filterBuildingHouses(activeBuilding, this.data.keyword),
-    });
+  handleLoadMoreHouses() {
+    if (!this.data.hasMoreHouses || !this.data.activeBuildingId) {
+      return;
+    }
+
+    this.updateActiveBuilding(
+      this.data.activeBuildingId,
+      this.data.keyword,
+      this.data.visibleHouseCount + HOUSE_PAGE_SIZE,
+    );
   },
 });

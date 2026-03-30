@@ -118,13 +118,33 @@ function buildBuildingOptions(periods: ManagementFeeDisclosurePeriodItem[], sele
         .flatMap((item) => item.buildings)
         .map((item) => [item.buildingId, { label: item.buildingName, value: item.buildingId }]),
     ).values(),
-  ).sort((a, b) => a.label.localeCompare(b.label, 'zh-CN'));
+  ).sort((a, b) => a.label.localeCompare(b.label, 'zh-CN', { numeric: true }));
 
   return [{ label: '全部楼栋', value: ALL_FILTER }, ...options];
 }
 
 function filterBuildings(buildings: ManagementFeeDisclosureBuildingItem[], selectedBuildingId: string) {
   return buildings.filter((item) => selectedBuildingId === ALL_FILTER || item.buildingId === selectedBuildingId);
+}
+
+function matchPeriodKeyword(
+  period: ManagementFeeDisclosurePeriodItem,
+  buildings: ManagementFeeDisclosureBuildingItem[],
+  keyword: string,
+) {
+  const normalized = keyword.trim();
+
+  if (!normalized) {
+    return true;
+  }
+
+  const keywords = [
+    period.rangeLabel,
+    period.periodMonth || '',
+    ...buildings.map((item) => item.buildingName),
+  ];
+
+  return keywords.some((field) => field.includes(normalized));
 }
 
 function mapPeriodCard(
@@ -175,6 +195,7 @@ function buildPeriodCards(
   selectedPeriodKey: string,
   selectedBuildingId: string,
   updatedAtText: string,
+  keyword: string,
 ) {
   return periods
     .slice()
@@ -183,7 +204,7 @@ function buildPeriodCards(
     .map((period) => {
       const buildings = filterBuildings(period.buildings, selectedBuildingId);
 
-      if (!buildings.length) {
+      if (!buildings.length || !matchPeriodKeyword(period, buildings, keyword)) {
         return null;
       }
 
@@ -238,6 +259,7 @@ Page({
     disclosureNote: '',
     publisherText: '',
     updatedAtText: '',
+    keyword: '',
     allPeriods: [] as ManagementFeeDisclosurePeriodItem[],
     periodCards: [] as PeriodCardView[],
     summary: {
@@ -282,13 +304,14 @@ Page({
       const updatedAtText = formatManagementFeeDateTime(result.updatedAt);
       const periodOptions = buildPeriodOptions(result.periods);
       const buildingOptions = buildBuildingOptions(result.periods, ALL_FILTER);
-      const periodCards = buildPeriodCards(result.periods, ALL_FILTER, ALL_FILTER, updatedAtText);
+      const periodCards = buildPeriodCards(result.periods, ALL_FILTER, ALL_FILTER, updatedAtText, '');
 
       this.setData({
         disclosureTitle: result.title || '收费公示',
         disclosureNote: result.note || '',
         publisherText: result.publisher || '',
         updatedAtText,
+        keyword: '',
         allPeriods: result.periods,
         periodCards,
         summary: buildSummary(periodCards),
@@ -332,6 +355,13 @@ Page({
     void this.loadDisclosure().finally(() => {
       event?.detail?.done?.();
     });
+  },
+
+  handleKeywordInput(event: WechatMiniprogram.Input) {
+    const keyword = event.detail.value || '';
+
+    this.setData({ keyword });
+    this.applyFilters({});
   },
 
   openPeriodPicker() {
@@ -424,10 +454,12 @@ Page({
       selectedPeriodKey,
       selectedBuildingId,
       this.data.updatedAtText,
+      this.data.keyword,
     );
     const periodIndex = findOptionIndex(periodOptions, selectedPeriodKey);
     const buildingIndex = findOptionIndex(buildingOptions, selectedBuildingId);
-    const hasFilters = selectedPeriodKey !== ALL_FILTER || selectedBuildingId !== ALL_FILTER;
+    const hasFilters =
+      selectedPeriodKey !== ALL_FILTER || selectedBuildingId !== ALL_FILTER || !!this.data.keyword.trim();
 
     this.setData({
       selectedPeriodKey,
