@@ -2,15 +2,19 @@
   <div class="default-layout">
     <aside class="sidebar">
       <div class="sidebar__brand">
-        <div class="sidebar__brand-mark">治</div>
+        <div class="sidebar__brand-mark">AD</div>
         <div>
-          <div class="sidebar__brand-title">社区物业自治系统</div>
-          <div class="sidebar__brand-subtitle">管理后台</div>
+          <div class="sidebar__brand-title">Admin Shell</div>
+          <div class="sidebar__brand-subtitle">Framework retained</div>
         </div>
       </div>
 
       <div class="sidebar__nav">
-        <section v-for="group in menuGroups" :key="group.title" class="sidebar__group">
+        <section
+          v-for="group in menuGroups"
+          :key="group.title"
+          class="sidebar__group"
+        >
           <div class="sidebar__group-title">{{ group.title }}</div>
           <nav class="sidebar__group-list">
             <RouterLink
@@ -33,16 +37,16 @@
     <div class="layout-shell">
       <header class="topbar">
         <div>
-          <div class="topbar__eyebrow">社区治理数字中台</div>
+          <div class="topbar__eyebrow">Admin application skeleton</div>
           <div class="topbar__title">{{ currentTitle }}</div>
         </div>
         <div class="topbar__meta">
-          <div class="topbar__status">系统运行正常</div>
+          <div class="topbar__status">Framework only</div>
           <div class="topbar__user">
             <div class="topbar__avatar">A</div>
             <div>
-              <div class="topbar__user-name">管理员</div>
-              <div class="topbar__user-role">系统运营账号</div>
+              <div class="topbar__user-name">Local Shell</div>
+              <div class="topbar__user-role">Single-page mode</div>
             </div>
           </div>
         </div>
@@ -58,33 +62,13 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
-import {
-  BuildingIcon,
-  CatalogIcon,
-  ChartBarIcon,
-  CheckCircleIcon,
-  HomeIcon,
-  SendIcon,
-  SystemSettingIcon,
-  UserListIcon,
-  ViewListIcon,
-} from 'tdesign-icons-vue-next';
+import { HomeIcon } from 'tdesign-icons-vue-next';
 import { flatMenuItems, menuGroups } from '@/config/menu';
 
 const route = useRoute();
 
 const iconMap = {
-  vote: CatalogIcon,
-  'vote-result': CheckCircleIcon,
-  disclosure: CatalogIcon,
-  publish: SendIcon,
-  'management-fee': ChartBarIcon,
-  house: HomeIcon,
-  building: BuildingIcon,
-  member: ViewListIcon,
-  review: CheckCircleIcon,
-  owner: UserListIcon,
-  setting: SystemSettingIcon,
+  home: HomeIcon,
 };
 
 const currentMenu = computed(() =>
@@ -92,10 +76,14 @@ const currentMenu = computed(() =>
 );
 
 const currentTitle = computed(
-  () => (route.meta.title as string | undefined) ?? currentMenu.value?.title ?? '管理后台',
+  () => (route.meta.title as string | undefined) ?? currentMenu.value?.title ?? 'Home',
 );
 
 function isActive(prefix: string) {
+  if (prefix === '/') {
+    return route.path === '/';
+  }
+
   return route.path.startsWith(prefix);
 }
 </script>

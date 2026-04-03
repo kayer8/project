@@ -41,3 +41,12 @@
 ## Visual/Browser Findings
 - Current list pages mostly render `record-card` loops directly in page bodies without shared list container.
 - `app-list` is now buildable and suitable as the wrapper for these repeated list blocks.
+
+## Additional Findings: Skeleton Reset And Relocation
+- Current repository root is mostly a wrapper; the actual products live under `autonomy/backend`, `autonomy/admin-web`, and `autonomy/wechat`.
+- `autonomy/package.json` is an aggregator script layer that starts `backend` and `admin-web` from subdirectories.
+- Backend framework-safe retention boundary is small: `src/main.ts`, `src/app.module.ts`, config validation, common response/error wrappers, and `modules/health`.
+- Backend currently depends on Prisma plus many domain modules; keeping Prisma would preserve unnecessary database coupling after table/API removal.
+- Admin framework-safe retention boundary is also small: `src/main.ts`, router bootstrap, shared layout files, styles, and a simplified menu config.
+- Admin routes currently redirect to `/votes/list` and enforce login through a route guard, so route/auth cleanup is required to leave only a home page.
+- Moving `backend` and `admin-web` to repository root will require removing or replacing the obsolete `autonomy` wrapper package.

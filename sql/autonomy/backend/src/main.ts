@@ -1,4 +1,4 @@
-import { Logger, RequestMethod, ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
@@ -10,12 +10,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const logger = new Logger('Bootstrap');
 
-  app.setGlobalPrefix('v1', {
-    exclude: [
-      { path: 'admin/v1', method: RequestMethod.ALL },
-      { path: 'admin/v1/(.*)', method: RequestMethod.ALL },
-    ],
-  });
+  app.setGlobalPrefix('v1');
   app.enableCors();
   app.useGlobalPipes(
     new ValidationPipe({
@@ -31,10 +26,9 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ResponseInterceptor());
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Autonomy Backend API')
-    .setDescription('Property governance service')
+    .setTitle('Autonomy Backend Skeleton')
+    .setDescription('Minimal NestJS service shell')
     .setVersion('0.1.0')
-    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, document, { useGlobalPrefix: true });

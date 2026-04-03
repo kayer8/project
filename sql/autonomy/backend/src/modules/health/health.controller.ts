@@ -5,8 +5,9 @@ export class HealthController {
   @Get()
   getHealth() {
     return {
-      service: 'autonomy-backend',
+      service: 'backend',
       status: 'ok',
+      mode: 'skeleton',
     };
   }
 }

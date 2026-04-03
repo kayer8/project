@@ -16,42 +16,6 @@ class EnvironmentVariables {
   @IsInt()
   @Min(1)
   PORT?: number;
-
-  @IsOptional()
-  @IsString()
-  DATABASE_URL?: string;
-
-  @IsOptional()
-  @IsString()
-  JWT_SECRET?: string;
-
-  @IsOptional()
-  @IsString()
-  JWT_EXPIRES_IN?: string;
-
-  @IsOptional()
-  @IsString()
-  ADMIN_JWT_SECRET?: string;
-
-  @IsOptional()
-  @IsString()
-  ADMIN_JWT_EXPIRES_IN?: string;
-
-  @IsOptional()
-  @IsString()
-  ADMIN_EMAIL?: string;
-
-  @IsOptional()
-  @IsString()
-  ADMIN_PASSWORD?: string;
-
-  @IsOptional()
-  @IsString()
-  WECHAT_APPID?: string;
-
-  @IsOptional()
-  @IsString()
-  WECHAT_SECRET?: string;
 }
 
 export function validateEnv(config: Record<string, unknown>) {

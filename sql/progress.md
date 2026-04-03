@@ -97,3 +97,17 @@
 | What's the goal? | Unify mini program lists onto shared refresh/load-more logic |
 | What have I learned? | Pages need `app-list`; components can align more closely with `useList` |
 | What have I done? | Repaired shared list infra and started list surface audit |
+
+## Session: 2026-04-03
+
+### Phase 1: Scope And Retention Boundary
+- **Status:** in_progress
+- **Started:** 2026-04-03
+- Actions taken:
+  - Scanned root and `autonomy/` structure to identify backend, admin, and mini program boundaries.
+  - Read backend entrypoints, Prisma schema, admin router, layout, and guards to determine the minimum framework-only retention set.
+  - Replaced stale planning focus with a new repository reset and relocation plan.
+- Files created/modified:
+  - `task_plan.md`
+  - `findings.md`
+  - `progress.md`
